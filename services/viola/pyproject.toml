@@ -1,0 +1,39 @@
+[project]
+name = "fermata-viola"
+version = "0.1.0"
+description = "Viola: Gesprächs-Agent von Fermata (Stimme und Text), Hintergrund- und Sicherheits-Agent."
+requires-python = ">=3.12,<3.13"
+dependencies = [
+  "anthropic[bedrock]>=1.11.0",
+  "boto3>=1.43.0",
+  "fastapi>=0.142.0",
+  "uvicorn>=0.54.0",
+  "httpx>=0.28.1",
+  "pydantic>=2.13.0",
+  "pyjwt>=2.15.0",
+  "livekit-agents>=1.8.4",
+  "livekit-api>=1.2.1",
+  "livekit-plugins-deepgram>=1.8.4",
+  "livekit-plugins-silero>=1.8.4",
+]
+
+[project.optional-dependencies]
+google = ["google-cloud-texttospeech>=2.33.0"]
+
+[project.scripts]
+viola = "viola.cli:main"
+
+[dependency-groups]
+dev = [
+  "pytest>=9.1.0",
+  "pytest-asyncio>=1.4.0",
+  "ruff>=0.16.0",
+  "mypy>=2.4.0",
+]
+
+[build-system]
+requires = ["hatchling>=1.27"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/viola"]
