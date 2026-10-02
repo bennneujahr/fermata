@@ -1,0 +1,26 @@
+{
+  "name": "fermata",
+  "private": true,
+  "description": "Fermata – Dating ohne Wischen: echte Abende in Partner-Lokalen (Monorepo).",
+  "packageManager": "pnpm@10.28.0",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "build": "pnpm -r --if-present build",
+    "test": "pnpm -r --if-present test",
+    "typecheck": "pnpm -r --if-present typecheck",
+    "lint": "pnpm -r --if-present lint",
+    "tokens:build": "pnpm --filter @fermata/tokens build",
+    "tokens:check": "pnpm --filter @fermata/tokens check",
+    "brand:build": "pnpm --filter @fermata/brand build",
+    "check:tone": "node scripts/check-tone.mjs",
+    "check:contrast": "node scripts/check-contrast.mjs",
+    "check:atem-size": "node scripts/check-atem-size.mjs",
+    "checks": "pnpm tokens:check && pnpm check:tone && pnpm check:contrast && pnpm check:atem-size",
+    "db:start": "bash scripts/db.sh start",
+    "db:stop": "bash scripts/db.sh stop",
+    "db:reset": "bash scripts/db.sh reset",
+    "db:test": "bash scripts/db.sh test"
+  }
+}
