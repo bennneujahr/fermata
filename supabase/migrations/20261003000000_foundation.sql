@@ -56,6 +56,8 @@ begin
   end if;
 end
 $$;
+-- postgres (Eigentümer der Migrationen) handelt im Namen der Bündel, z. B. als Eigentümer der Art.-9-Tabellen.
+grant fermata_sensitive, fermata_matcher, fermata_agent to postgres;
 comment on role fermata_sensitive is 'Besitzt die Art.-9-Tabellen und Prüffunktionen.';
 comment on role fermata_matcher is 'Rechte des Auswahl-Jobs: liest nur, was die Auswahl braucht; keine Art.-9-Rohdaten.';
 comment on role fermata_agent is 'Rechte des Sprach-Agenten (über die Agent-Function).';
