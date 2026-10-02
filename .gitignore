@@ -39,3 +39,6 @@ supabase/.branches/
 .idea/
 .vscode/*
 !.vscode/extensions.json
+
+# Arbeitskopien der Bau-Agenten
+.claude/worktrees/
