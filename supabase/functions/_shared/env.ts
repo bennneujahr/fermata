@@ -28,3 +28,12 @@ export function siteUrl(): string {
 export function appUrl(): string {
   return env("FERMATA_APP_URL", "http://localhost:3000").replace(/\/$/, "");
 }
+
+/** Öffentliche Basisadresse der Edge Functions (für Links in Mails, z. B. den Bestätigungslink). */
+export function functionsUrl(): string {
+  const explicit = optionalEnv("FERMATA_FUNCTIONS_URL");
+  if (explicit) return explicit.replace(/\/$/, "");
+  const supabase = optionalEnv("SUPABASE_URL");
+  if (supabase) return `${supabase.replace(/\/$/, "")}/functions/v1`;
+  return "http://localhost:54321/functions/v1";
+}

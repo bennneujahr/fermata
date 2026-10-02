@@ -424,3 +424,21 @@ enabled = true
 # formatted with uppercase keywords, indent 2, max width 180, trailing commas,
 # and column/key alignment. Set to "null" to emit raw, unformatted SQL.
 # format_options = "{\"keywordCase\":\"upper\",\"indent\":2,\"maxWidth\":180,\"commaStyle\":\"trailing\"}"
+
+# Fermata M1: Die Wartelisten-Functions werden ohne Supabase-JWT aufgerufen (Landingpage ohne Anmeldung,
+# Bestätigungslink aus der Mail). Schutz: Prüfung, Drossel und Regeln in api.waitlist_* (PLAN 2.3 Nr. 1).
+[functions.waitlist-signup]
+verify_jwt = false
+
+[functions.waitlist-confirm]
+verify_jwt = false
+
+[functions.waitlist-status]
+verify_jwt = false
+
+[functions.waitlist-unsubscribe]
+verify_jwt = false
+
+# Aufrufer ist die Server-Funktion /s/[slug] der Landingpage; optional mit LINK_HIT_SECRET geschützt.
+[functions.link-hit]
+verify_jwt = false

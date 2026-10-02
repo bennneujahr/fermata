@@ -386,6 +386,18 @@ $$;
 comment on function api.waitlist_signup(text, text, text, text, text, text, text, text, text, text) is
   'Anmeldung zur Warteliste: Drossel, Prüfung, neutrale Antwort, erneuter Versand für unbestätigte Adressen.';
 
+-- Mailversand fehlgeschlagen: Mindestpause zurücksetzen, damit ein erneuter Versuch sofort eine Mail auslöst.
+create or replace function api.waitlist_mail_failed(p_email text)
+returns void
+language sql
+volatile
+security definer
+set search_path = ''
+as $$
+  update public.waitlist w set last_mail_at = null where w.email = lower(btrim(coalesce(p_email, '')))::extensions.citext;
+$$;
+comment on function api.waitlist_mail_failed(text) is 'Setzt die Mindestpause zurück, wenn der Versand einer Wartelisten-Mail fehlschlug.';
+
 -- ---------------------------------------------------------------------------
 -- api.waitlist_confirm – Bestätigung (Double-Opt-in, Schritt 2)
 -- Vergibt Grundnummer, Gründungsstatus, Einladungscode(s) und schreibt Vorrückungen gut.
@@ -705,6 +717,7 @@ comment on function api.admin_waitlist_grant_invite(uuid) is 'Gibt einer bestät
 -- Rechte: alles nur für service_role; die Admin-Funktionen zusätzlich für authenticated (prüfen app.is_admin()).
 revoke all on function
   api.waitlist_signup(text, text, text, text, text, text, text, text, text, text),
+  api.waitlist_mail_failed(text),
   api.waitlist_confirm(text, text, text),
   api.waitlist_status(text),
   api.waitlist_unsubscribe(text),
@@ -715,6 +728,7 @@ revoke all on function
 from public, anon, authenticated;
 grant execute on function
   api.waitlist_signup(text, text, text, text, text, text, text, text, text, text),
+  api.waitlist_mail_failed(text),
   api.waitlist_confirm(text, text, text),
   api.waitlist_status(text),
   api.waitlist_unsubscribe(text),

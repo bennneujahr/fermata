@@ -1,7 +1,7 @@
 -- Warteliste (M1): Platznummern je Region, Vorrückung, Gründungsmitglieder, Drossel, neutrale Antworten,
 -- Ablauf der Links, Löschfristen, Plakat-Zähler, Admin-Zahlen und RLS.
 begin;
-select plan(75);
+select plan(77);
 
 -- ---------------------------------------------------------------------------
 -- Hilfen (nur in dieser Transaktion)
@@ -87,7 +87,7 @@ select throws_ok($$ update public.link_hits set count = 0 $$, '42501', null, 'au
 select tests.reset_role();
 
 -- ---------------------------------------------------------------------------
--- 2. Anmeldung: Prüfung, neutrale Antworten, erneuter Versand (15)
+-- 2. Anmeldung: Prüfung, neutrale Antworten, erneuter Versand (17)
 -- ---------------------------------------------------------------------------
 select is(pg_temp.signup('anna@example.org') ->> 'send', 'confirm', 'Neue Adresse: Bestätigungs-Mail');
 select is((select confirmed_at from public.waitlist where email = 'anna@example.org'), null, 'Eintrag ist zunächst unbestätigt');
@@ -95,6 +95,9 @@ select is((select base_number from public.waitlist where email = 'anna@example.o
 select is(pg_temp.signup('ANNA@example.org') -> 'result', '"ok"'::jsonb, 'Gleiche Adresse (andere Schreibweise): gleiche Antwort');
 select is((select count(*)::int from public.waitlist where email = 'anna@example.org'), 1, 'E-Mail bleibt eindeutig (citext)');
 select is(pg_temp.signup('anna@example.org') ->> 'send', null, 'Innerhalb der Mindestpause: keine weitere Mail');
+select api.waitlist_mail_failed('anna@example.org');
+select is(pg_temp.signup('anna@example.org') ->> 'send', 'confirm', 'Nach fehlgeschlagenem Versand: sofort neuer Versuch');
+select ok(not has_function_privilege('anon', 'api.waitlist_mail_failed(text)', 'EXECUTE'), 'anon darf api.waitlist_mail_failed nicht ausführen');
 
 select pg_temp.confirm_hash('anna@example.org') as old_hash \gset
 select ops.sim_clock_advance(interval '11 minutes');
