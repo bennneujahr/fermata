@@ -26,7 +26,6 @@ insert into ops.app_settings (key, value, description, category, is_public) valu
   ('interview.max_sessions_per_day', '6', 'Höchstens so viele Gespräche je Person und Kalendertag (Schutz vor Kosten und Missbrauch).', 'gespraech', false),
   ('interview.request_ttl_minutes', '15', 'Ein angefragtes Gespräch muss innerhalb so vieler Minuten beginnen.', 'gespraech', false),
   ('interview.text_max_session_minutes', '60', 'Längste Dauer eines Gesprächs im Textmodus („Text statt Stimme“).', 'gespraech', false),
-  ('interview.text_token_minutes', '90', 'Gültigkeit des Zugangs zum Textmodus in Minuten.', 'gespraech', false),
   ('interview.continuation_days', '7', 'Ein Gespräch, das wegen des Zeitlimits endete, kann so viele Tage lang fortgesetzt werden.', 'gespraech', false),
   ('interview.safety_transcript_retention_days', '30', 'PLATZHALTER (Frage B5): Aufbewahrung von Transkripten mit Sicherheits-Hinweis. 30 bedeutet: wie alle anderen.', 'gespraech', false),
   ('interview.ai_notice_version', '"2026-10-03"', 'Fassung des KI-Hinweises (Art. 50 AI Act), die Viola zu Beginn spricht.', 'gespraech', false),
