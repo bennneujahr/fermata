@@ -98,7 +98,7 @@ security definer
 set search_path = ''
 as $$
 declare
-  v jsonb;
+  v_result jsonb;
 begin
   perform app.require_admin();
   select jsonb_build_object(
@@ -126,14 +126,14 @@ begin
                                      'source', sf.source, 'created_at', sf.created_at, 'reviewed_at', sf.reviewed_at)
                                      order by sf.created_at desc), '[]'::jsonb)
                      from safety.safety_flags sf where sf.user_id = a.user_id)
-  ) into v
+  ) into v_result
   from app.accounts a join auth.users u on u.id = a.user_id
   where a.user_id = p_user;
-  if v is null then
+  if v_result is null then
     raise exception 'Konto nicht gefunden' using errcode = 'P0002';
   end if;
   insert into ops.audit_log (actor, action, target_table, target_id) values (auth.uid(), 'admin.account_viewed', 'app.accounts', p_user::text);
-  return v;
+  return v_result;
 end;
 $$;
 grant execute on function api.admin_account(uuid) to authenticated;
