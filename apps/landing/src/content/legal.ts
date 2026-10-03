@@ -95,7 +95,7 @@ export const datenschutz: LegalPage = {
       paragraphs: [
         "Wenn Sie sich eintragen, verarbeiten wir: Vorname, E-Mail-Adresse, Region, Postleitzahl, Zeitpunkt und Version Ihrer Einwilligung, gegebenenfalls das Kürzel des Plakats, über das Sie gekommen sind, und gegebenenfalls den Einladungscode, mit dem Sie eingeladen wurden. Nach der Bestätigung kommen Ihr Platz, Ihr Gründungsstatus und Ihr Einladungscode hinzu.",
         "Zweck: Warteliste führen, Ihren Platz berechnen, Ihre Einladung ermöglichen und Sie zum Start in Ihrer Region per E-Mail informieren. Rechtsgrundlage ist Ihre Einwilligung (Art. 6 Abs. 1 lit. a DSGVO), die Sie jederzeit mit Wirkung für die Zukunft widerrufen können, zum Beispiel über den Abmeldelink.",
-        "Double-Opt-in: Erst nach Klick auf den Link in der Bestätigungs-Mail steht eine Adresse auf der Liste. Unbestätigte Einträge löschen wir nach 7 Tagen. Bestätigte Einträge löschen wir, sobald Sie sich abmelden. [[Was mit dem Eintrag passiert, wenn aus der Warteliste ein Konto wird (M2)]]",
+        "Double-Opt-in: Erst nach Klick auf den Link in der Bestätigungs-Mail steht eine Adresse auf der Liste. Unbestätigte Einträge löschen wir nach 7 Tagen. Bestätigte Einträge löschen wir, sobald Sie sich abmelden. Wenn Sie eingeladen werden und sich zum ersten Mal in der App anmelden, übernehmen wir nur Ihren Gründungsstatus in Ihr Konto und löschen den Eintrag auf der Warteliste.",
         "Die Angaben sind freiwillig. Ohne sie können wir Sie nicht auf die Warteliste setzen.",
       ],
     },

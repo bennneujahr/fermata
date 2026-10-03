@@ -100,7 +100,7 @@ Stufe A braucht nur die mit „A“ markierten Punkte.
 
 - [ ] **A** **Hilfe-Nummern erneut geprüft** (Heimwegtelefon 030 12074182 und Zeiten, 110, 112, TelefonSeelsorge
       0800 111 0 111 / 0800 111 0 222 / 116 123, Hilfetelefon Gewalt gegen Frauen 116 016) – Einstellungen
-      `safety.*` **und** `safety.crisis_lines` (Viola) gleich gepflegt; Landingpage neu gebaut.
+      in den Einstellungen `safety.*` (eine Quelle für Viola und Hilfe-Seite: `safety.crisis_lines()`); Landingpage neu gebaut.
 - [ ] **B (Blocker)** Zwei-Faktor für Benn eingerichtet (TOTP) und für alle Anbieter-Konten.
 - [ ] **B (Blocker)** `safety.admin_alert_email` auf ein überwachtes Postfach; Vertretung benannt (RUNBOOK Abschnitt 9).
 - [ ] **B (Blocker)** Ende-zu-Ende in Staging: Meldung → vorläufige Sperre → Absage beim Gegenüber → Prüfung →
