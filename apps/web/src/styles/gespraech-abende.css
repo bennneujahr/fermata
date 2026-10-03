@@ -204,8 +204,8 @@
 }
 
 .voice__speaker {
-  font-weight: 650;
-  color: var(--color-brass-decor);
+  font-weight: 700;
+  color: var(--color-on-night);
   margin-inline-end: 0.25rem;
 }
 
@@ -226,6 +226,10 @@
   background: var(--color-night-raised);
   text-align: start;
   color: var(--color-on-night);
+}
+
+.voice__summary .eyebrow {
+  color: var(--color-on-night-muted);
 }
 
 .voice__summary-hint {
