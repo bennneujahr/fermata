@@ -53,3 +53,28 @@ jobs:
       - name: Typprüfung
         working-directory: supabase/functions
         run: deno check $(find . -name '*.ts' -not -path '*/node_modules/*' | sort)
+
+  matcher:
+    name: Auswahl-Job (Python)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - uses: astral-sh/setup-uv@v6
+      - name: psql installieren
+        run: sudo apt-get update && sudo apt-get install -y postgresql-client
+      - name: Test-Datenbank mit Migrationen
+        run: bash scripts/db.sh migrate
+      - name: ruff
+        working-directory: services/matcher
+        run: uv run ruff check .
+      - name: pytest
+        working-directory: services/matcher
+        env:
+          DB_PORT: "54322"
+        run: uv run pytest -q
+      - name: Datenbank stoppen
+        if: always()
+        run: bash scripts/db.sh stop
