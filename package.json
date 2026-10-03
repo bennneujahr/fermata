@@ -17,10 +17,11 @@
     "check:tone": "node scripts/check-tone.mjs",
     "check:contrast": "node scripts/check-contrast.mjs",
     "check:atem-size": "node scripts/check-atem-size.mjs",
-    "checks": "pnpm tokens:check && pnpm check:tone && pnpm check:contrast && pnpm check:atem-size",
+    "checks": "pnpm tokens:check && pnpm check:tone && pnpm check:contrast && pnpm check:atem-size && pnpm check:supabase-config",
     "db:start": "bash scripts/db.sh start",
     "db:stop": "bash scripts/db.sh stop",
     "db:reset": "bash scripts/db.sh reset",
-    "db:test": "bash scripts/db.sh test"
+    "db:test": "bash scripts/db.sh test",
+    "check:supabase-config": "python3 scripts/check-supabase-config.py"
   }
 }

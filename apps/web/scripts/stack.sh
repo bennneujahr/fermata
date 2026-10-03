@@ -11,17 +11,23 @@ STATE="$APP_DIR/.stack"
 mkdir -p "$STATE"
 
 # Eigene Datenbank für den Stapel (54348), damit `scripts/db.sh test` (54342) ihn nicht zurücksetzt.
-export DB_PORT="${STACK_DB_PORT:-54348}" DB_CONTAINER="${STACK_DB_CONTAINER:-fermata-db-web-stack}"
-FUNCTIONS_PORT=54341
-AUTH_PORT=54343
-REST_PORT=54344
-GATEWAY_PORT=54345
-SMTP_PORT=54346
-MAIL_HTTP_PORT=54347
-APP_PORT=3041
-AUTH_CONTAINER=fermata-auth-web
-REST_CONTAINER=fermata-rest-web
-MAIL_CONTAINER=fermata-mail-web
+# STACK_SLOT=N (0–9) verschiebt alle Ports um N×100 und hängt -N an die Containernamen,
+# damit mehrere Arbeitskopien gleichzeitig einen Stapel betreiben können.
+SLOT="${STACK_SLOT:-0}"
+OFF=$((SLOT * 100))
+SUFFIX=""
+[ "$SLOT" = "0" ] || SUFFIX="-$SLOT"
+export DB_PORT="${STACK_DB_PORT:-$((54348 + OFF))}" DB_CONTAINER="${STACK_DB_CONTAINER:-fermata-db-web-stack$SUFFIX}"
+FUNCTIONS_PORT=$((54341 + OFF))
+AUTH_PORT=$((54343 + OFF))
+REST_PORT=$((54344 + OFF))
+GATEWAY_PORT=$((54345 + OFF))
+SMTP_PORT=$((54346 + OFF))
+MAIL_HTTP_PORT=$((54347 + OFF))
+APP_PORT=$((3041 + OFF))
+AUTH_CONTAINER=fermata-auth-web$SUFFIX
+REST_CONTAINER=fermata-rest-web$SUFFIX
+MAIL_CONTAINER=fermata-mail-web$SUFFIX
 JWT_SECRET="fermata-local-jwt-secret-with-at-least-32-characters"
 DB_URL="postgres://postgres:postgres@localhost:$DB_PORT/postgres"
 
@@ -44,6 +50,7 @@ FERMATA_CONTACT_EMAIL=hallo@fermata.example
 DIDIT_MODE=fake
 DIDIT_WEBHOOK_SECRET=fermata-fake-didit-secret
 MAILPIT_URL=http://localhost:$MAIL_HTTP_PORT
+APP_PORT=$APP_PORT
 ENV
 }
 

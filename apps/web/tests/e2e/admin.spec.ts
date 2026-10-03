@@ -65,7 +65,7 @@ test("Admin: TOTP einrichten, Übersicht, Einladen, Einstellungen, erneute Zwei-
   await expect(page.getByText(`Einladung an ${invitee} ist unterwegs.`)).toBeVisible();
   const mail = await outboxMail(invitee, "account.invite");
   expect(mail?.subject).toBe("Ihre Einladung zu Fermata");
-  expect(mail?.text).toContain("http://localhost:3041/anmelden");
+  expect(mail?.text).toContain(`${process.env.FERMATA_APP_URL ?? "http://localhost:3041"}/anmelden`);
   const [acc] = await sql`select a.status, m.status as membership, billing.available_evenings(a.user_id) as n
     from app.accounts a join billing.memberships m using (user_id) join auth.users u on u.id = a.user_id where u.email = ${invitee}`;
   expect(acc).toMatchObject({ status: "onboarding", membership: "free", n: 1 });

@@ -1,6 +1,7 @@
 // Öffentliche Seiten, PWA, Sicherheits-Header und Schutz der Bereiche.
 import { expect, test } from "@playwright/test";
 import { expectAccessible, watchConsole } from "./helpers/checks";
+import { stack } from "./helpers/env";
 
 test("Sicherheits-Header: strenge CSP mit Nonce, keine Drittanbieter", async ({ request }) => {
   const res = await request.get("/anmelden");
@@ -10,7 +11,8 @@ test("Sicherheits-Header: strenge CSP mit Nonce, keine Drittanbieter", async ({ 
   expect(script).not.toContain("unsafe-inline");
   expect(script).not.toContain("unsafe-eval");
   expect(csp).toContain("frame-ancestors 'none'");
-  expect(/connect-src ([^;]+)/.exec(csp)![1]).toBe("'self' http://localhost:54345 ws://localhost:54345");
+  const supabase = stack.NEXT_PUBLIC_SUPABASE_URL ?? "http://localhost:54345";
+  expect(/connect-src ([^;]+)/.exec(csp)![1]).toBe(`'self' ${supabase} ${supabase.replace(/^http/, "ws")}`);
   expect(res.headers()["x-frame-options"]).toBe("DENY");
   expect(res.headers()["referrer-policy"]).toBe("same-origin");
   const nonce = /'nonce-([^']+)'/.exec(script)![1]!;

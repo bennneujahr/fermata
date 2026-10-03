@@ -134,7 +134,7 @@ test("Anmeldung über den Link aus der Mail (token_hash, ein Klick)", async ({ p
   await page.getByRole("button", { name: "Code anfordern" }).click();
   await expect(page).toHaveURL(/\/anmelden\/code/);
   const mail = await waitForMail(email, "Anmeldecode", before);
-  const href = /href="(http:\/\/localhost:3041\/anmelden\/bestaetigen\?[^"]+)"/.exec(mail.html)?.[1]?.replace(/&amp;/g, "&");
+  const href = /href="(https?:\/\/[^"/]+\/anmelden\/bestaetigen\?[^"]+)"/.exec(mail.html)?.[1]?.replace(/&amp;/g, "&");
   expect(href).toBeTruthy();
   await page.context().clearCookies();
   await page.goto(href!);
