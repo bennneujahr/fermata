@@ -1,8 +1,10 @@
+import Link from "next/link";
 import type { ReactNode } from "react";
 import { AppShell } from "@/components/shell/Shells";
 import { ButtonLink, EmptyState, Notice } from "@/components/ui";
 import { errors } from "@/copy/common";
 import { start } from "@/copy/member";
+import { titles as safetyTitles } from "@/copy/sicherheit";
 import { getAdminStatus, requireMember } from "@/lib/data";
 
 export default async function MemberLayout({ children }: { children: ReactNode }) {
@@ -18,12 +20,16 @@ export default async function MemberLayout({ children }: { children: ReactNode }
     );
   }
   const suspended = overview.onboarding.status === "suspended" || overview.sanctions_active;
+  const sanctionsLink = safetyTitles.sanktionen;
   return (
     <AppShell>
       {suspended ? (
         <div className="stack">
           <Notice tone="warning" title={errors.suspendedTitle}>
-            {errors.suspendedText}
+            <p>{errors.suspendedText}</p>
+            <p>
+              <Link href="/sicherheit/sanktionen">{sanctionsLink}</Link>
+            </p>
           </Notice>
         </div>
       ) : null}

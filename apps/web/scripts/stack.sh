@@ -32,6 +32,9 @@ VIOLA_TEXT_SECRET="fermata-local-text-secret-0123456789abcdef"
 AUTH_CONTAINER=fermata-auth-web$SUFFIX
 REST_CONTAINER=fermata-rest-web$SUFFIX
 MAIL_CONTAINER=fermata-mail-web$SUFFIX
+# Stripe-Attrappe (stripe/stripe-mock) für Bestellung, Kündigung und Widerruf (docs/bereiche/ui-mitgliedschaft-sicherheit.md).
+STRIPE_PORT=$((54383 + OFF))
+STRIPE_CONTAINER=fermata-stripe-web$SUFFIX
 JWT_SECRET="fermata-local-jwt-secret-with-at-least-32-characters"
 DB_URL="postgres://postgres:postgres@localhost:$DB_PORT/postgres"
 
@@ -66,6 +69,13 @@ DIDIT_MODE=fake
 DIDIT_WEBHOOK_SECRET=fermata-fake-didit-secret
 MAILPIT_URL=http://localhost:$MAIL_HTTP_PORT
 APP_PORT=$APP_PORT
+SUPABASE_JWT_SECRET=$JWT_SECRET
+FERMATA_FUNCTIONS_URL=http://localhost:$GATEWAY_PORT/functions/v1
+STRIPE_SECRET_KEY=sk_test_fermatalocal
+STRIPE_PUBLISHABLE_KEY=pk_test_fermatalocal
+NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_test_fermatalocal
+STRIPE_API_BASE=http://localhost:$STRIPE_PORT
+VENUE_LINK_SECRET=fermata-local-venue-link-secret
 ENV
   # Web-Push: lokales VAPID-Schlüsselpaar (einmal je Arbeitskopie erzeugt, liegt nur in .stack/, nie im Repository).
   if [ ! -s "$STATE/vapid" ]; then
@@ -106,6 +116,8 @@ up() {
   docker run -d --name "$MAIL_CONTAINER" --network host \
     -e MP_SMTP_BIND_ADDR="127.0.0.1:$SMTP_PORT" -e MP_UI_BIND_ADDR="127.0.0.1:$MAIL_HTTP_PORT" \
     axllent/mailpit:v1.27 >/dev/null
+
+  docker run -d --name "$STRIPE_CONTAINER" -p "127.0.0.1:$STRIPE_PORT:12111" stripe/stripe-mock:latest >/dev/null
 
   docker run -d --name "$REST_CONTAINER" --network host \
     -e PGRST_DB_URI="postgres://authenticator:postgres@localhost:$DB_PORT/postgres" \
@@ -164,6 +176,7 @@ up() {
   wait_http "http://127.0.0.1:$REST_PORT/"
   wait_http "http://127.0.0.1:$GATEWAY_PORT/auth/v1/health"
   wait_http "http://127.0.0.1:$MAIL_HTTP_PORT/api/v1/info"
+  wait_http "http://127.0.0.1:$STRIPE_PORT/v1/charges"
   echo "Stapel läuft. Umgebung: $STATE/env"
 }
 
@@ -179,7 +192,7 @@ down() {
       "$ROOT/supabase/functions" | "$APP_DIR" | "$ROOT/services/viola") kill "$p" 2>/dev/null || true ;;
     esac
   done
-  docker rm -f "$AUTH_CONTAINER" "$REST_CONTAINER" "$MAIL_CONTAINER" >/dev/null 2>&1 || true
+  docker rm -f "$AUTH_CONTAINER" "$REST_CONTAINER" "$MAIL_CONTAINER" "$STRIPE_CONTAINER" >/dev/null 2>&1 || true
   (cd "$ROOT" && bash scripts/db.sh stop)
 }
 

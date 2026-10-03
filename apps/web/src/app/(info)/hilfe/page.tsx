@@ -1,62 +1,58 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Badge, Card, PageHeader } from "@/components/ui";
+import { HelpNumbers } from "@/components/sicherheit/HelpNumbers";
+import { ButtonLink, Card, PageHeader } from "@/components/ui";
 import { Icon } from "@/components/ui/Icon";
-import { help } from "@/copy/help";
-import { getPublicSettings } from "@/lib/data";
-import { telHref } from "@/lib/format";
+import { help, titles } from "@/copy/sicherheit";
+import { getPublicSettings, getSession } from "@/lib/data";
+import { getHelpContacts } from "@/lib/safety";
 import { currentForm } from "../form";
-import { titles } from "@/copy/titles";
 
 export const metadata: Metadata = { title: titles.hilfe };
 
+// Hilfe-Knopf (immer oben rechts): Notruf, Heimwegtelefon, weitere Hilfe-Nummern aus api.help_contacts(),
+// dazu Melden und Abend teilen. Auch ohne Anmeldung erreichbar.
 export default async function HelpPage() {
-  const [settings, form] = await Promise.all([getPublicSettings(), currentForm()]);
+  const [contacts, settings, form, { claims }] = await Promise.all([getHelpContacts(), getPublicSettings(), currentForm(), getSession()]);
   const c = help(form);
-  const emergency = settings["safety.emergency_number"] ?? "110";
-  const heimweg = settings["safety.heimwegtelefon_number"];
-  const hours = settings["safety.heimwegtelefon_hours"];
   const contact = settings["site.contact_email"];
+  const member = Boolean(claims?.sub);
   return (
     <div className="stack stack-lg">
       <PageHeader title={c.title} lead={c.lead} />
+      <Card title={c.emergencyTitle} variant="outline" id="notruf">
+        <p className="soft">{c.emergencyText}</p>
+        <HelpNumbers contacts={contacts} form={form} variant="full" />
+      </Card>
       <div className="grid-auto">
-        <Card title={c.emergencyTitle} variant="outline" id="notruf">
-          <p className="soft">{c.emergencyText}</p>
-          <a href={telHref(emergency)} className="call call--emergency">
-            <span className="call__icon">
-              <Icon name="phone" />
-            </span>
-            <span className="call__text">{c.emergencyCta(emergency)}</span>
-          </a>
-        </Card>
-        {heimweg ? (
-          <Card title={c.heimwegTitle} variant="outline" id="heimweg">
-            <p className="soft">{c.heimwegText}</p>
-            <a href={telHref(heimweg)} className="call">
-              <span className="call__icon">
-                <Icon name="phone" />
-              </span>
-              <span className="call__text">
-                <span>{c.heimwegCta(heimweg)}</span>
-                {hours ? <span className="call__sub">{c.heimwegHours(hours)}</span> : null}
-              </span>
-            </a>
-          </Card>
-        ) : null}
-      </div>
-      <div className="grid-auto">
-        <Card title={c.reportTitle} id="melden" eyebrow={<Badge tone="brass">{c.comingSoon}</Badge>}>
+        <Card title={c.reportTitle} id="melden">
           <p className="soft">{c.reportText}</p>
-          <p className="muted text-sm">{c.reportSoon}</p>
-          {contact ? (
-            <p>
-              <a href={`mailto:${contact}`}>{contact}</a>
-            </p>
-          ) : null}
+          {member ? (
+            <div>
+              <ButtonLink href="/sicherheit/melden" icon="flag">
+                {c.reportCta}
+              </ButtonLink>
+            </div>
+          ) : (
+            <>
+              <p className="muted text-sm">{c.reportLoggedOut}</p>
+              {contact ? (
+                <p>
+                  <a href={`mailto:${contact}`}>{contact}</a>
+                </p>
+              ) : null}
+            </>
+          )}
         </Card>
-        <Card title={c.shareTitle} id="teilen" eyebrow={<Badge tone="brass">{c.comingSoon}</Badge>}>
+        <Card title={c.shareTitle} id="teilen">
           <p className="soft">{c.shareText}</p>
+          {member ? (
+            <div>
+              <ButtonLink href="/sicherheit/teilen" variant="secondary" icon="share">
+                {c.shareCta}
+              </ButtonLink>
+            </div>
+          ) : null}
         </Card>
       </div>
       <Card title={c.standardsTitle} variant="sunk" id="standards">
@@ -68,6 +64,11 @@ export default async function HelpPage() {
             </li>
           ))}
         </ul>
+        {member ? (
+          <p>
+            <Link href="/sicherheit">{c.safetyCta}</Link>
+          </p>
+        ) : null}
       </Card>
       <Card title={c.contactTitle} variant="outline" id="kontakt">
         <p className="soft">{c.contactText}</p>

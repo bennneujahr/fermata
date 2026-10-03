@@ -1,0 +1,39 @@
+/* Ergänzungen für Rechtstexte (lib/markdown.tsx): Zitat, Trennlinie, Code, Tabelle. Nur Tokens. */
+.prose blockquote {
+  margin: 0 0 var(--space-4);
+  padding: var(--space-3) var(--space-4);
+  border-inline-start: 3px solid var(--color-brass-decor);
+  background: var(--color-paper-sunk);
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  color: var(--color-ink-soft);
+}
+
+.prose blockquote p {
+  margin: 0;
+}
+
+.prose h3 {
+  font-size: var(--text-md);
+  font-family: var(--font-body);
+  font-weight: 650;
+  color: var(--color-ink);
+  margin: var(--space-4) 0 var(--space-2);
+}
+
+.prose h4 {
+  font-size: var(--text-md);
+  font-family: var(--font-body);
+  font-weight: 600;
+  color: var(--color-ink);
+  margin: var(--space-3) 0 var(--space-1);
+}
+
+.prose code {
+  padding: 0.05em 0.3em;
+  border-radius: var(--radius-sm);
+  background: var(--color-paper-sunk);
+}
+
+.prose .table-wrap {
+  margin: 0 0 var(--space-4);
+}
