@@ -155,6 +155,7 @@ from jsonb_array_elements($art9$[
   {"c": "religion", "p": "religi", "prefix": true, "anywhere": false},
   {"c": "religion", "p": "gläubig", "prefix": true, "anywhere": false},
   {"c": "religion", "p": "an gott", "prefix": false, "anywhere": false},
+  {"c": "religion", "p": "(mein|meinen|meinem|meiner|ihr|ihren|ihrem|ihrer|dein|deinen|deinem|deiner|sein|seinen|seinem|der|den|dem|im|vom|zum) glauben?", "prefix": false, "anywhere": false},
   {"c": "religion", "p": "gottesdienst", "prefix": true, "anywhere": false},
   {"c": "religion", "p": "kirche", "prefix": true, "anywhere": true},
   {"c": "religion", "p": "katholi", "prefix": true, "anywhere": false},

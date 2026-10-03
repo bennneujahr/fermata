@@ -29,6 +29,8 @@ MIGRATION = Path(__file__).resolve().parents[3] / "supabase" / "migrations" / "2
         ("Ich bin katholisch erzogen.", "religion"),
         ("Ich singe im Kirchenchor.", "religion"),
         ("Ich bin Atheist.", "religion"),
+        ("Ihr Glaube gibt Ihnen Halt.", "religion"),
+        ("Der Glaube ist mir wichtig.", "religion"),
         ("Ich fasten im Ramadan.", "religion"),
         ("Politisch stehe ich eher links.", "politik"),
         ("Ich bin Mitglied der SPD.", "politik"),
