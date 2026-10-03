@@ -183,6 +183,7 @@ export const gespraech = (f: AddressForm) => ({
   } as Record<string, string>,
   transcriptUntil: (date: string) => `Gesprächstext bis ${date} lesbar`,
   transcriptGone: "Gesprächstext gelöscht",
+  transcriptNone: "Kein Gesprächstext gespeichert",
   open: "Ansehen",
 
   // Bestätigte Zusammenfassung

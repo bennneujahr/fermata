@@ -39,21 +39,20 @@ export function EveningCard({ evening: e, form, now, compact }: { evening: Eveni
       </div>
       <div className="evening-card__meta">
         {e.starts_at ? (
-          <span className="cluster evening-card__when">
+          <span className="evening-card__line">
             <Icon name="clock" size={18} />
-            {formatEveningTime(e.starts_at, now)}
+            <span>{formatEveningTime(e.starts_at, now)}</span>
           </span>
         ) : times.length ? (
-          <span className="cluster evening-card__when">
+          <span className="evening-card__line">
             <Icon name="clock" size={18} />
-            {times.map((t) => formatSlotShort(t)).join(" · ")}
+            <span>{times.map((t) => formatSlotShort(t)).join(" · ")}</span>
           </span>
         ) : null}
         {e.venue?.name ? (
-          <span className="cluster">
+          <span className="evening-card__line">
             <Icon name="evening" size={18} />
-            {e.venue.name}
-            {e.venue.city ? `, ${e.venue.city}` : ""}
+            <span>{c.at(e.venue.name, e.venue.city)}</span>
           </span>
         ) : null}
       </div>

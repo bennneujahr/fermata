@@ -72,9 +72,14 @@ export default async function EveningPage({ params, searchParams }: { params: Pr
       <PageHeader
         eyebrow={c.states[d.state] ?? d.state}
         title={proposal ? c.proposalWith(name) : c.withName(name)}
-        lead={d.starts_at ? formatEveningTime(d.starts_at, now) : deadline ? c.deadlineNote(deadline) : undefined}
+        lead={proposal ? (deadline ? c.deadlineNote(deadline) : undefined) : d.starts_at && action !== "prepare" ? formatEveningTime(d.starts_at, now) : undefined}
       >
-        {d.venue?.name ? <p className="soft">{c.at(d.venue.name)}</p> : null}
+        {d.venue?.name ? (
+          <p className="cluster soft venue-line">
+            <Icon name="evening" size={18} />
+            {c.at(d.venue.name, d.venue.city)}
+          </p>
+        ) : null}
       </PageHeader>
 
       {sp.rueckmeldung === "danke" ? (

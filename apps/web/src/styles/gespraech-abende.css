@@ -57,6 +57,11 @@
   --btn-fg: var(--color-on-night);
 }
 
+/* Während des Gesprächs nur das Gespräch: Erklärungen und Verlauf treten zurück. */
+.gespraech-page:has(.conversation[data-stage="voice"], .conversation[data-stage="text"], .conversation[data-stage="lost"]) .gespraech-secondary {
+  display: none;
+}
+
 /* ---------- Gespräch: Start ---------- */
 .atem-stage--lg fermata-atem {
   --atem-size: clamp(10rem, 8rem + 14vw, 16rem);
@@ -417,6 +422,13 @@
   white-space: pre-wrap;
 }
 
+@media (max-width: 30rem) {
+  .summary-quote {
+    font-size: var(--text-md);
+    padding: var(--space-4);
+  }
+}
+
 .summary-draft {
   margin: 0;
   display: flex;
@@ -515,8 +527,15 @@
   color: var(--color-ink-soft);
 }
 
-.evening-card__meta .cluster {
-  --cluster-gap: var(--space-2);
+.evening-card__line {
+  display: flex;
+  gap: var(--space-2);
+  align-items: flex-start;
+}
+
+.evening-card__line svg {
+  flex: none;
+  margin-top: 0.2rem;
 }
 
 .evening-card[data-action="choose_time"],
@@ -563,6 +582,10 @@
   padding: 0.2rem 0.8rem;
   background: var(--color-night-raised);
   color: var(--color-on-night);
+}
+
+.venue-line {
+  --cluster-gap: var(--space-2);
 }
 
 .why-text {
@@ -708,6 +731,10 @@
 }
 
 /* Rückmeldung */
+.feedback-form {
+  max-inline-size: 46rem;
+}
+
 .rating {
   display: grid;
   grid-template-columns: repeat(5, minmax(0, 1fr));
@@ -820,6 +847,10 @@
 .avail-day:disabled {
   color: var(--color-ink-muted);
   cursor: default;
+}
+
+.avail-table__cell--out {
+  background: transparent;
 }
 
 .avail-day__wd {

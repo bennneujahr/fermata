@@ -14,7 +14,7 @@ export function FindCard({ info, form, href, full }: { info: FindInfo; form: Add
       <div className="card__header">
         <p className="eyebrow">{`${formatClock(info.opens_at)} – ${formatClock(info.closes_at)}`}</p>
         <h2 className="card__title" id="finden-titel">
-          {c.findTitle}
+          {full ? c.findNow : c.findTitle}
         </h2>
       </div>
       <p className="find-card__ask">{c.findAsk(info.reservation_name)}</p>

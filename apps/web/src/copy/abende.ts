@@ -22,7 +22,7 @@ export const abende = (f: AddressForm) => ({
   open: "Öffnen",
   withName: (name: string | null) => (name ? `Abend mit ${name}` : "Abend"),
   proposalWith: (name: string | null) => (name ? `Vorschlag: ein Abend mit ${name}` : "Vorschlag für einen Abend"),
-  at: (venue: string) => `im ${venue}`,
+  at: (venue: string, city?: string | null) => (city ? `${venue}, ${city}` : venue),
   states: {
     proposed: "Vorschlag",
     time_requested: "Uhrzeit wird abgestimmt",
@@ -183,6 +183,7 @@ export const abende = (f: AddressForm) => ({
     "Von 15 Minuten vor bis 45 Minuten nach Beginn sehen Sie hier, woran Sie Ihr Gegenüber erkennen.",
     "Von 15 Minuten vor bis 45 Minuten nach Beginn siehst du hier, woran du dein Gegenüber erkennst.",
   ),
+  findNow: "Jetzt im Lokal",
   findOpens: (when: string) => `Öffnet ${when}.`,
   findClosed: "Das Finde-Fenster ist geschlossen.",
   findAsk: (name: string) => af(f, `Fragen Sie im Lokal nach dem Tisch für „${name}“.`, `Frag im Lokal nach dem Tisch für „${name}“.`),
@@ -316,6 +317,7 @@ export const abende = (f: AddressForm) => ({
 /** Karten „Nächster Schritt“ auf der Startseite. */
 export const startCards = (f: AddressForm) => ({
   eyebrow: "Nächster Schritt",
+  answerBy: (when: string) => `Antwort ${when}.`,
   conversation: {
     title: "Gespräch mit Viola",
     text: af(f, "Viola lernt Sie in einem ruhigen Gespräch kennen – mit Stimme oder als Text.", "Viola lernt dich in einem ruhigen Gespräch kennen – mit Stimme oder als Text."),

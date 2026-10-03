@@ -82,7 +82,7 @@ export default async function ConversationPage({ searchParams }: { searchParams:
   );
 
   return (
-    <div className="stack stack-lg">
+    <div className="stack stack-lg gespraech-page">
       <PageHeader eyebrow={c.eyebrow} title={c.title} lead={c.lead} />
 
       {!verified ? (
@@ -108,7 +108,7 @@ export default async function ConversationPage({ searchParams }: { searchParams:
         />
       )}
 
-      <div className="grid-auto">
+      <div className="grid-auto gespraech-secondary">
         <Card title={c.aboutTitle} id="viola" variant="sunk">
           <ul className="list-plain stack stack-sm">
             {c.about.map((t) => (
@@ -131,7 +131,7 @@ export default async function ConversationPage({ searchParams }: { searchParams:
         </Card>
       </div>
 
-      <Card title={c.profileTitle} id="zusammenfassung">
+      <Card title={c.profileTitle} id="zusammenfassung" className="gespraech-secondary">
         {profile?.summary_text ? (
           <>
             <blockquote className="summary-quote">{profile.summary_text}</blockquote>
@@ -142,7 +142,7 @@ export default async function ConversationPage({ searchParams }: { searchParams:
         )}
       </Card>
 
-      <Card title={c.historyTitle} id="verlauf">
+      <Card title={c.historyTitle} id="verlauf" className="gespraech-secondary">
         {history.length ? (
           <ul className="list-plain list-divided history">
             {history.map((s) => {
@@ -157,7 +157,9 @@ export default async function ConversationPage({ searchParams }: { searchParams:
                       <Badge tone={s.status === "completed" ? "success" : s.status === "active" ? "brass" : undefined}>{c.historyStatus[s.status] ?? s.status}</Badge>
                       <Badge tone={s.summary_status === "draft" ? "wine" : undefined}>{c.summaryStatus[s.summary_status] ?? s.summary_status}</Badge>
                     </div>
-                    <p className="muted text-sm">{del ? c.transcriptUntil(formatDate(del)) : c.transcriptGone}</p>
+                    <p className="muted text-sm">
+                      {del ? c.transcriptUntil(formatDate(del)) : now.getTime() - new Date(s.created_at).getTime() > 30 * 86_400_000 ? c.transcriptGone : c.transcriptNone}
+                    </p>
                   </div>
                   <ButtonLink href={`/gespraech/${s.id}`} variant="secondary" size="sm" iconAfter="arrowRight">
                     {c.open}

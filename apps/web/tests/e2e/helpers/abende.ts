@@ -35,13 +35,15 @@ export async function member(first: string, opts: { tier?: "auftakt" | "andante"
 }
 
 let venueCounter = 0;
+const VENUE_NAMES = ["Café am Pfaffenteich", "Weinstube Schlossblick", "Teehaus am Markt", "Bistro Seeufer", "Kaffeerösterei Altstadt"];
 
 /** Lokal mit freien Tischen an Tag 3 bis 5 (19:00, 19:30, 20:00 Uhr). */
-export async function venue(name = "Café am Pfaffenteich"): Promise<string> {
+export async function venue(nameIn?: string): Promise<string> {
+  const name = nameIn ?? VENUE_NAMES[venueCounter % VENUE_NAMES.length]!;
   venueCounter += 1;
   const [v] = await sql`
     insert into app.venues (name, street, postal_code, city, lat, lon, contact_name, contact_email, reservation_mode, description, public_transport, accessibility)
-    values (${`${name}${venueCounter > 1 ? ` ${venueCounter}` : ""}`}, 'Am Pfaffenteich 5', '19055', 'Schwerin', 53.6304, 11.4148, 'Frau Wirt', 'tisch@cafe.example', 'email',
+    values (${name}, 'Am Pfaffenteich 5', '19055', 'Schwerin', 53.6304, 11.4148, 'Frau Wirt', 'tisch@cafe.example', 'email',
             'Ruhiges Café mit Blick aufs Wasser.', 'Tram 1 und 2, Haltestelle Marienplatz (3 Minuten zu Fuß)', 'Stufenloser Eingang, barrierefreies WC')
     returning id`;
   for (const day of [3, 4, 5]) {

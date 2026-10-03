@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { cellInPast, cellKey, cellRange, cellsToWindows, checkWindows, periodDays, SLOT_TIMES, weeksOf, windowsOutsideGrid, windowsToCells } from "./availability";
+import { cellInPast, cellKey, cellRange, cellsToWindows, checkWindows, periodDays, SLOT_TIMES, weekColumns, weeksOf, windowsOutsideGrid, windowsToCells } from "./availability";
 import { weekdayOfKey } from "./berlin";
 
 describe("Raster für freie Abende", () => {
@@ -14,6 +14,7 @@ describe("Raster für freie Abende", () => {
     const weeks = weeksOf(days, weekdayOfKey);
     expect(weeks.map((w) => w.length)).toEqual([4, 7, 3]);
     expect(weeks[1]![0]).toBe("2026-10-12");
+    expect(weekColumns(weeks[0]!, weekdayOfKey)).toEqual(["2026-10-05", "2026-10-06", "2026-10-07", "2026-10-08", "2026-10-09", "2026-10-10", "2026-10-11"]);
   });
   it("zusammenhängende Felder werden ein Fenster (UTC)", () => {
     const cells = [...cellRange("2026-10-09", "18:00", "20:30"), cellKey("2026-10-09", "22:00"), cellKey("2026-10-10", "17:00")];

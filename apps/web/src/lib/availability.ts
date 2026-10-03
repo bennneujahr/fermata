@@ -58,6 +58,13 @@ export function weeksOf(days: string[], weekdayOf: (d: string) => number): strin
   return weeks;
 }
 
+/** Alle sieben Tage (Montag bis Sonntag) der Woche, in der eine Teilwoche liegt – für ein gleichmäßiges Raster. */
+export function weekColumns(week: string[], weekdayOf: (d: string) => number): string[] {
+  if (!week.length) return [];
+  const monday = addDays(week[0]!, -((weekdayOf(week[0]!) + 6) % 7));
+  return Array.from({ length: 7 }, (_, i) => addDays(monday, i));
+}
+
 export interface WindowIn {
   starts_at: string;
   ends_at: string;

@@ -15,6 +15,7 @@ import {
   DEFAULT_RULES,
   SLOT_TIMES,
   slotEnd,
+  weekColumns,
   weeksOf,
   type GridRules,
 } from "@/lib/availability";
@@ -170,8 +171,9 @@ export function AvailabilityGrid({
                 <thead>
                   <tr>
                     <td className="avail-table__corner" />
-                    {week.map((day) => {
+                    {weekColumns(week, weekdayOfKey).map((day) => {
                       const label = formatDateKeyShort(day);
+                      if (!week.includes(day)) return <td key={day} className="avail-table__day avail-table__day--out" aria-hidden="true" />;
                       const [wd, rest] = label.split(", ");
                       const any = SLOT_TIMES.some((t) => editable(day, t));
                       return (
@@ -197,7 +199,9 @@ export function AvailabilityGrid({
                       <th scope="row" className="avail-table__time">
                         {t.endsWith(":00") ? t : <span className="avail-table__half">{t}</span>}
                       </th>
-                      {week.map((day, col) => {
+                      {weekColumns(week, weekdayOfKey).map((day) => {
+                        const col = week.indexOf(day);
+                        if (col < 0) return <td key={day} className="avail-table__cell avail-table__cell--out" aria-hidden="true" />;
                         const k = cellKey(day, t);
                         const on = cells.has(k);
                         const past = isPast(day, t);

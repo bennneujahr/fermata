@@ -17,7 +17,12 @@ export default async function EveningsPage() {
   const [{ form }, evenings, periods, now] = await Promise.all([requireMember("/abende"), getMyEvenings(), getPeriods(), getDbNow()]);
   const c = abende(form);
   const z = zeiten(form);
-  const upcoming = evenings.filter((e) => isUpcoming(e, now));
+  // Erst, was jetzt zu tun ist; dann nach Datum (nächster Abend zuerst).
+  const urgent = new Set(["find", "answer_time", "choose_time", "feedback"]);
+  const when = (e: (typeof evenings)[number]) => new Date(e.starts_at ?? e.my_deadline_at ?? e.created_at).getTime();
+  const upcoming = evenings
+    .filter((e) => isUpcoming(e, now))
+    .sort((x, y) => Number(urgent.has(y.my_action)) - Number(urgent.has(x.my_action)) || when(x) - when(y));
   const past = evenings.filter((e) => !isUpcoming(e, now));
   const openPeriod = periods.find((p) => p.is_open);
 

@@ -22,7 +22,7 @@ async function grantConsent(page: Page) {
   await expect(page.getByRole("button", { name: "Lieber schreiben" })).toBeVisible();
 }
 
-test("Text: Einwilligung, KI-Hinweis zuerst, ganzes Gespräch, Zusammenfassung korrigieren (Art. 9) und bestätigen", async ({ page }) => {
+test("Text: Einwilligung, KI-Hinweis zuerst, ganzes Gespräch, Zusammenfassung korrigieren (erst Art.-9-Hinweis, dann gespeichert)", async ({ page }) => {
   test.setTimeout(180_000);
   const console = watchConsole(page);
   const m = await member("Mira");
@@ -146,5 +146,39 @@ test("Text: früh beenden (Du-Form) ohne Zusammenfassung; Krise zeigt die Hilfe 
   await expect(crisis.getByRole("link", { name: /0800 1110111 anrufen/ })).toHaveAttribute("href", "tel:08001110111");
   await expect(crisis.getByRole("link", { name: /Notruf 112/ })).toHaveAttribute("href", "tel:112");
   await expectAccessible(page, "Krise");
+  console.expectClean();
+});
+
+test("Zusammenfassung bestätigen und einen zweiten Entwurf verwerfen", async ({ page }) => {
+  const console = watchConsole(page);
+  const m = await member("Ida");
+  const draft = (text: string) => sql`
+    insert into app.interview_sessions (user_id, kind, mode, status, address_form, tier_depth, started_at, ended_at, summary_draft, summary_status, end_reason, ai_notice_at)
+    values (${m.id}::uuid, 'erstgespraech', 'text', 'completed', 'sie', 'auftakt', now() - interval '30 minutes', now() - interval '5 minutes', ${text}, 'draft', 'fertig', now() - interval '30 minutes')
+    returning id`;
+  const [first] = await draft("Sie lesen gern, wandern an der Ostsee und wünschen sich ein Gegenüber mit Humor.");
+  await loginByLink(page, m.email);
+  // Start zeigt die Zusammenfassung als nächsten Schritt
+  await expect(page.locator("#naechster-schritt")).toContainText("Ihre Zusammenfassung");
+  await page.locator("#naechster-schritt").getByRole("link", { name: "Zusammenfassung lesen" }).click();
+  await expect(page).toHaveURL(new RegExp(`/gespraech/${first!.id}$`));
+  await page.getByRole("button", { name: "Stimmt so" }).click();
+  await expect(page.getByText("Danke. Die Zusammenfassung ist bestätigt.")).toBeVisible();
+  const [s1] = await sql`select summary_status from app.interview_sessions where id = ${first!.id}::uuid`;
+  expect(s1!.summary_status).toBe("confirmed");
+  const [pc] = await sql`select summary_text from app.profile_core where user_id = ${m.id}::uuid`;
+  expect(pc!.summary_text).toContain("Ostsee");
+
+  const [second] = await draft("Ein zweiter Entwurf, der nicht stimmt und verworfen wird.");
+  await page.goto(`/gespraech/${second!.id}`);
+  await page.getByRole("button", { name: "Verwerfen" }).click();
+  const dialog = page.getByRole("dialog", { name: "Zusammenfassung verwerfen?" });
+  await expectAccessible(page, "Dialog Verwerfen");
+  await dialog.getByRole("button", { name: "Ja, verwerfen" }).click();
+  await expect(page.getByText("Der Entwurf ist verworfen.")).toBeVisible();
+  const [s2] = await sql`select summary_status from app.interview_sessions where id = ${second!.id}::uuid`;
+  expect(s2!.summary_status).toBe("rejected");
+  const [pc2] = await sql`select summary_text from app.profile_core where user_id = ${m.id}::uuid`;
+  expect(pc2!.summary_text).toContain("Ostsee");
   console.expectClean();
 });
