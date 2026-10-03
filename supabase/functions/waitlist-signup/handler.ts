@@ -80,7 +80,12 @@ export default handler(["POST"], async (req) => {
       ${b.first_name}, ${email}, ${b.region}, ${b.postal_code}, ${b.consent_version},
       ${b.source ?? null}, ${b.invite ?? null}, ${clientIp(req)}, ${confirm.hash}, ${status.hash}
     ) as r`;
-  const r = row!.r as { result: string; send?: "confirm" | "already" | null; first_name?: string; fields?: Record<string, FieldError> };
+  const r = row!.r as {
+    result: string;
+    send?: "confirm" | "already" | null;
+    first_name?: string;
+    fields?: Record<string, FieldError>;
+  };
 
   if (r.result === "throttled") return json(req, { error: "throttled" }, 429);
   if (r.result === "invalid") return json(req, { error: "validation", fields: r.fields ?? {} }, 422);
@@ -100,12 +105,17 @@ export default handler(["POST"], async (req) => {
       });
       await sendMail({ ...draft, to: email });
     } else {
-      const draft = waitlistAlreadyMail({ firstName: r.first_name ?? "", statusUrl: `${siteUrl()}/willkommen#t=${status.token}` });
+      const draft = waitlistAlreadyMail({
+        firstName: r.first_name ?? "",
+        statusUrl: `${siteUrl()}/willkommen#t=${status.token}`,
+      });
       await sendMail({ ...draft, to: email });
     }
   } catch (err) {
     // Ohne Adresse protokollieren; die Pause zurücksetzen, damit ein neuer Versuch sofort eine Mail auslöst.
-    console.error(JSON.stringify({ level: "error", msg: "waitlist mail failed", template: r.send, error: String(err) }));
+    console.error(
+      JSON.stringify({ level: "error", msg: "waitlist mail failed", template: r.send, error: String(err) }),
+    );
     await db()`select api.waitlist_mail_failed(${email})`;
     return json(req, { error: "mail_failed" }, 503);
   }

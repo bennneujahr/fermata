@@ -77,6 +77,8 @@ pnpm --filter @fermata/landing dev          # http://localhost:4331
 cd apps/landing && FERMATA_ADAPTER=node pnpm build && PORT=4331 HOST=localhost node dist/server/entry.mjs
 ```
 
+Gestaltung prüfen (laufende Seite nötig): `node apps/landing/scripts/shot.mjs / 1440 hell /tmp/start.png tiles` erzeugt Bildschirmfotos in Kacheln (Breite, `hell`/`dunkel`).
+
 Bestätigungslinks lokal: `select recipient, text from ops.mail_outbox order by id desc limit 1;` (über `bash scripts/db.sh psql` mit denselben `DB_PORT`/`DB_CONTAINER`).
 
 Hinweis: `@astrojs/vercel` kann kein `astro preview`. Für Tests, Lighthouse und lokale Vorschau baut `FERMATA_ADAPTER=node` dieselben Seiten mit `@astrojs/node`. Astro 7 startet `astro preview` in nicht-interaktiven Shells im Hintergrund (`astro preview stop` beendet ihn); deshalb starten die Tests `node dist/server/entry.mjs` direkt.

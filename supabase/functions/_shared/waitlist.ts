@@ -23,4 +23,12 @@ export async function setting<T = unknown>(key: string): Promise<T> {
 }
 
 /** Regionsauswahl im Formular (muss zu app.waitlist_region_group passen). */
-export const REGIONS = ["schwerin", "nordwestmecklenburg", "ludwigslust-parchim", "hamburg", "luebeck", "rostock", "anderswo"] as const;
+export const REGIONS = [
+  "schwerin",
+  "nordwestmecklenburg",
+  "ludwigslust-parchim",
+  "hamburg",
+  "luebeck",
+  "rostock",
+  "anderswo",
+] as const;

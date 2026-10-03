@@ -22,7 +22,9 @@ function greeting(firstName: string): string {
 }
 
 /** Bestätigungs-Mail (Double-Opt-in). Bewusst ohne Werbung, nur der Zweck der Mail. */
-export function waitlistConfirmMail(p: { firstName: string; confirmUrl: string; validHours: number; retentionDays: number }): Draft {
+export function waitlistConfirmMail(
+  p: { firstName: string; confirmUrl: string; validHours: number; retentionDays: number },
+): Draft {
   const { html, text } = renderMail({
     preheader: "Ein Klick, dann stehen Sie auf der Warteliste.",
     greeting: greeting(p.firstName),
@@ -63,10 +65,14 @@ export function waitlistWelcomeMail(p: {
     `danke für Ihre Bestätigung. Zum Zeitpunkt der Bestätigung haben Sie Platz ${p.place} auf der Warteliste für ${region}.`,
   ];
   if (p.invited) {
-    paragraphs.push(`Sie wurden persönlich eingeladen. Deshalb sind Sie und die Person, die Sie eingeladen hat, schon ${p.bonusPlaces} Plätze vorgerückt.`);
+    paragraphs.push(
+      `Sie wurden persönlich eingeladen. Deshalb sind Sie und die Person, die Sie eingeladen hat, schon ${p.bonusPlaces} Plätze vorgerückt.`,
+    );
   }
   if (p.isFoundingMember) {
-    paragraphs.push(`Sie gehören zu den ersten ${p.foundingLimit} aus ${region}. Damit sind Sie Gründungsmitglied von Fermata.`);
+    paragraphs.push(
+      `Sie gehören zu den ersten ${p.foundingLimit} aus ${region}. Damit sind Sie Gründungsmitglied von Fermata.`,
+    );
   }
   paragraphs.push(
     "Ihr Platz kann sich noch etwas verschieben, wenn andere Menschen jemanden einladen. Den aktuellen Stand sehen Sie auf Ihrer persönlichen Seite.",

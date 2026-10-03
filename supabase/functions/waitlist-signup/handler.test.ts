@@ -7,10 +7,14 @@ import { dbTest, FUNCTIONS, post, reset, setSetting, setup, signupBody, teardown
 const { sql, mailer } = setup();
 
 dbTest("Preflight: CORS nur für erlaubte Herkunft", async () => {
-  const ok = await handler(new Request("http://localhost/x", { method: "OPTIONS", headers: { origin: "https://fermata.test" } }));
+  const ok = await handler(
+    new Request("http://localhost/x", { method: "OPTIONS", headers: { origin: "https://fermata.test" } }),
+  );
   assertEquals(ok.status, 204);
   assertEquals(ok.headers.get("access-control-allow-origin"), "https://fermata.test");
-  const other = await handler(new Request("http://localhost/x", { method: "OPTIONS", headers: { origin: "https://evil.example" } }));
+  const other = await handler(
+    new Request("http://localhost/x", { method: "OPTIONS", headers: { origin: "https://evil.example" } }),
+  );
   assertEquals(other.headers.get("access-control-allow-origin"), null);
   const get = await handler(new Request("http://localhost/x"));
   assertEquals(get.status, 405);
@@ -23,10 +27,26 @@ dbTest("Ungültiges JSON und leere Felder", async () => {
   assertEquals(res.status, 422);
   assertEquals(await res.json(), {
     error: "validation",
-    fields: { first_name: "required", email: "required", region: "required", postal_code: "required", consent: "required" },
+    fields: {
+      first_name: "required",
+      email: "required",
+      region: "required",
+      postal_code: "required",
+      consent: "required",
+    },
   });
-  const bad = await handler(post("waitlist-signup", signupBody({ email: "anna@", postal_code: "1905", region: "mars", first_name: "www.spam.example/x" })));
-  assertEquals((await bad.json()).fields, { first_name: "invalid", email: "invalid", region: "invalid", postal_code: "invalid" });
+  const bad = await handler(
+    post(
+      "waitlist-signup",
+      signupBody({ email: "anna@", postal_code: "1905", region: "mars", first_name: "www.spam.example/x" }),
+    ),
+  );
+  assertEquals((await bad.json()).fields, {
+    first_name: "invalid",
+    email: "invalid",
+    region: "invalid",
+    postal_code: "invalid",
+  });
   assertEquals(mailer.sent.length, 0);
 });
 
@@ -51,7 +71,9 @@ dbTest("Mindestzeit: zu schnelles Absenden wird abgelehnt", async () => {
 
 dbTest("Anmeldung: Bestätigungs-Mail, nur Hash gespeichert, gleiche Antwort beim zweiten Mal", async () => {
   await reset(sql, mailer);
-  const first = await handler(post("waitlist-signup", signupBody({ email: " Anna@Example.org ", source: "pfaffenteich" })));
+  const first = await handler(
+    post("waitlist-signup", signupBody({ email: " Anna@Example.org ", source: "pfaffenteich" })),
+  );
   assertEquals(first.status, 202);
   const firstBody = await first.text();
   assertEquals(mailer.sent.length, 1);
@@ -59,9 +81,12 @@ dbTest("Anmeldung: Bestätigungs-Mail, nur Hash gespeichert, gleiche Antwort bei
   assertEquals(mail.to, "anna@example.org");
   assertEquals(mail.template, "waitlist.confirm");
   assertEquals(mail.subject, "Bitte bestätigen Sie Ihre Anmeldung bei Fermata");
-  const m = new RegExp(`${FUNCTIONS.replace(/[/.]/g, "\\$&")}/waitlist-confirm\\?t=([A-Za-z0-9_-]{43})`).exec(mail.text);
+  const m = new RegExp(`${FUNCTIONS.replace(/[/.]/g, "\\$&")}/waitlist-confirm\\?t=([A-Za-z0-9_-]{43})`).exec(
+    mail.text,
+  );
   assert(m, "Bestätigungslink fehlt");
-  const [row] = await sql`select confirm_token_hash, source, first_name from public.waitlist where email = 'anna@example.org'`;
+  const [row] =
+    await sql`select confirm_token_hash, source, first_name from public.waitlist where email = 'anna@example.org'`;
   assertEquals(row!.confirm_token_hash, await sha256Hex(m[1]!));
   assertEquals(row!.source, "pfaffenteich");
   assert(!mail.text.includes("pfaffenteich"), "Keine Werbung oder Quelle in der Bestätigungs-Mail");
@@ -82,7 +107,9 @@ dbTest("Drossel: zu viele Versuche je IP", async () => {
   const third = await handler(post("waitlist-signup", signupBody({ email: "a3@example.org" }), ip));
   assertEquals(third.status, 429);
   assertEquals(await third.json(), { error: "throttled" });
-  const other = await handler(post("waitlist-signup", signupBody({ email: "a4@example.org" }), { "x-forwarded-for": "192.0.2.11" }));
+  const other = await handler(
+    post("waitlist-signup", signupBody({ email: "a4@example.org" }), { "x-forwarded-for": "192.0.2.11" }),
+  );
   assertEquals(other.status, 202);
   await setSetting(sql, "waitlist.rate_limit_per_hour", 1000);
 });

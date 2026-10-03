@@ -26,7 +26,9 @@ export default handler(["GET"], async (req) => {
 
   const status = await issueToken();
   const unsubscribe = await issueToken();
-  const [row] = await db()`select api.waitlist_confirm(${await hashToken(token)}, ${status.hash}, ${unsubscribe.hash}) as r`;
+  const [row] = await db()`select api.waitlist_confirm(${await hashToken(
+    token,
+  )}, ${status.hash}, ${unsubscribe.hash}) as r`;
   const r = row!.r as ConfirmResult;
   if (r.result !== "ok") return expired();
 

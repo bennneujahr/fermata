@@ -1,7 +1,16 @@
 import { assertEquals } from "@std/assert";
 import confirm from "../waitlist-confirm/handler.ts";
 import signup from "../waitlist-signup/handler.ts";
-import { confirmToken, dbTest, fragmentToken, post, reset, setup, signupBody, teardown } from "../waitlist-signup/test_utils.ts";
+import {
+  confirmToken,
+  dbTest,
+  fragmentToken,
+  post,
+  reset,
+  setup,
+  signupBody,
+  teardown,
+} from "../waitlist-signup/test_utils.ts";
 import handler from "./handler.ts";
 
 const { sql, mailer } = setup();
@@ -20,7 +29,11 @@ dbTest("Abmeldung über den Link aus der Mail löscht den Eintrag", async () => 
   const res = await handler(post("waitlist-unsubscribe", { t: u }));
   assertEquals([res.status, await res.json()], [200, { ok: true }]);
   assertEquals(await count(), 0);
-  assertEquals((await sql`select count(*)::int as n from public.waitlist_invites`)[0]!.n, 0, "Einladungscodes verfallen mit");
+  assertEquals(
+    (await sql`select count(*)::int as n from public.waitlist_invites`)[0]!.n,
+    0,
+    "Einladungscodes verfallen mit",
+  );
 });
 
 dbTest("Abmeldung über den Statuslink; unbekannte Links bekommen dieselbe Antwort", async () => {
