@@ -213,9 +213,12 @@ insert into app.match_runs (id, scheduled_for, status) values ('10000000-0000-00
 insert into app.pairings (id, run_id, user_a, user_b, total_score, status)
   values ('20000000-0000-0000-0000-0000000000b1', '10000000-0000-0000-0000-0000000000b1',
           '00000000-0000-0000-0000-0000000000a1', '00000000-0000-0000-0000-0000000000a5', 0.8, 'proposed');
-insert into app.evenings (id, pairing_id, user_a, user_b, state)
+insert into app.evenings (id, pairing_id, user_a, user_b, state, starts_at)
   values ('30000000-0000-0000-0000-0000000000b1', '20000000-0000-0000-0000-0000000000b1',
-          '00000000-0000-0000-0000-0000000000a1', '00000000-0000-0000-0000-0000000000a5', 'happened');
+          '00000000-0000-0000-0000-0000000000a1', '00000000-0000-0000-0000-0000000000a5', 'happened', app.now() - interval '1 day');
+-- Gleiche Regel wie das Angebot (M5): eigene Rückmeldung „war da“ liegt vor.
+insert into app.feedback (evening_id, user_id, attended)
+  values ('30000000-0000-0000-0000-0000000000b1', '00000000-0000-0000-0000-0000000000a5', true);
 
 select tests.act_as('00000000-0000-0000-0000-0000000000a5');
 select throws_ok($$ select api.interview_request('nachbesprechung', 'voice') $$, '22023', 'evening_not_eligible', 'Nachbesprechung braucht einen Abend');

@@ -181,13 +181,21 @@ async def run_job(ctx: JobContext, cfg: Config, backend: Backend, model: ChatMod
 
     @ctx.room.on("data_received")
     def _data(packet: Any) -> None:
-        # Knopf „Text statt Stimme“ in der Web-App: {"type": "switch_to_text"} auf dem Topic „viola“.
+        # Knöpfe der Web-App auf dem Topic „viola“: {"type": "switch_to_text"} und {"type": "end"} („Beenden“).
         if getattr(packet, "topic", "") != DATA_TOPIC:
             return
         with contextlib.suppress(ValueError, TypeError, AttributeError):
-            if json.loads(bytes(packet.data).decode()).get("type") == "switch_to_text":
+            kind = json.loads(bytes(packet.data).decode()).get("type")
+            if kind == "switch_to_text":
                 conv.switch_to_text()
                 finished.set()
+            elif kind == "end":
+                asyncio.get_running_loop().create_task(_end_by_person())
+
+    async def _end_by_person() -> None:
+        # Die Person beendet bewusst: Ende „person_beendet“ (nicht „technik“), danach Zusammenfassung wie üblich.
+        await conv.end_by_person()
+        finished.set()
 
     @ctx.room.on("participant_disconnected")
     def _left(_p: Any) -> None:

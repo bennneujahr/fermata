@@ -301,9 +301,9 @@ begin
   if p_kind = 'nachbesprechung' then
     if p_evening_id is null
        or coalesce((ops.setting('evening.debrief_minutes') ->> tier)::integer, 0) <= 0
-       or not exists (select 1 from app.evenings e where e.id = p_evening_id and uid in (e.user_a, e.user_b) and e.state = 'happened')
-       or exists (select 1 from app.interview_sessions x where x.user_id = uid and x.evening_id = p_evening_id
-                  and x.kind = 'nachbesprechung' and x.status = 'completed') then
+       -- Eine Regel für Angebot und Gespräch: erlaubt genau dann, wenn M5 die Nachbesprechung anbietet
+       -- (app.debrief_offer_for: eigene Rückmeldung „war da“, Frist, noch nicht abgeschlossen).
+       or not coalesce((app.debrief_offer_for(p_evening_id, uid) ->> 'eligible')::boolean, false) then
       raise exception 'evening_not_eligible' using errcode = '22023';
     end if;
   elsif p_evening_id is not null then
