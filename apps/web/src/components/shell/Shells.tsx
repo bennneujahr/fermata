@@ -19,10 +19,14 @@ export const memberNav: NavItem[] = [
 
 export const adminNav: NavItem[] = [
   { href: "/admin", label: adminCopy.nav.overview, icon: "grid" },
+  { href: "/admin/auswahl", label: adminCopy.nav.runs, icon: "sparkle" },
+  { href: "/admin/sicherheit", label: adminCopy.nav.safety, icon: "shield" },
+  { href: "/admin/lokale", label: adminCopy.nav.venues, icon: "pin" },
+  { href: "/admin/warteliste", label: adminCopy.nav.waitlist, icon: "clock" },
+  { href: "/admin/mitgliedschaft", label: adminCopy.nav.membership, icon: "membership" },
   { href: "/admin/konten", label: adminCopy.nav.accounts, icon: "users" },
   { href: "/admin/einladen", label: adminCopy.nav.invite, icon: "send" },
   { href: "/admin/pruefungen", label: adminCopy.nav.verifications, icon: "id" },
-  { href: "/admin/hinweise", label: adminCopy.nav.flags, icon: "flag" },
   { href: "/admin/einstellungen", label: adminCopy.nav.settings, icon: "settings" },
 ];
 

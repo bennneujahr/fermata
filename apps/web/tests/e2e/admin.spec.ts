@@ -49,7 +49,7 @@ test("Admin: TOTP einrichten, Übersicht, Einladen, Einstellungen, erneute Zwei-
 
   // Übersicht (aal2)
   await expect(page).toHaveURL(/\/admin$/);
-  await expect(page.getByRole("heading", { level: 1, name: "Übersicht" })).toBeVisible();
+  await expect(page.getByRole("heading", { level: 1, name: "Heute" })).toBeVisible();
   await expectAccessible(page, "/admin");
 
   // Einladen
@@ -87,9 +87,10 @@ test("Admin: TOTP einrichten, Übersicht, Einladen, Einstellungen, erneute Zwei-
   await page.getByRole("navigation", { name: "Admin-Navigation" }).getByRole("link", { name: "Ausweisprüfungen" }).click();
   await expect(page.getByRole("heading", { level: 1, name: "Ausweisprüfungen" })).toBeVisible();
   await expectAccessible(page, "/admin/pruefungen");
-  await page.getByRole("navigation", { name: "Admin-Navigation" }).getByRole("link", { name: "Sicherheits-Hinweise" }).click();
+  await page.getByRole("navigation", { name: "Admin-Navigation" }).getByRole("link", { name: "Sicherheit" }).click();
+  await page.getByRole("navigation", { name: "Sicherheit: Bereich" }).getByRole("link", { name: "Hinweise" }).click();
   await expect(page.getByRole("heading", { level: 1, name: "Sicherheits-Hinweise" })).toBeVisible();
-  await expectAccessible(page, "/admin/hinweise");
+  await expectAccessible(page, "/admin/sicherheit/hinweise");
 
   // Einstellungen: ungültiges JSON, falscher Typ, gültige Änderung mit Verlauf
   await page.getByRole("navigation", { name: "Admin-Navigation" }).getByRole("link", { name: "Einstellungen" }).click();
