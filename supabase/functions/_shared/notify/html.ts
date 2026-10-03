@@ -1,5 +1,6 @@
 // Schlichte HTML-Seite im Fermata-Stil (für venue-confirm). Texte kommen aus den Vorlagen.
-export const escapeHtml = (s: string): string => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+export const escapeHtml = (s: string): string =>
+  s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 
 export function htmlPage(title: string, body: string): string {
   return `<!doctype html>
@@ -12,4 +13,3 @@ export function htmlPage(title: string, body: string): string {
 ${body}
 </main></body></html>`;
 }
-

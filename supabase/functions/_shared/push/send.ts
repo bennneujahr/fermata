@@ -45,8 +45,11 @@ export class WebPushSender implements PushSender {
   async send(target: PushTarget, message: PushMessage, opts: PushOptions): Promise<PushResult> {
     let body: Uint8Array;
     try {
-      body = await encryptPushPayload(b64uDecode(target.p256dh), b64uDecode(target.auth),
-        new TextEncoder().encode(JSON.stringify(message)));
+      body = await encryptPushPayload(
+        b64uDecode(target.p256dh),
+        b64uDecode(target.auth),
+        new TextEncoder().encode(JSON.stringify(message)),
+      );
     } catch (err) {
       // Kaputte Schlüssel im Abo: wie „nicht mehr gültig“ behandeln.
       return { status: 410, outcome: "gone", error: `Schlüssel ungültig: ${(err as Error).message}` };

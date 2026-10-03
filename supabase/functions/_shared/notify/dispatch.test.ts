@@ -4,8 +4,15 @@ import { assert, assertEquals, assertMatch, assertStringIncludes } from "@std/as
 import { MemoryMailer } from "../mail/outbox.ts";
 import type { MailMessage } from "../mail/types.ts";
 import { knownTemplates, renderNotification } from "../mail/templates/notify.ts";
-import { b64uEncode, decryptPushPayload, generateVapidKeys, importVapid, type PushTarget, WebPushSender } from "../push/mod.ts";
-import { dispatchDue, type DispatchDeps, type NotifyStore } from "./dispatch.ts";
+import {
+  b64uEncode,
+  decryptPushPayload,
+  generateVapidKeys,
+  importVapid,
+  type PushTarget,
+  WebPushSender,
+} from "../push/mod.ts";
+import { type DispatchDeps, dispatchDue, type NotifyStore } from "./dispatch.ts";
 import type { ChannelResult, ClaimedNotification, NotificationContext } from "./types.ts";
 import { signVenueToken, verifyVenueToken } from "./venue-token.ts";
 import dispatchHandler, { setDispatchDeps } from "../../notify-dispatch/handler.ts";
@@ -15,12 +22,23 @@ import pushKey from "../../push-key/handler.ts";
 const EVENING_ID = "30000000-0000-0000-0000-000000000001";
 const RES_ID = "40000000-0000-0000-0000-000000000001";
 
-function memberCtx(template: string, form: "sie" | "du", extra: Partial<NotificationContext> = {}): NotificationContext {
+function memberCtx(
+  template: string,
+  form: "sie" | "du",
+  extra: Partial<NotificationContext> = {},
+): NotificationContext {
   return {
     id: 1,
     template,
-    payload: { evening_id: EVENING_ID, hours_before: 2, late: true, minutes: 10, respond_until: "2026-10-10T07:00:00Z",
-      deadline_at: "2026-10-08T17:00:00Z", offer_until: "2026-10-16T17:30:00Z" },
+    payload: {
+      evening_id: EVENING_ID,
+      hours_before: 2,
+      late: true,
+      minutes: 10,
+      respond_until: "2026-10-10T07:00:00Z",
+      deadline_at: "2026-10-08T17:00:00Z",
+      offer_until: "2026-10-16T17:30:00Z",
+    },
     is_safety: template === "evening.checkin",
     has_deadline: true,
     recipient: { kind: "member", email: "anna@example.test", name: "Anna", address_form: form },
@@ -48,8 +66,17 @@ function memberCtx(template: string, form: "sie" | "du", extra: Partial<Notifica
       find_before_minutes: 15,
       feedback_until: "2026-10-16T17:30:00Z",
     },
-    safety: { emergency_number: "110", heimwegtelefon_number: "030 12074182", heimwegtelefon_hours: "So–Do 21–01 Uhr, Fr/Sa 21–03 Uhr" },
-    period: { id: "51000000-0000-0000-0000-000000000001", starts_on: "2026-10-14", ends_on: "2026-10-27", answer_until: "2026-10-07T08:05:00Z" },
+    safety: {
+      emergency_number: "110",
+      heimwegtelefon_number: "030 12074182",
+      heimwegtelefon_hours: "So–Do 21–01 Uhr, Fr/Sa 21–03 Uhr",
+    },
+    period: {
+      id: "51000000-0000-0000-0000-000000000001",
+      starts_on: "2026-10-14",
+      ends_on: "2026-10-27",
+      answer_until: "2026-10-07T08:05:00Z",
+    },
     ...extra,
   };
 }
@@ -61,8 +88,12 @@ function venueCtx(template: string, kind: "venue" | "admin" = "venue"): Notifica
     payload: { reservation_id: RES_ID },
     is_safety: false,
     has_deadline: false,
-    recipient: { kind, email: kind === "venue" ? "tisch@cafe.example" : "benn@fermata.example", name: kind === "venue" ? "Frau Wirt" : null,
-      address_form: kind === "venue" ? "sie" : "du" },
+    recipient: {
+      kind,
+      email: kind === "venue" ? "tisch@cafe.example" : "benn@fermata.example",
+      name: kind === "venue" ? "Frau Wirt" : null,
+      address_form: kind === "venue" ? "sie" : "du",
+    },
     reservation: {
       id: RES_ID,
       starts_at: "2026-10-09T17:30:00Z",
@@ -73,8 +104,15 @@ function venueCtx(template: string, kind: "venue" | "admin" = "venue"): Notifica
       venue_confirmed_at: null,
       notes: "Bitte ein ruhiger Tisch",
       token_expires_at: "2026-10-10T17:30:00Z",
-      venue: { name: "Café am See", street: "Seestraße 1", postal_code: "19053", city: "Schwerin", contact_name: "Frau Wirt",
-        contact_phone: kind === "admin" ? "0385 123456" : null, reservation_mode: kind === "venue" ? "email" : "telefon" },
+      venue: {
+        name: "Café am See",
+        street: "Seestraße 1",
+        postal_code: "19053",
+        city: "Schwerin",
+        contact_name: "Frau Wirt",
+        contact_phone: kind === "admin" ? "0385 123456" : null,
+        reservation_mode: kind === "venue" ? "email" : "telefon",
+      },
     },
   };
 }
@@ -91,7 +129,10 @@ Deno.test("Vorlagen: jede Kennung liefert Mail und (außer Lokal/Admin/Quittung)
       assert(r.mail.subject.length > 5, template);
       assertEquals(r.mail.template, template);
       assert(!/!/.test(r.mail.text.replace("<!doctype", "")), `Ausrufezeichen in ${template}`);
-      assert(!r.mail.text.includes("undefined") && !r.mail.text.includes("null"), `Platzhalter offen in ${template}: ${r.mail.text}`);
+      assert(
+        !r.mail.text.includes("undefined") && !r.mail.text.includes("null"),
+        `Platzhalter offen in ${template}: ${r.mail.text}`,
+      );
       if (!isVenue && template !== "evening.cancel_receipt") {
         assert(r.push, `Push fehlt: ${template}`);
         assertEquals(r.push.title, "Fermata");
@@ -117,7 +158,10 @@ Deno.test("Vorschlag: Lokal, warum Sie beide, drei Zeiten, Frist; Du-Form duzt",
   assertStringIncludes(du.text, "Hallo Anna,");
   assertStringIncludes(du.text, "für dich");
   assertStringIncludes(du.text, "Warum ihr beide:");
-  assert(!du.text.replace("Sie gehen beide gern am Wasser spazieren.", "").includes(" Sie "), "Du-Form ohne Sie (außer im zitierten Grund)");
+  assert(
+    !du.text.replace("Sie gehen beide gern am Wasser spazieren.", "").includes(" Sie "),
+    "Du-Form ohne Sie (außer im zitierten Grund)",
+  );
 });
 
 Deno.test("Check-in nennt Notruf und Heimwegtelefon; Push ist eine Sicherheitsnachricht ohne Namen", () => {
@@ -142,7 +186,10 @@ Deno.test("Rückmeldung nötig: neutral, verrät nichts über die Angaben des Ge
 });
 
 Deno.test("Lokal: Reservierung mit Code und Personen, ohne Mitgliederdaten; Admin bekommt Telefon", () => {
-  const r = renderNotification(venueCtx("venue.reservation"), { ...opts, venueConfirmUrl: "https://x.example/venue-confirm?t=abc" });
+  const r = renderNotification(venueCtx("venue.reservation"), {
+    ...opts,
+    venueConfirmUrl: "https://x.example/venue-confirm?t=abc",
+  });
   assertMatch(r.mail!.subject, /Reservierung für 2 Personen am Freitag, 9\. Oktober, 19:30 Uhr \(Fermata K7QX\)/);
   assertStringIncludes(r.mail!.text, "Tisch-Code: K7QX");
   assertStringIncludes(r.mail!.text, "Personen: 2");
@@ -158,7 +205,10 @@ Deno.test("Lokal: Reservierung mit Code und Personen, ohne Mitgliederdaten; Admi
 
 Deno.test("Unbekannte Vorlage oder fehlende Daten: nichts", () => {
   assertEquals(renderNotification(memberCtx("test.ping", "sie"), opts), { mail: null, push: null });
-  assertEquals(renderNotification(memberCtx("evening.proposed", "sie", { evening: undefined }), opts), { mail: null, push: null });
+  assertEquals(renderNotification(memberCtx("evening.proposed", "sie", { evening: undefined }), opts), {
+    mail: null,
+    push: null,
+  });
 });
 
 Deno.test("Bestätigungslink: signieren, prüfen, manipuliert, abgelaufen", async () => {
@@ -200,7 +250,9 @@ class FakeStore implements NotifyStore {
 }
 
 async function browserSubscription() {
-  const pair = await crypto.subtle.generateKey({ name: "ECDH", namedCurve: "P-256" }, true, ["deriveBits"]) as CryptoKeyPair;
+  const pair = await crypto.subtle.generateKey({ name: "ECDH", namedCurve: "P-256" }, true, [
+    "deriveBits",
+  ]) as CryptoKeyPair;
   const publicKey = new Uint8Array(await crypto.subtle.exportKey("raw", pair.publicKey));
   const auth = crypto.getRandomValues(new Uint8Array(16));
   return { publicKey, privateKey: pair.privateKey, auth };
@@ -225,18 +277,37 @@ async function fakePushService() {
   return { received, target, close: () => server.shutdown() };
 }
 
-function claimed(id: number, ctx: NotificationContext, targets: PushTarget[], doEmail = true, doPush = true): ClaimedNotification {
-  return { id, template: ctx.template, do_email: doEmail, do_push: doPush, is_safety: ctx.is_safety, user_id: "u1", context: ctx,
-    push_targets: targets };
+function claimed(
+  id: number,
+  ctx: NotificationContext,
+  targets: PushTarget[],
+  doEmail = true,
+  doPush = true,
+): ClaimedNotification {
+  return {
+    id,
+    template: ctx.template,
+    do_email: doEmail,
+    do_push: doPush,
+    is_safety: ctx.is_safety,
+    user_id: "u1",
+    context: ctx,
+    push_targets: targets,
+  };
 }
 
-async function deps(store: NotifyStore, mailer: { send: (m: MailMessage) => Promise<{ id: string }> }, withPush = true):
-  Promise<DispatchDeps> {
+async function deps(
+  store: NotifyStore,
+  mailer: { send: (m: MailMessage) => Promise<{ id: string }> },
+  withPush = true,
+): Promise<DispatchDeps> {
   const keys = await generateVapidKeys();
   return {
     store,
     sendMail: (m) => mailer.send(m),
-    push: withPush ? new WebPushSender(await importVapid(keys.publicKey, keys.privateKey, "mailto:hallo@fermata.example")) : null,
+    push: withPush
+      ? new WebPushSender(await importVapid(keys.publicKey, keys.privateKey, "mailto:hallo@fermata.example"))
+      : null,
     appUrl: "https://app.fermata.example",
     functionsUrl: "https://projekt.supabase.example/functions/v1",
     venueLinkSecret: "geheim",
@@ -275,9 +346,14 @@ Deno.test("notify-dispatch: E-Mail und Push zustellen, 410 meldet ungültiges Ab
     assertEquals(store.logs.map((l) => l.status), ["sent", "failed"]);
 
     // Bestätigungslink in der Mail ans Lokal ist gültig signiert
-    const link = /https:\/\/projekt\.supabase\.example\/functions\/v1\/venue-confirm\?t=(\S+)/.exec(mailer.sent[1]!.text);
+    const link = /https:\/\/projekt\.supabase\.example\/functions\/v1\/venue-confirm\?t=(\S+)/.exec(
+      mailer.sent[1]!.text,
+    );
     assert(link, mailer.sent[1]!.text);
-    assertEquals(await verifyVenueToken("geheim", decodeURIComponent(link[1]!), Date.parse("2026-10-09T00:00:00Z")), RES_ID);
+    assertEquals(
+      await verifyVenueToken("geheim", decodeURIComponent(link[1]!), Date.parse("2026-10-09T00:00:00Z")),
+      RES_ID,
+    );
   } finally {
     await svc.close();
   }
@@ -325,10 +401,15 @@ Deno.test("Handler notify-dispatch: nur mit Geheimnis", async () => {
   try {
     const url = "http://localhost/functions/v1/notify-dispatch";
     assertEquals((await dispatchHandler(new Request(url, { method: "POST" }))).status, 401);
-    assertEquals((await dispatchHandler(new Request(url, { method: "POST", headers: { "x-fermata-dispatch-secret": "falsch" } }))).status,
-      401);
+    assertEquals(
+      (await dispatchHandler(new Request(url, { method: "POST", headers: { "x-fermata-dispatch-secret": "falsch" } })))
+        .status,
+      401,
+    );
     assertEquals((await dispatchHandler(new Request(url, { method: "GET" }))).status, 405);
-    const ok = await dispatchHandler(new Request(url, { method: "POST", headers: { "x-fermata-dispatch-secret": "s3cret-test" } }));
+    const ok = await dispatchHandler(
+      new Request(url, { method: "POST", headers: { "x-fermata-dispatch-secret": "s3cret-test" } }),
+    );
     assertEquals(ok.status, 200);
     assertEquals((await ok.json()).claimed, 0);
   } finally {
@@ -384,11 +465,13 @@ Deno.test("Handler venue-confirm: GET zeigt, erst POST bestätigt; falscher Link
     assertStringIncludes(get.headers.get("content-security-policy") ?? "", "default-src 'none'");
     assertEquals(confirmed, 0, "GET bestätigt nicht");
 
-    const post = await venueConfirm(new Request(url, {
-      method: "POST",
-      headers: { "content-type": "application/x-www-form-urlencoded" },
-      body: new URLSearchParams({ t: token }).toString(),
-    }));
+    const post = await venueConfirm(
+      new Request(url, {
+        method: "POST",
+        headers: { "content-type": "application/x-www-form-urlencoded" },
+        body: new URLSearchParams({ t: token }).toString(),
+      }),
+    );
     assertEquals(post.status, 200);
     assertStringIncludes(await post.text(), "Danke, die Reservierung ist bestätigt");
     assertEquals(confirmed, 1);

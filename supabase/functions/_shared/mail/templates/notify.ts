@@ -6,7 +6,15 @@ import type { NotificationContext } from "../../notify/types.ts";
 import { formatDateOnly, formatDayTime, formatShortDayTime } from "../../notify/format.ts";
 import { eveningTemplates } from "./evening.ts";
 import { venueCancellation, venueReservation, venueUnconfirmed } from "./evening-venue.ts";
-import { form, greeting, memberFooter, paths, pushMessage, type Rendered, type RenderOptions } from "./notify-common.ts";
+import {
+  form,
+  greeting,
+  memberFooter,
+  paths,
+  pushMessage,
+  type Rendered,
+  type RenderOptions,
+} from "./notify-common.ts";
 
 export type { Draft, Rendered, RenderOptions } from "./notify-common.ts";
 
@@ -20,16 +28,22 @@ function availabilityRequest(ctx: NotificationContext, opts: RenderOptions): Ren
     preheader: t("Wann haben Sie in den nächsten Wochen Zeit?", "Wann hast du in den nächsten Wochen Zeit?"),
     greeting: greeting(f, ctx.recipient.name),
     paragraphs: [
-      t(`für den nächsten Durchgang fragen wir Ihre freien Abende ab: ${range}.`,
-        `für den nächsten Durchgang fragen wir deine freien Abende ab: ${range}.`),
-      t("Tragen Sie bitte ein, wann Sie Zeit haben. Einen Abend schlagen wir nur zu Zeiten vor, die bei Ihnen beiden frei sind.",
-        "Trag bitte ein, wann du Zeit hast. Einen Abend schlagen wir nur zu Zeiten vor, die bei euch beiden frei sind."),
+      t(
+        `für den nächsten Durchgang fragen wir Ihre freien Abende ab: ${range}.`,
+        `für den nächsten Durchgang fragen wir deine freien Abende ab: ${range}.`,
+      ),
+      t(
+        "Tragen Sie bitte ein, wann Sie Zeit haben. Einen Abend schlagen wir nur zu Zeiten vor, die bei Ihnen beiden frei sind.",
+        "Trag bitte ein, wann du Zeit hast. Einen Abend schlagen wir nur zu Zeiten vor, die bei euch beiden frei sind.",
+      ),
     ],
     button: { label: "Freie Abende eintragen", url: opts.appUrl + paths.availability(p.id) },
     after: [
       t(`Das geht bis ${until}.`, `Das geht bis ${until}.`),
-      t("Wenn Sie in diesem Zeitraum keine Zeit haben, müssen Sie nichts tun.",
-        "Wenn du in diesem Zeitraum keine Zeit hast, musst du nichts tun."),
+      t(
+        "Wenn Sie in diesem Zeitraum keine Zeit haben, müssen Sie nichts tun.",
+        "Wenn du in diesem Zeitraum keine Zeit hast, musst du nichts tun.",
+      ),
     ],
     footer: memberFooter(f),
   });
@@ -41,8 +55,12 @@ function availabilityRequest(ctx: NotificationContext, opts: RenderOptions): Ren
       template: ctx.template,
       purpose: "Zeitenabfrage mit Frist",
     },
-    push: pushMessage(ctx, `Freie Abende bitte bis ${formatShortDayTime(p.answer_until)} eintragen.`, paths.availability(p.id),
-      `zeiten-${p.id}`),
+    push: pushMessage(
+      ctx,
+      `Freie Abende bitte bis ${formatShortDayTime(p.answer_until)} eintragen.`,
+      paths.availability(p.id),
+      `zeiten-${p.id}`,
+    ),
   };
 }
 
@@ -54,18 +72,36 @@ function availabilityReminder(ctx: NotificationContext, opts: RenderOptions): Re
   const { html, text } = renderMail({
     greeting: greeting(f, ctx.recipient.name),
     paragraphs: [
-      t(`für ${formatDateOnly(p.starts_on)} bis ${formatDateOnly(p.ends_on)} haben Sie noch keine freien Abende eingetragen. Das geht noch bis ${until}.`,
-        `für ${formatDateOnly(p.starts_on)} bis ${formatDateOnly(p.ends_on)} hast du noch keine freien Abende eingetragen. Das geht noch bis ${until}.`),
-      t("Wenn Sie in diesem Zeitraum keine Zeit haben, müssen Sie nichts tun.",
-        "Wenn du in diesem Zeitraum keine Zeit hast, musst du nichts tun."),
+      t(
+        `für ${formatDateOnly(p.starts_on)} bis ${
+          formatDateOnly(p.ends_on)
+        } haben Sie noch keine freien Abende eingetragen. Das geht noch bis ${until}.`,
+        `für ${formatDateOnly(p.starts_on)} bis ${
+          formatDateOnly(p.ends_on)
+        } hast du noch keine freien Abende eingetragen. Das geht noch bis ${until}.`,
+      ),
+      t(
+        "Wenn Sie in diesem Zeitraum keine Zeit haben, müssen Sie nichts tun.",
+        "Wenn du in diesem Zeitraum keine Zeit hast, musst du nichts tun.",
+      ),
     ],
     button: { label: "Freie Abende eintragen", url: opts.appUrl + paths.availability(p.id) },
     footer: memberFooter(f),
   });
   return {
-    mail: { subject: "Erinnerung: freie Abende eintragen", html, text, template: ctx.template, purpose: "Erinnerung Zeitenabfrage" },
-    push: pushMessage(ctx, `Freie Abende noch bis ${formatShortDayTime(p.answer_until)} eintragen.`, paths.availability(p.id),
-      `zeiten-${p.id}`),
+    mail: {
+      subject: "Erinnerung: freie Abende eintragen",
+      html,
+      text,
+      template: ctx.template,
+      purpose: "Erinnerung Zeitenabfrage",
+    },
+    push: pushMessage(
+      ctx,
+      `Freie Abende noch bis ${formatShortDayTime(p.answer_until)} eintragen.`,
+      paths.availability(p.id),
+      `zeiten-${p.id}`,
+    ),
   };
 }
 

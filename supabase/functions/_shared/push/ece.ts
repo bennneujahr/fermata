@@ -30,7 +30,9 @@ export function concat(...parts: Uint8Array[]): Uint8Array {
 }
 
 async function hmac(key: Uint8Array, data: Uint8Array): Promise<Uint8Array> {
-  const k = await crypto.subtle.importKey("raw", key as BufferSource, { name: "HMAC", hash: "SHA-256" }, false, ["sign"]);
+  const k = await crypto.subtle.importKey("raw", key as BufferSource, { name: "HMAC", hash: "SHA-256" }, false, [
+    "sign",
+  ]);
   return new Uint8Array(await crypto.subtle.sign("HMAC", k, data as BufferSource));
 }
 
@@ -41,8 +43,13 @@ export async function hkdf(salt: Uint8Array, ikm: Uint8Array, info: Uint8Array, 
   return (await hmac(prk, concat(info, new Uint8Array([1])))).slice(0, length);
 }
 
-async function deriveKeys(authSecret: Uint8Array, ecdhSecret: Uint8Array, uaPublic: Uint8Array, asPublic: Uint8Array,
-  salt: Uint8Array): Promise<{ cek: Uint8Array; nonce: Uint8Array; ikm: Uint8Array }> {
+async function deriveKeys(
+  authSecret: Uint8Array,
+  ecdhSecret: Uint8Array,
+  uaPublic: Uint8Array,
+  asPublic: Uint8Array,
+  salt: Uint8Array,
+): Promise<{ cek: Uint8Array; nonce: Uint8Array; ikm: Uint8Array }> {
   const keyInfo = concat(te.encode("WebPush: info\0"), uaPublic, asPublic);
   const ikm = await hkdf(authSecret, ecdhSecret, keyInfo, 32);
   const cek = await hkdf(salt, ikm, te.encode("Content-Encoding: aes128gcm\0"), 16);
@@ -67,9 +74,15 @@ export interface EncryptOptions {
 }
 
 /** Verschlüsselt eine Nachricht für ein Push-Abo (p256dh = ua_public, auth = auth_secret). */
-export async function encryptPushPayload(uaPublic: Uint8Array, authSecret: Uint8Array, plaintext: Uint8Array,
-  opts: EncryptOptions = {}): Promise<Uint8Array> {
-  if (uaPublic.length !== 65 || uaPublic[0] !== 0x04) throw new Error("p256dh: unkomprimierter P-256-Punkt (65 Byte) erwartet");
+export async function encryptPushPayload(
+  uaPublic: Uint8Array,
+  authSecret: Uint8Array,
+  plaintext: Uint8Array,
+  opts: EncryptOptions = {},
+): Promise<Uint8Array> {
+  if (uaPublic.length !== 65 || uaPublic[0] !== 0x04) {
+    throw new Error("p256dh: unkomprimierter P-256-Punkt (65 Byte) erwartet");
+  }
   if (authSecret.length !== 16) throw new Error("auth: 16 Byte erwartet");
   const rs = opts.recordSize ?? 4096;
   const padding = opts.padding ?? 0;
@@ -85,8 +98,13 @@ export async function encryptPushPayload(uaPublic: Uint8Array, authSecret: Uint8
   // Ein einziger (letzter) Datensatz: Klartext, Trennzeichen 0x02, optionale Nullen.
   const record = concat(plaintext, new Uint8Array([0x02]), new Uint8Array(padding));
   const key = await crypto.subtle.importKey("raw", cek as BufferSource, "AES-GCM", false, ["encrypt"]);
-  const cipher = new Uint8Array(await crypto.subtle.encrypt({ name: "AES-GCM", iv: nonce as BufferSource, tagLength: 128 }, key,
-    record as BufferSource));
+  const cipher = new Uint8Array(
+    await crypto.subtle.encrypt(
+      { name: "AES-GCM", iv: nonce as BufferSource, tagLength: 128 },
+      key,
+      record as BufferSource,
+    ),
+  );
 
   const header = new Uint8Array(21);
   header.set(salt, 0);
@@ -96,8 +114,11 @@ export async function encryptPushPayload(uaPublic: Uint8Array, authSecret: Uint8
 }
 
 /** Entschlüsselt (Seite des Browsers). Für Tests und zur Prüfung der Gegenrichtung. */
-export async function decryptPushPayload(body: Uint8Array, ua: { publicKey: Uint8Array; privateKey: CryptoKey },
-  authSecret: Uint8Array): Promise<Uint8Array> {
+export async function decryptPushPayload(
+  body: Uint8Array,
+  ua: { publicKey: Uint8Array; privateKey: CryptoKey },
+  authSecret: Uint8Array,
+): Promise<Uint8Array> {
   if (body.length < 21) throw new Error("zu kurz");
   const salt = body.slice(0, 16);
   const rs = new DataView(body.buffer, body.byteOffset, body.byteLength).getUint32(16, false);
@@ -108,8 +129,13 @@ export async function decryptPushPayload(body: Uint8Array, ua: { publicKey: Uint
   const secret = await ecdh(ua.privateKey, asPublic);
   const { cek, nonce } = await deriveKeys(authSecret, secret, ua.publicKey, asPublic, salt);
   const key = await crypto.subtle.importKey("raw", cek as BufferSource, "AES-GCM", false, ["decrypt"]);
-  const record = new Uint8Array(await crypto.subtle.decrypt({ name: "AES-GCM", iv: nonce as BufferSource, tagLength: 128 }, key,
-    cipher as BufferSource));
+  const record = new Uint8Array(
+    await crypto.subtle.decrypt(
+      { name: "AES-GCM", iv: nonce as BufferSource, tagLength: 128 },
+      key,
+      cipher as BufferSource,
+    ),
+  );
   let end = record.length - 1;
   while (end >= 0 && record[end] === 0) end--;
   if (end < 0 || record[end] !== 0x02) throw new Error("Trennzeichen des letzten Datensatzes fehlt");

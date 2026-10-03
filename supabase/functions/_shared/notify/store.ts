@@ -32,7 +32,12 @@ export class PgNotifyStore implements NotifyStore {
     }));
   }
 
-  async complete(id: number, email: ChannelResult | null, push: ChannelResult | null, error: string | null): Promise<string> {
+  async complete(
+    id: number,
+    email: ChannelResult | null,
+    push: ChannelResult | null,
+    error: string | null,
+  ): Promise<string> {
     const [row] = await this.sql`select ops.notify_complete(${id}, ${email}, ${push}, ${error}) as r`;
     return row!.r as string;
   }

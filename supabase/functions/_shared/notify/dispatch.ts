@@ -49,8 +49,16 @@ async function venueConfirmUrl(deps: DispatchDeps, n: ClaimedNotification): Prom
 }
 
 /** Eine Nachricht verschicken und das Ergebnis melden. Fehler bleiben in der Zeile (last_error), ohne Adressen. */
-export async function dispatchOne(deps: DispatchDeps, n: ClaimedNotification, stats: DispatchStats, ttl: number): Promise<void> {
-  const rendered = renderNotification(n.context, { appUrl: deps.appUrl, venueConfirmUrl: await venueConfirmUrl(deps, n) });
+export async function dispatchOne(
+  deps: DispatchDeps,
+  n: ClaimedNotification,
+  stats: DispatchStats,
+  ttl: number,
+): Promise<void> {
+  const rendered = renderNotification(n.context, {
+    appUrl: deps.appUrl,
+    venueConfirmUrl: await venueConfirmUrl(deps, n),
+  });
   const errors: string[] = [];
   let email: ChannelResult | null = null;
   let push: ChannelResult | null = null;
@@ -114,8 +122,10 @@ export async function dispatchOne(deps: DispatchDeps, n: ClaimedNotification, st
 }
 
 /** Holt in Runden fällige Nachrichten ab, bis keine mehr da sind oder die Zeit um ist. */
-export async function dispatchDue(deps: DispatchDeps, opts: { batchSize?: number; maxBatches?: number; budgetMs?: number } = {}):
-  Promise<DispatchStats> {
+export async function dispatchDue(
+  deps: DispatchDeps,
+  opts: { batchSize?: number; maxBatches?: number; budgetMs?: number } = {},
+): Promise<DispatchStats> {
   const stats = emptyStats();
   const batchSize = opts.batchSize ?? 25;
   const maxBatches = opts.maxBatches ?? 20;
@@ -130,7 +140,12 @@ export async function dispatchDue(deps: DispatchDeps, opts: { batchSize?: number
       } catch (err) {
         // Unerwarteter Fehler (z. B. Vorlage): als Fehlversuch melden, damit die Zeile nicht hängen bleibt.
         console.error(JSON.stringify({ level: "error", msg: "notify-dispatch", id: n.id, err: String(err) }));
-        await deps.store.complete(n.id, n.do_email ? "failed" : null, n.do_push ? "failed" : null, String(err).slice(0, 500));
+        await deps.store.complete(
+          n.id,
+          n.do_email ? "failed" : null,
+          n.do_push ? "failed" : null,
+          String(err).slice(0, 500),
+        );
       }
     }
     if (batch.length < batchSize) break;

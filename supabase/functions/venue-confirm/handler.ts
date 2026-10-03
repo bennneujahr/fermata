@@ -49,7 +49,9 @@ function page(body: string, status = 200): Response {
 }
 
 export default async function venueConfirm(req: Request): Promise<Response> {
-  if (req.method !== "GET" && req.method !== "POST") return new Response(null, { status: 405, headers: { allow: "GET, POST" } });
+  if (req.method !== "GET" && req.method !== "POST") {
+    return new Response(null, { status: 405, headers: { allow: "GET, POST" } });
+  }
   try {
     const secret = optionalEnv("VENUE_LINK_SECRET");
     if (!secret) return page(venueLinkInvalidPage(), 503);

@@ -18,7 +18,9 @@ const fixtures = new URL("../../../tests/500_fixtures.sql", import.meta.url);
 class Rollback extends Error {}
 
 async function browserSubscription() {
-  const pair = await crypto.subtle.generateKey({ name: "ECDH", namedCurve: "P-256" }, true, ["deriveBits"]) as CryptoKeyPair;
+  const pair = await crypto.subtle.generateKey({ name: "ECDH", namedCurve: "P-256" }, true, [
+    "deriveBits",
+  ]) as CryptoKeyPair;
   const publicKey = new Uint8Array(await crypto.subtle.exportKey("raw", pair.publicKey));
   const auth = crypto.getRandomValues(new Uint8Array(16));
   return { publicKey, privateKey: pair.privateKey, auth };
@@ -48,13 +50,16 @@ Deno.test({
         await tx`update ops.sim_clock set offset_interval = app.berlin_at((now() at time zone 'Europe/Berlin')::date + 1, '12:00') - now()`;
         await tx`select tests.m5_setup()`;
         const [ids] = await tx`select tests.m5_id('anna') as anna, tests.m5_id('ben') as ben`;
-        await tx`insert into app.consents (user_id, kind, action, document_version) values (${ids!.anna}, 'push', 'granted', 'v1')`;
+        await tx`insert into app.consents (user_id, kind, action, document_version) values (${
+          ids!.anna
+        }, 'push', 'granted', 'v1')`;
         await tx`insert into app.push_subscriptions (user_id, endpoint, p256dh, auth) values
           (${ids!.anna}, ${base + "/push/anna"}, ${b64uEncode(sub.publicKey)}, ${b64uEncode(sub.auth)}),
           (${ids!.anna}, ${base + "/gone/alt"}, ${b64uEncode(sub.publicKey)}, ${b64uEncode(sub.auth)})`;
         const [e1] = await tx`select tests.m5_new_evening(${ids!.anna}, ${ids!.ben},
           array[tests.m5_at(4, '19:00'), tests.m5_at(4, '19:30'), tests.m5_at(5, '19:00')]) as id`;
-        const [e2] = await tx`select tests.m5_confirmed_evening(tests.m5_id('cem'), tests.m5_id('emil'), tests.m5_at(5, '20:00')) as id`;
+        const [e2] =
+          await tx`select tests.m5_confirmed_evening(tests.m5_id('cem'), tests.m5_id('emil'), tests.m5_at(5, '20:00')) as id`;
 
         const mailer = new MemoryMailer();
         const keys = await generateVapidKeys();
@@ -83,12 +88,16 @@ Deno.test({
         // Wunschzeit an Emil ist durch die Bestätigung überholt: nicht mehr verschickt
         assertEquals(byTemplate("evening.time_requested").length, 0);
         const [outdated] = await tx`select count(*)::int as n from ops.notification_queue
-          where evening_id = ${e2!.id} and template in ('evening.proposed', 'evening.time_requested') and skip_reason = 'outdated'`;
+          where evening_id = ${
+          e2!.id
+        } and template in ('evening.proposed', 'evening.time_requested') and skip_reason = 'outdated'`;
         assertEquals(outdated!.n, 3);
         const venue = byTemplate("venue.reservation");
         assertEquals(venue.length, 1);
         assertEquals(venue[0]!.to, "tisch@cafe.example");
-        const [res] = await tx`select table_code, venue_notified_at from app.evening_reservations where evening_id = ${e2!.id}`;
+        const [res] = await tx`select table_code, venue_notified_at from app.evening_reservations where evening_id = ${
+          e2!.id
+        }`;
         assertStringIncludes(venue[0]!.text, `Tisch-Code: ${res!.table_code}`);
         assertMatch(venue[0]!.text, /venue-confirm\?t=/);
         assert(!/Cem|Emil|Celik|Eckert|example\.test/.test(venue[0]!.text), "Lokal erfährt keine Mitgliederdaten");
@@ -101,11 +110,14 @@ Deno.test({
         assertEquals(stats.push_removed, 1);
         const subs = await tx`select endpoint from app.push_subscriptions where user_id = ${ids!.anna}`;
         assertEquals(subs.map((s) => s.endpoint), [base + "/push/anna"]);
-        const [log] = await tx`select count(*)::int as n from ops.notifications_log where user_id = ${ids!.anna} and channel = 'push' and status = 'sent'`;
+        const [log] = await tx`select count(*)::int as n from ops.notifications_log where user_id = ${
+          ids!.anna
+        } and channel = 'push' and status = 'sent'`;
         assertEquals(log!.n, 1);
 
         // Alles erledigt, nichts mehr fällig
-        const [open] = await tx`select count(*)::int as n from ops.notification_queue where sent_at is null and failed_at is null`;
+        const [open] =
+          await tx`select count(*)::int as n from ops.notification_queue where sent_at is null and failed_at is null`;
         assertEquals(open!.n, 0);
         const again = await dispatchDue({
           store: new PgNotifyStore(tx as unknown as Sql),
@@ -126,7 +138,8 @@ Deno.test({
 });
 
 Deno.test({
-  name: "DB: zwei gleichzeitige Bestätigungen für den letzten Tisch – die zweite wartet auf die Sperre und bekommt no_table_free",
+  name:
+    "DB: zwei gleichzeitige Bestätigungen für den letzten Tisch – die zweite wartet auf die Sperre und bekommt no_table_free",
   ignore: !url,
   sanitizeResources: false,
   sanitizeOps: false,
@@ -199,7 +212,8 @@ Deno.test({
 
       const [s] = await admin`select reserved, tables from app.venue_slots where venue_id = ${venueId}`;
       assertEquals([s!.reserved, s!.tables], [1, 1]);
-      const states = await admin`select id, state from app.evenings where id in (${e1}, ${e2}) order by id = ${e1} desc`;
+      const states =
+        await admin`select id, state from app.evenings where id in (${e1}, ${e2}) order by id = ${e1} desc`;
       assertEquals(states.map((r) => r.state), ["confirmed", "time_requested"]);
     } finally {
       await admin`delete from auth.users where id in ${admin(users)}`;

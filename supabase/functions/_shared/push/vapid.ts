@@ -18,14 +18,20 @@ export async function importVapid(publicKey: string, privateKey: string, subject
   if (pub.length !== 65 || pub[0] !== 0x04) throw new Error("VAPID_PUBLIC_KEY: 65 Byte (unkomprimiert) erwartet");
   if (d.length !== 32) throw new Error("VAPID_PRIVATE_KEY: 32 Byte erwartet");
   if (!/^(mailto:|https:\/\/)/.test(subject)) throw new Error("VAPID_SUBJECT: mailto: oder https:// erwartet");
-  const key = await crypto.subtle.importKey("jwk", {
-    kty: "EC",
-    crv: "P-256",
-    d: b64uEncode(d),
-    x: b64uEncode(pub.slice(1, 33)),
-    y: b64uEncode(pub.slice(33, 65)),
-    ext: false,
-  }, ES256, false, ["sign"]);
+  const key = await crypto.subtle.importKey(
+    "jwk",
+    {
+      kty: "EC",
+      crv: "P-256",
+      d: b64uEncode(d),
+      x: b64uEncode(pub.slice(1, 33)),
+      y: b64uEncode(pub.slice(33, 65)),
+      ext: false,
+    },
+    ES256,
+    false,
+    ["sign"],
+  );
   return { publicKey: b64uEncode(pub), privateKey: key, subject };
 }
 
@@ -43,12 +49,18 @@ export async function vapidJwt(vapid: Vapid, audience: string, expiresAt: number
   const claims = b64uEncode(te.encode(JSON.stringify({ aud: audience, exp: expiresAt, sub: vapid.subject })));
   const input = `${header}.${claims}`;
   // WebCrypto liefert die Signatur als r||s (64 Byte) – genau das Format von JWS ES256.
-  const sig = new Uint8Array(await crypto.subtle.sign({ name: "ECDSA", hash: "SHA-256" }, vapid.privateKey, te.encode(input)));
+  const sig = new Uint8Array(
+    await crypto.subtle.sign({ name: "ECDSA", hash: "SHA-256" }, vapid.privateKey, te.encode(input)),
+  );
   return `${input}.${b64uEncode(sig)}`;
 }
 
 /** Authorization-Kopfzeile: "vapid t=<JWT>, k=<öffentlicher Schlüssel>". */
-export async function vapidAuthorization(vapid: Vapid, endpoint: string, nowSeconds = Math.floor(Date.now() / 1000)): Promise<string> {
+export async function vapidAuthorization(
+  vapid: Vapid,
+  endpoint: string,
+  nowSeconds = Math.floor(Date.now() / 1000),
+): Promise<string> {
   const audience = new URL(endpoint).origin;
   const jwt = await vapidJwt(vapid, audience, nowSeconds + 12 * 3600);
   return `vapid t=${jwt}, k=${vapid.publicKey}`;

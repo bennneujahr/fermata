@@ -15,6 +15,8 @@ import {
 } from "./mod.ts";
 
 const td = new TextDecoder();
+// Referenz-Bibliothek nur für die Gegenprobe in Tests (nicht im Versand verwendet).
+const WEB_PUSH = "npm:web-push@3.6.7";
 const te = new TextEncoder();
 
 // RFC 8291, Anhang A (https://www.rfc-editor.org/rfc/rfc8291#appendix-A)
@@ -26,12 +28,15 @@ const RFC = {
   uaPrivate: "q1dXpw3UpT5VOmu_cf_v6ih07Aems3njxI-JWgLcM94",
   salt: "DGv6ra1nlYgDCS1FRnbzlw",
   authSecret: "BTBZMqHH6r4Tts7J_aSIgg",
-  body: "DGv6ra1nlYgDCS1FRnbzlwAAEABBBP4z9KsN6nGRTbVYI_c7VJSPQTBtkgcy27mlmlMoZIIgDll6e3vCYLocInmYWAmS6TlzAC8wEqKK6PBru3jl7A_yl95bQpu6cVPTpK4Mqgkf1CXztLVBSt2Ks3oZwbuwXPXLWyouBWLVWGNWQexSgSxsj_Qulcy4a-fN",
+  body:
+    "DGv6ra1nlYgDCS1FRnbzlwAAEABBBP4z9KsN6nGRTbVYI_c7VJSPQTBtkgcy27mlmlMoZIIgDll6e3vCYLocInmYWAmS6TlzAC8wEqKK6PBru3jl7A_yl95bQpu6cVPTpK4Mqgkf1CXztLVBSt2Ks3oZwbuwXPXLWyouBWLVWGNWQexSgSxsj_Qulcy4a-fN",
 };
 
 /** Schlüssel wie im Browser: ECDH P-256, öffentlicher Teil roh (65 Byte), auth 16 Byte. */
 async function browserSubscription() {
-  const pair = await crypto.subtle.generateKey({ name: "ECDH", namedCurve: "P-256" }, true, ["deriveBits"]) as CryptoKeyPair;
+  const pair = await crypto.subtle.generateKey({ name: "ECDH", namedCurve: "P-256" }, true, [
+    "deriveBits",
+  ]) as CryptoKeyPair;
   const publicKey = new Uint8Array(await crypto.subtle.exportKey("raw", pair.publicKey));
   const auth = crypto.getRandomValues(new Uint8Array(16));
   return { publicKey, privateKey: pair.privateKey, auth, p256dh: b64uEncode(publicKey), authB64: b64uEncode(auth) };
@@ -39,17 +44,24 @@ async function browserSubscription() {
 
 Deno.test("RFC 8291 Anhang A: Verschlüsselung ergibt genau das Beispiel", async () => {
   const sender = await importEcdhKeyPair(b64uDecode(RFC.asPrivate), b64uDecode(RFC.asPublic));
-  const body = await encryptPushPayload(b64uDecode(RFC.uaPublic), b64uDecode(RFC.authSecret), b64uDecode(RFC.plaintext), {
-    salt: b64uDecode(RFC.salt),
-    senderKeys: sender,
-  });
+  const body = await encryptPushPayload(
+    b64uDecode(RFC.uaPublic),
+    b64uDecode(RFC.authSecret),
+    b64uDecode(RFC.plaintext),
+    {
+      salt: b64uDecode(RFC.salt),
+      senderKeys: sender,
+    },
+  );
   assertEquals(b64uEncode(body), RFC.body);
 });
 
 Deno.test("RFC 8291 Anhang A: Entschlüsselung ergibt den Klartext", async () => {
   const ua = await importEcdhKeyPair(b64uDecode(RFC.uaPrivate), b64uDecode(RFC.uaPublic));
-  const plain = await decryptPushPayload(b64uDecode(RFC.body), { publicKey: b64uDecode(RFC.uaPublic), privateKey: ua.privateKey },
-    b64uDecode(RFC.authSecret));
+  const plain = await decryptPushPayload(b64uDecode(RFC.body), {
+    publicKey: b64uDecode(RFC.uaPublic),
+    privateKey: ua.privateKey,
+  }, b64uDecode(RFC.authSecret));
   assertEquals(td.decode(plain), "When I grow up, I want to be a watermelon");
 });
 
@@ -78,8 +90,7 @@ Deno.test("Ungültige Abo-Schlüssel werden abgelehnt", async () => {
 });
 
 Deno.test("Gegenprobe: npm:web-push verschlüsselt, wir entschlüsseln", async () => {
-  // @ts-ignore: CommonJS-Modul ohne Typen
-  const helper = (await import("npm:web-push@3.6.7/src/encryption-helper.js")).default;
+  const helper = (await import(`${WEB_PUSH}/src/encryption-helper.js`)).default;
   const sub = await browserSubscription();
   const message = "Gegenprobe mit der Referenz-Bibliothek";
   const res = helper.encrypt(sub.p256dh, sub.authB64, message, "aes128gcm");
@@ -106,14 +117,20 @@ Deno.test("VAPID: JWT-Aufbau, Laufzeit und gültige ES256-Signatur", async () =>
   assertEquals(k, keys.publicKey);
   const sig = b64uDecode(s!);
   assertEquals(sig.length, 64, "r||s mit je 32 Byte");
-  const pub = await crypto.subtle.importKey("raw", b64uDecode(k!) as BufferSource, { name: "ECDSA", namedCurve: "P-256" }, false,
-    ["verify"]);
-  assert(await crypto.subtle.verify({ name: "ECDSA", hash: "SHA-256" }, pub, sig as BufferSource, te.encode(`${h}.${c}`)));
+  const pub = await crypto.subtle.importKey(
+    "raw",
+    b64uDecode(k!) as BufferSource,
+    { name: "ECDSA", namedCurve: "P-256" },
+    false,
+    ["verify"],
+  );
+  assert(
+    await crypto.subtle.verify({ name: "ECDSA", hash: "SHA-256" }, pub, sig as BufferSource, te.encode(`${h}.${c}`)),
+  );
 });
 
 Deno.test("VAPID: Schlüssel aus npm:web-push sind kompatibel", async () => {
-  // @ts-ignore: CommonJS-Modul ohne Typen
-  const webpush = (await import("npm:web-push@3.6.7")).default;
+  const webpush = (await import(`${WEB_PUSH}`)).default;
   const keys = webpush.generateVAPIDKeys();
   const vapid = await importVapid(keys.publicKey, keys.privateKey, "https://fermata.example");
   const jwt = await vapidJwt(vapid, "https://updates.push.services.mozilla.com", 1_800_000_000);
@@ -135,7 +152,7 @@ interface Received {
   message: unknown;
 }
 
-export async function fakePushService(sub: { publicKey: Uint8Array; privateKey: CryptoKey; auth: Uint8Array }) {
+export function fakePushService(sub: { publicKey: Uint8Array; privateKey: CryptoKey; auth: Uint8Array }) {
   const received: Received[] = [];
   const server = Deno.serve({ port: 0, hostname: "127.0.0.1", onListen: () => {} }, async (req) => {
     const url = new URL(req.url);
@@ -155,7 +172,9 @@ Deno.test("Versand an den Push-Dienst: 201, 410, 500, nicht erreichbar", async (
   const svc = await fakePushService(sub);
   try {
     const keys = await generateVapidKeys();
-    const sender = new WebPushSender(await importVapid(keys.publicKey, keys.privateKey, "mailto:hallo@fermata.example"));
+    const sender = new WebPushSender(
+      await importVapid(keys.publicKey, keys.privateKey, "mailto:hallo@fermata.example"),
+    );
     const msg = { title: "Fermata", body: "Ihr Abend steht.", url: "/abende/1", tag: "abend-1" };
     const target = { endpoint: `${svc.base}/push/abc`, p256dh: sub.p256dh, auth: sub.authB64 };
 

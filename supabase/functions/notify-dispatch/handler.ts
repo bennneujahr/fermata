@@ -7,7 +7,7 @@ import { timingSafeEqual } from "../_shared/crypto.ts";
 import { appUrl, optionalEnv } from "../_shared/env.ts";
 import { handler, HttpError, json } from "../_shared/http.ts";
 import { sendMail } from "../_shared/mail/mod.ts";
-import { dispatchDue, type DispatchDeps } from "../_shared/notify/dispatch.ts";
+import { type DispatchDeps, dispatchDue } from "../_shared/notify/dispatch.ts";
 import { PgNotifyStore } from "../_shared/notify/store.ts";
 import { pushSenderFromEnv } from "../_shared/push/send.ts";
 
@@ -18,7 +18,8 @@ export async function defaultDeps(): Promise<DispatchDeps> {
     sendMail,
     push: await pushSenderFromEnv(),
     appUrl: appUrl(),
-    functionsUrl: optionalEnv("FERMATA_FUNCTIONS_URL") ?? (supabaseUrl ? `${supabaseUrl.replace(/\/$/, "")}/functions/v1` : null),
+    functionsUrl: optionalEnv("FERMATA_FUNCTIONS_URL") ??
+      (supabaseUrl ? `${supabaseUrl.replace(/\/$/, "")}/functions/v1` : null),
     venueLinkSecret: optionalEnv("VENUE_LINK_SECRET") ?? null,
   };
 }

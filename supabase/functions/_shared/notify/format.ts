@@ -2,8 +2,18 @@
 const TZ = "Europe/Berlin";
 
 const dayFmt = new Intl.DateTimeFormat("de-DE", { weekday: "long", day: "numeric", month: "long", timeZone: TZ });
-const shortDayFmt = new Intl.DateTimeFormat("de-DE", { weekday: "short", day: "numeric", month: "short", timeZone: TZ });
-const timeFmt = new Intl.DateTimeFormat("de-DE", { hour: "2-digit", minute: "2-digit", hourCycle: "h23", timeZone: TZ });
+const shortDayFmt = new Intl.DateTimeFormat("de-DE", {
+  weekday: "short",
+  day: "numeric",
+  month: "short",
+  timeZone: TZ,
+});
+const timeFmt = new Intl.DateTimeFormat("de-DE", {
+  hour: "2-digit",
+  minute: "2-digit",
+  hourCycle: "h23",
+  timeZone: TZ,
+});
 
 function toDate(value: string | Date): Date {
   return value instanceof Date ? value : new Date(value);
@@ -36,5 +46,7 @@ export function formatDateOnly(isoDate: string): string {
 
 /** Datum der Ortszeit als „2026-10-14“ (für Vergleiche „heute/morgen“) */
 export function berlinDate(value: string | Date): string {
-  return new Intl.DateTimeFormat("en-CA", { timeZone: TZ, year: "numeric", month: "2-digit", day: "2-digit" }).format(toDate(value));
+  return new Intl.DateTimeFormat("en-CA", { timeZone: TZ, year: "numeric", month: "2-digit", day: "2-digit" }).format(
+    toDate(value),
+  );
 }
