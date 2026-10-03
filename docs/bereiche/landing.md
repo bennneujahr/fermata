@@ -13,7 +13,7 @@ Bildschirmfotos zum Ansehen: [`docs/screenshots/landing/`](../screenshots/landin
 | Teil | Ort | Inhalt |
 |---|---|---|
 | Datenbank | `supabase/migrations/20261003000100_waitlist.sql` | Tabellen `waitlist`, `waitlist_invites`, `waitlist_counters`, `signup_attempts`, `link_hits`; alle Regeln als Funktionen in `api.*`; pg_cron-Job für Löschfristen |
-| DB-Tests | `supabase/tests/100_waitlist.test.sql` | 77 pgTAP-Prüfungen |
+| DB-Tests | `supabase/tests/100_waitlist.test.sql` | 80 pgTAP-Prüfungen |
 | Edge Functions | `supabase/functions/waitlist-signup`, `waitlist-confirm`, `waitlist-status`, `waitlist-unsubscribe`, `link-hit` | je `handler.ts` + `index.ts`, Deno-Tests in `handler.test.ts` |
 | Mail-Vorlagen | `supabase/functions/_shared/mail/templates/waitlist.ts` | Bestätigung (ohne Werbung), Willkommen, „schon eingetragen“ |
 | Landingpage | `apps/landing` (`@fermata/landing`) | Astro 7, statisch, genau eine Server-Funktion `/s/[slug]` |
@@ -43,7 +43,7 @@ Seiten: `/`, `/bestaetigen`, `/willkommen`, `/bestaetigung-abgelaufen`, `/abmeld
 - **Erneute Anmeldung:** unbestätigt → neuer Link, Angaben werden aktualisiert, der alte Link gilt nicht mehr; schon bestätigt → Mail mit neuem persönlichem Link (der alte Statuslink gilt nicht mehr). Zwischen zwei Mails an dieselbe Adresse liegen mindestens `waitlist.resend_min_minutes` (10). Schlägt der Versand fehl, wird die Pause zurückgesetzt (`api.waitlist_mail_failed`) und die Seite bittet, es gleich noch einmal zu versuchen.
 - **Löschfristen** (2.2): `api.waitlist_cleanup()` stündlich per pg_cron (`fermata-waitlist-cleanup`, Minute 23): unbestätigte Einträge nach 7 Tagen (ab letzter Mail), Drossel-Einträge nach 24 h, Tagessalze nach 2 Tagen. Ohne pg_cron läuft die Migration trotzdem durch (Hinweis im Log).
 - **Admin-Zahlen:** `api.admin_waitlist_stats()` (nur `app.is_admin()`, also Admin mit `aal2`): Summen, je Gruppe, je Tag, je Quelle (Plakat-Kürzel), Plakat-Aufrufe, Einladungen.
-- **Zugriff:** RLS auf allen fünf Tabellen, keine Policies, keine Rechte für `anon`/`authenticated`. Alle `api.waitlist_*`-Funktionen sind `security definer`, `search_path = ''`, nur für `service_role` ausführbar.
+- **Zugriff:** RLS auf allen fünf Tabellen, keine Policies, keine Rechte für `anon`/`authenticated`. Alle `api.waitlist_*`-Funktionen sind `security definer`, `search_path = ''`, nur für `service_role` ausführbar (ausdrückliche Grants); die Admin-Funktionen zusätzlich für `authenticated`, sie prüfen `app.is_admin()`. Weil PostgreSQL neuen Funktionen standardmäßig EXECUTE an PUBLIC gibt, endet die Migration mit `revoke execute on all functions in schema api from public` und entzieht PUBLIC die Rechte an den Hilfsfunktionen `app.waitlist_*`. Ein pgTAP-Test prüft, dass keine Funktion in `api` und keine `app.waitlist_*`-Funktion für PUBLIC ausführbar ist. Mit einer simulierten Integrations-Migration („revoke execute … from public“ in allen Fermata-Schemas) laufen DB-, Deno- und Ablauf-Tests ebenfalls grün.
 
 ### Neue Einstellungen (`ops.app_settings`)
 
@@ -87,7 +87,7 @@ Hinweis: `@astrojs/vercel` kann kein `astro preview`. Für Tests, Lighthouse und
 
 | Was | Befehl | Ergebnis (3.10.2026) |
 |---|---|---|
-| pgTAP (Fundament + Warteliste) | `DB_PORT=54332 DB_CONTAINER=fermata-db-landing bash scripts/db.sh test` | 2 Dateien, 93 Prüfungen (16 + 77), alle grün |
+| pgTAP (Fundament + Warteliste) | `DB_PORT=54332 DB_CONTAINER=fermata-db-landing bash scripts/db.sh test` | 2 Dateien, 96 Prüfungen (16 + 80), alle grün |
 | Deno (Edge Functions) | `cd supabase/functions && DB_PORT=54332 deno test --allow-env --allow-net --allow-read waitlist-signup/ waitlist-confirm/ waitlist-unsubscribe/ link-hit/` | 21 Tests grün (Datenbank muss migriert laufen) |
 | Playwright | `cd apps/landing && DB_PORT=54332 npx playwright test` | 42 Tests grün |
 | Bildschirmfotos | `cd apps/landing && DB_PORT=54332 npx playwright test --config playwright.screenshots.config.ts` | 16 PNGs in `docs/screenshots/landing/` |

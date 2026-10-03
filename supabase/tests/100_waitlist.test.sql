@@ -1,7 +1,7 @@
 -- Warteliste (M1): Platznummern je Region, Vorrückung, Gründungsmitglieder, Drossel, neutrale Antworten,
 -- Ablauf der Links, Löschfristen, Plakat-Zähler, Admin-Zahlen und RLS.
 begin;
-select plan(77);
+select plan(80);
 
 -- ---------------------------------------------------------------------------
 -- Hilfen (nur in dieser Transaktion)
@@ -40,7 +40,7 @@ $$;
 update ops.app_settings set value = '1000' where key = 'waitlist.rate_limit_per_hour';
 
 -- ---------------------------------------------------------------------------
--- 1. Aufbau und RLS (16)
+-- 1. Aufbau, RLS und Ausführungsrechte (19)
 -- ---------------------------------------------------------------------------
 select has_table('public', t, 'Tabelle public.' || t || ' existiert')
 from unnest(array['waitlist', 'waitlist_invites', 'signup_attempts', 'link_hits', 'waitlist_counters']) t;
@@ -66,13 +66,30 @@ select ok(
       unnest(array[
         'api.waitlist_signup(text, text, text, text, text, text, text, text, text, text)',
         'api.waitlist_confirm(text, text, text)', 'api.waitlist_status(text)', 'api.waitlist_unsubscribe(text)',
-        'api.waitlist_cleanup()', 'api.link_hit(text)']) f
+        'api.waitlist_mail_failed(text)', 'api.waitlist_cleanup()', 'api.link_hit(text)',
+        'app.waitlist_region_group(text)', 'app.waitlist_new_invite_code()', 'app.waitlist_create_invite(uuid)',
+        'app.waitlist_place(uuid)', 'app.waitlist_is_hash(text)']) f
     where has_function_privilege(r, f, 'EXECUTE')
   ),
   'anon und authenticated dürfen die Wartelisten-Funktionen nicht ausführen');
 select ok(has_function_privilege('service_role', 'api.waitlist_signup(text, text, text, text, text, text, text, text, text, text)', 'EXECUTE'),
   'service_role darf api.waitlist_signup ausführen');
-select ok(not has_function_privilege('anon', 'api.admin_waitlist_stats()', 'EXECUTE'), 'anon darf die Admin-Zahlen nicht abrufen');
+select ok(not has_function_privilege('anon', 'api.admin_waitlist_stats()', 'EXECUTE')
+  and not has_function_privilege('anon', 'api.admin_waitlist_grant_invite(uuid)', 'EXECUTE'), 'anon darf die Admin-Funktionen nicht ausführen');
+-- PUBLIC (Standardrecht jeder neuen Funktion) hat auf keine Funktion im Schema api und auf keine
+-- Wartelisten-Funktion in app ein Ausführungsrecht; proacl = null hieße „Standard“ = PUBLIC darf.
+select is(
+  (select array_agg(p.oid::regprocedure::text order by 1) from pg_proc p
+   where p.pronamespace = 'api'::regnamespace
+     and (p.proacl is null or exists (select 1 from aclexplode(p.proacl) a where a.grantee = 0))),
+  null, 'Keine Funktion im Schema api ist für PUBLIC ausführbar');
+select is(
+  (select array_agg(p.oid::regprocedure::text order by 1) from pg_proc p
+   where p.pronamespace = 'app'::regnamespace and p.proname like 'waitlist%'
+     and (p.proacl is null or exists (select 1 from aclexplode(p.proacl) a where a.grantee = 0))),
+  null, 'Keine Wartelisten-Funktion in app ist für PUBLIC ausführbar');
+select ok(has_function_privilege('authenticated', 'api.admin_waitlist_stats()', 'EXECUTE'),
+  'authenticated darf die Admin-Zahlen aufrufen (die Funktion prüft app.is_admin())');
 
 select tests.act_as_anon();
 select throws_ok($$ select * from public.waitlist $$, '42501', null, 'anon kann die Warteliste nicht lesen');

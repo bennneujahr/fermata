@@ -755,3 +755,15 @@ exception when others then
   raise notice 'pg_cron konnte nicht eingerichtet werden (%); api.waitlist_cleanup() bitte anders planen.', sqlerrm;
 end
 $$;
+
+-- ---------------------------------------------------------------------------
+-- Ausführungsrechte zum Schluss: PostgreSQL gibt jeder neuen Funktion EXECUTE an PUBLIC; die
+-- schema-bezogenen default privileges des Fundaments entfernen das nicht. Deshalb hier ausdrücklich:
+-- im Schema api nichts für PUBLIC (die Funktionen oben haben ihre Rechte einzeln: service_role,
+-- Admin-Funktionen zusätzlich authenticated mit Prüfung app.is_admin()). Im Schema public legt diese
+-- Migration keine Funktionen an.
+-- ---------------------------------------------------------------------------
+revoke execute on all functions in schema api from public;
+revoke all on function app.waitlist_region_group(text) from public, anon, authenticated;
+revoke all on function app.waitlist_new_invite_code(), app.waitlist_create_invite(uuid), app.waitlist_place(uuid),
+  app.waitlist_is_hash(text) from public, anon, authenticated;
