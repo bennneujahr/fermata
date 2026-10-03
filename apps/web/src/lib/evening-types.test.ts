@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { serviceOrigins } from "./csp";
+import { buildCsp, serviceOrigins, violaConnectSources } from "./csp";
 import { isMemberPath } from "./routes";
 import { isUpcoming, offeredTimes, toggleTime } from "./evening-types";
 
@@ -39,5 +39,15 @@ describe("CSP für LiveKit und den Textdienst", () => {
     expect(serviceOrigins("https://viola.fermata.example/v1")).toEqual(["https://viola.fermata.example", "wss://viola.fermata.example"]);
     expect(serviceOrigins(undefined)).toEqual([]);
     expect(serviceOrigins("kein url")).toEqual([]);
+  });
+  it("nur, was eingerichtet ist", () => {
+    expect(violaConnectSources({})).toEqual([]);
+    expect(violaConnectSources({ NEXT_PUBLIC_LIVEKIT_URL: "wss://lk.example", NEXT_PUBLIC_VIOLA_TEXT_URL: "https://viola.example" })).toEqual([
+      "wss://lk.example",
+      "https://lk.example",
+      "https://viola.example",
+    ]);
+    const csp = buildCsp({ nonce: "n", supabaseUrl: "https://db.example" });
+    expect(/connect-src ([^;]+)/.exec(csp)![1]).toBe("'self' https://db.example wss://db.example");
   });
 });
