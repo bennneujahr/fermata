@@ -143,7 +143,8 @@ test("Text: früh beenden (Du-Form) ohne Zusammenfassung; Krise zeigt die Hilfe 
   await page.getByRole("button", { name: "Senden" }).click();
   const crisis = page.getByRole("region", { name: /Hilfe in schweren Momenten/ });
   await expect(crisis).toBeVisible({ timeout: 15_000 });
-  await expect(crisis.getByRole("link", { name: /0800 1110111 anrufen/ })).toHaveAttribute("href", "tel:08001110111");
+  // Schreibweise kommt aus safety.crisis_lines() (offiziell „0800 111 0 111“); die Wählnummer bleibt gleich.
+  await expect(crisis.getByRole("link", { name: /0800 ?111 ?0 ?111 anrufen/ })).toHaveAttribute("href", "tel:08001110111");
   await expect(crisis.getByRole("link", { name: /Notruf 112/ })).toHaveAttribute("href", "tel:112");
   await expectAccessible(page, "Krise");
   console.expectClean();
