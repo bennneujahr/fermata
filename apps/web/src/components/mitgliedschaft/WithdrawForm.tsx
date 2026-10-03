@@ -1,7 +1,7 @@
 "use client";
 // Widerrufsbutton (§ 356a BGB), angemeldet: Schritt 1 Name, Vertrag und Kontaktweg (vorausgefüllt aus
 // billing-withdraw preview, mit Berechnung), Schritt 2 „Widerruf bestätigen“ (confirm). ENTWURF.
-import { useId, useState, useTransition, type FormEvent } from "react";
+import { useId, useState, useTransition, type FormEvent, type ReactNode } from "react";
 import { withdrawMembership } from "@/app/actions/billing";
 import { Button, Field, Notice } from "@/components/ui";
 import { errors as commonErrors } from "@/copy/common";
@@ -14,7 +14,7 @@ import { FlowStep } from "./FlowStep";
 import { Receipt } from "./Receipt";
 import "./mitgliedschaft.css";
 
-export function WithdrawForm({ form, preview }: { form: AddressForm; preview: WithdrawPreview }) {
+export function WithdrawForm({ form, preview, intro }: { form: AddressForm; preview: WithdrawPreview; intro?: ReactNode }) {
   const c = withdrawCopy(form);
   const uid = useId();
   const [name, setName] = useState(preview.name ?? "");
@@ -70,6 +70,7 @@ export function WithdrawForm({ form, preview }: { form: AddressForm; preview: Wi
 
   return (
     <form className="stack stack-lg" onSubmit={submit} noValidate aria-busy={pending || undefined}>
+      {intro}
       <section className="card stack" aria-labelledby={`${uid}-s1`}>
         <FlowStep n={1} eyebrow={c.step1} title={c.step1Title} id={`${uid}-s1`} />
         <Field id={`${uid}-name`} label={c.name} autoComplete="name" value={name} onChange={(e) => setName(e.target.value)} error={fieldError.name} required />

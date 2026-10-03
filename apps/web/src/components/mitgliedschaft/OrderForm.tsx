@@ -56,7 +56,12 @@ export function OrderForm({
     if (!publishableKey) return;
     let element: StripePaymentElement | null = null;
     let cancelled = false;
-    loadStripe.setLoadParameters({ advancedFraudSignals: false });
+    try {
+      // Ohne „advanced fraud signals“ (keine zusätzlichen Gerätedaten an Stripe); siehe Doku, offene Frage für Benn.
+      loadStripe.setLoadParameters({ advancedFraudSignals: false });
+    } catch {
+      // schon gesetzt (zweiter Aufruf nach Seitenwechsel)
+    }
     loadStripe(publishableKey, { locale: "de" })
       .then((stripe) => {
         if (cancelled || !stripe || !mountRef.current) return;

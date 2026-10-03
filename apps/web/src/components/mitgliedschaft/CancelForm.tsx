@@ -1,7 +1,7 @@
 "use client";
 // Kündigungsknopf (§ 312k BGB), angemeldet: Schritt 1 Angaben (vorausgefüllt aus billing-cancel preview),
 // Schritt 2 „Jetzt kündigen“ (billing-cancel confirm). Danach Eingangsbestätigung mit Datum und Uhrzeit. ENTWURF.
-import { useId, useState, useTransition, type FormEvent } from "react";
+import { useId, useState, useTransition, type FormEvent, type ReactNode } from "react";
 import { cancelMembership } from "@/app/actions/billing";
 import { Button, Field, Notice, TextArea } from "@/components/ui";
 import { errors as commonErrors } from "@/copy/common";
@@ -14,7 +14,7 @@ import { FlowStep } from "./FlowStep";
 import { Receipt } from "./Receipt";
 import "./mitgliedschaft.css";
 
-export function CancelForm({ form, preview }: { form: AddressForm; preview: CancelPreview }) {
+export function CancelForm({ form, preview, intro }: { form: AddressForm; preview: CancelPreview; intro?: ReactNode }) {
   const c = cancelCopy(form);
   const uid = useId();
   const effective = preview.immediate ? c.effectiveNow : preview.effective_at ? formatDate(preview.effective_at) : "–";
@@ -65,6 +65,7 @@ export function CancelForm({ form, preview }: { form: AddressForm; preview: Canc
 
   return (
     <form className="stack stack-lg" onSubmit={submit} noValidate aria-busy={pending || undefined}>
+      {intro}
       <section className="card stack" aria-labelledby={`${uid}-s1`}>
         <FlowStep n={1} eyebrow={c.step1} title={c.step1Title} id={`${uid}-s1`} />
         <dl className="facts">

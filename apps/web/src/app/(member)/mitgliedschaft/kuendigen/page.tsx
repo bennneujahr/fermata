@@ -21,8 +21,8 @@ export default async function CancelPage() {
       <p>
         <Link href="/mitgliedschaft">{c.back}</Link>
       </p>
-      <PageHeader title={c.title} lead={c.lead} />
-      <Notice tone="draft">{c.draft}</Notice>
+      <PageHeader title={c.title} />
+      {"error" in result || !result.preview.possible ? <Notice tone="draft">{c.draft}</Notice> : null}
       {"error" in result ? (
         <Notice tone="warning">{errors.generic(form)}</Notice>
       ) : !result.preview.possible ? (
@@ -33,7 +33,16 @@ export default async function CancelPage() {
           ) : null}
         </Notice>
       ) : (
-        <CancelForm form={form} preview={result.preview} />
+        <CancelForm
+          form={form}
+          preview={result.preview}
+          intro={
+            <div className="stack stack-sm">
+              <p className="lead measure">{c.lead}</p>
+              <Notice tone="draft">{c.draft}</Notice>
+            </div>
+          }
+        />
       )}
     </div>
   );

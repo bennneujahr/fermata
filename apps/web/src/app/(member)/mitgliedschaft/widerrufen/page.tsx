@@ -22,8 +22,8 @@ export default async function WithdrawPage() {
       <p>
         <Link href="/mitgliedschaft">{c.back}</Link>
       </p>
-      <PageHeader title={c.title} lead={p?.possible && p.until ? c.lead(formatDate(p.until)) : undefined} />
-      <Notice tone="draft">{c.draft}</Notice>
+      <PageHeader title={c.title} />
+      {!p?.possible ? <Notice tone="draft">{c.draft}</Notice> : null}
       {!p ? (
         <Notice tone="warning">{errors.generic(form)}</Notice>
       ) : !p.possible ? (
@@ -38,7 +38,16 @@ export default async function WithdrawPage() {
           ) : null}
         </Notice>
       ) : (
-        <WithdrawForm form={form} preview={p} />
+        <WithdrawForm
+          form={form}
+          preview={p}
+          intro={
+            <div className="stack stack-sm">
+              {p.until ? <p className="lead measure">{c.lead(formatDate(p.until))}</p> : null}
+              <Notice tone="draft">{c.draft}</Notice>
+            </div>
+          }
+        />
       )}
     </div>
   );

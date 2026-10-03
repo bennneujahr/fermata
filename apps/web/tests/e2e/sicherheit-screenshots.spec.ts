@@ -69,6 +69,7 @@ async function shoot(
       await page.goto(typeof path === "function" ? await path() : path);
       if (opts.prepare) await opts.prepare(page);
       await page.evaluate(() => document.fonts.ready);
+      await page.evaluate(() => window.scrollTo(0, 0));
       await page.waitForTimeout(300);
       const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
       expect.soft(overflow, `${name} ${v.device} ${s.name}: waagrechter Überlauf`).toBeLessThanOrEqual(0);
