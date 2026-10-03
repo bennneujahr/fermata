@@ -1,6 +1,11 @@
 // Ende-zu-Ende-Tests gegen die gebaute Seite (@astrojs/node), den lokalen Server der Edge Functions und die
 // Test-Datenbank aus scripts/db.sh. Vorher: DB_PORT=… DB_CONTAINER=… bash scripts/db.sh reset (Repo-Wurzel).
+import { existsSync } from "node:fs";
 import { defineConfig, devices } from "@playwright/test";
+
+// Lokal (Cloud-Umgebung) liegt Chromium vorinstalliert unter /opt/pw-browsers; in CI nutzt Playwright sein eigenes.
+const preinstalled = process.env.PW_CHROMIUM_PATH ?? "/opt/pw-browsers/chromium-1194/chrome-linux/chrome";
+const launchOptions = existsSync(preinstalled) ? { executablePath: preinstalled } : {};
 import { E2E } from "./tests/env";
 
 export default defineConfig({
@@ -17,6 +22,7 @@ export default defineConfig({
     locale: "de-DE",
     trace: "retain-on-failure",
     ...devices["Desktop Chrome"],
+    launchOptions,
   },
   webServer: [
     {

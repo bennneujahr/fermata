@@ -191,7 +191,7 @@ Die Seite ist statisch: Werte wie Hörprobe, Preisanzeige, Umsatzsteuer, Startmo
 - **Plakat-Zähler über Supabase:** Die Vercel-Funktion `/s/[slug]` hat keinen Datenbankzugang und ruft deshalb die Function `link-hit` auf (mit 1,5 s Zeitlimit; die Weiterleitung klappt auch, wenn das Zählen scheitert).
 - **CSP doppelt:** als Header (`vercel.json`) und als `<meta>` mit der genauen Functions-Adresse; lokal und in den Tests gilt das `<meta>`.
 - **Favicon:** neue Datei `packages/brand/svg/favicon-plain.svg` (ohne `<style>`, damit sie auch unter der strengen CSP sicher funktioniert; ohne eigene Dunkel-Fassung).
-- **Playwright 1.56.1** statt der neuesten Version, weil das vorinstallierte Chromium (Build 1194) genau dazu passt; kein `playwright install` nötig.
+- **Playwright 1.63.0** wie in der Web-App (eine Version im ganzen Repository). In der Cloud-Umgebung nutzt die Konfiguration das vorinstallierte Chromium unter `/opt/pw-browsers`, in CI installiert Playwright sein eigenes.
 - **Hörprobe als Build-Schalter** (statt zur Laufzeit), weil die Seite statisch ist und keine Anfrage an Supabase beim Laden machen soll.
 
 ## Änderungen an gemeinsamen Dateien (für die Zusammenführung)

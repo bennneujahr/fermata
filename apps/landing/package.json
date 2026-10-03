@@ -25,7 +25,7 @@
     "@astrojs/check": "0.9.10",
     "@astrojs/node": "11.1.6",
     "@axe-core/playwright": "4.13.0",
-    "@playwright/test": "1.56.1",
+    "@playwright/test": "1.63.0",
     "chrome-launcher": "1.2.2",
     "lighthouse": "13.5.0",
     "postgres": "3.4.9",
