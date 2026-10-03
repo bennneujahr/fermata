@@ -38,7 +38,8 @@ export function buildCsp(o: CspOptions): string {
     "form-action": ["'self'"],
   };
   const parts = Object.entries(directives).map(([k, v]) => `${k} ${v.join(" ")}`);
-  if (!o.dev) parts.push("upgrade-insecure-requests");
+  // Nur, wenn Supabase über HTTPS läuft (lokal mit http://localhost würde es Anfragen kaputt machen).
+  if (!o.dev && supabase?.startsWith("https:")) parts.push("upgrade-insecure-requests");
   return parts.join("; ");
 }
 
