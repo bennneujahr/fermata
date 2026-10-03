@@ -78,18 +78,21 @@ create policy profile_embeddings_matcher_update on app.profile_embeddings for up
 -- 3. Hilfsfunktionen
 -- ---------------------------------------------------------------------------
 -- Offener Abend (proposed, time_*, confirmed): Person kommt nicht in den Pool. Nur Ja/Nein, kein Lesezugriff auf app.evenings.
+-- plpgsql statt sql, weil app.evenings erst in einer späteren Migration (…000500) entsteht.
 create or replace function app.has_open_evening(p_user uuid)
 returns boolean
-language sql
+language plpgsql
 stable
 security definer
 set search_path = ''
 as $$
-  select exists (
+begin
+  return exists (
     select 1 from app.evenings e
     where (e.user_a = p_user or e.user_b = p_user)
       and e.state in ('proposed', 'time_requested', 'time_countered', 'confirmed')
   );
+end;
 $$;
 comment on function app.has_open_evening(uuid) is 'true, wenn die Person einen laufenden Abend hat (vorgeschlagen, in Abstimmung oder bestätigt).';
 grant execute on function app.has_open_evening(uuid) to fermata_matcher, service_role;
@@ -526,14 +529,16 @@ $$;
 comment on function api.admin_run_pairings(uuid) is 'Admin: Vorschläge eines Laufs mit Scores, Prüfnotizen, Lokal; Personen nur mit Anzeigename und Altersband.';
 
 -- Prüft vor der Freigabe, ob beide noch teilnehmen dürfen. Liefert einen Grund oder null.
+-- plpgsql, weil billing und safety erst in späteren Migrationen entstehen.
 create or replace function app.pairing_block_reason(p_user_a uuid, p_user_b uuid)
 returns text
-language sql
+language plpgsql
 stable
 security definer
 set search_path = ''
 as $$
-  select case
+begin
+  return case
     when app.is_blocked(p_user_a, p_user_b) then 'Eine Person hat die andere blockiert.'
     when safety.is_suspended(p_user_a) or safety.is_suspended(p_user_b) then 'Eine Person ist gesperrt.'
     when exists (select 1 from app.accounts a where a.user_id in (p_user_a, p_user_b) and a.status <> 'active')
@@ -544,6 +549,7 @@ as $$
               and app.has_consent(p_user_a, 'art9_profile') and app.has_consent(p_user_b, 'art9_profile'))
       then 'Eine Einwilligung wurde widerrufen.'
   end;
+end;
 $$;
 revoke execute on function app.pairing_block_reason(uuid, uuid) from public, anon, authenticated;
 
