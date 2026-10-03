@@ -97,6 +97,28 @@ select tests.reset_role();
 select is((select count(*)::int from app.evening_reservations r join app.venue_slots s on s.id = r.slot_id
             where s.starts_at = tests.m5_at(6, '21:00') and r.status = 'reserved'), 1, 'Genau eine gültige Reservierung');
 
+-- Kontingent (M6): billing.assert_evening_available wird vor der Bestätigung für beide geprüft, falls vorhanden
+select tests.m5_new_evening(tests.m5_id('cem'), tests.m5_id('emil'), array[tests.m5_at(6, '19:30')]) as e10 \gset
+select tests.act_as(tests.m5_id('cem'));
+select api.evening_request_time(:'e10', array[tests.m5_at(6, '19:30')]);
+select tests.reset_role();
+create function billing.assert_evening_available(p_user uuid) returns void language plpgsql as $f$
+begin
+  if p_user = tests.m5_id('cem') then
+    raise exception 'Kein Abend verfügbar' using errcode = 'P0001', hint = 'no_evening_available';
+  end if;
+end;
+$f$;
+select tests.act_as(tests.m5_id('emil'));
+select is(tests.hint_of(format('select api.evening_confirm(%L, %L)', :'e10', tests.m5_at(6, '19:30'))), 'no_evening_available',
+  'Bestätigung prüft das Kontingent beider (auch des Gegenübers)');
+select tests.reset_role();
+select is((select state from app.evenings where id = :'e10'), 'time_requested', 'Ohne verfügbaren Abend bleibt alles offen');
+drop function billing.assert_evening_available(uuid);
+select tests.act_as(tests.m5_id('emil'));
+select is(api.evening_confirm(:'e10', tests.m5_at(6, '19:30')) ->> 'state', 'confirmed', 'Ohne die Funktion (vor M6) geht es wie bisher');
+select tests.reset_role();
+
 -- Kurzfristige Bestätigung
 select tests.m5_new_evening(tests.m5_id('anna'), tests.m5_id('emil'), array[tests.m5_at(3, '19:00')]) as e6 \gset
 select tests.act_as(tests.m5_id('emil'));
@@ -181,6 +203,19 @@ select is((select state from app.evenings where id = :'e8'), 'cancelled_early', 
 select is(tests.m5_count('evening.cancelled', null, :'e8'), 2, 'Beide erfahren von der Absage durch Fermata');
 select is((select reserved from app.venue_slots where venue_id = tests.m5_id('venue') and starts_at = tests.m5_at(6, '20:00')), 0,
   'Admin-Absage gibt den Tisch frei');
+
+-- Absage aus dem Sicherheitsbereich (notify_by = safety): M7 informiert selbst, M5 schickt nichts an Mitglieder
+select tests.m5_confirmed_evening(tests.m5_id('ben'), tests.m5_id('fritz'), tests.m5_at(3, '20:00')) as e11 \gset
+select app.evening_transition(:'e11', 'cancel_admin', tests.m5_id('dora'), '{"notify_by": "safety"}'::jsonb);
+select is((select state from app.evenings where id = :'e11'), 'cancelled_early', 'Absage aus dem Sicherheitsbereich');
+select is(tests.m5_count('evening.cancelled', null, :'e11') + tests.m5_count('evening.cancel_receipt', null, :'e11'), 0,
+  'Keine eigene Absage-Nachricht an die Mitglieder');
+select is((select count(*)::int from ops.notification_queue where template = 'venue.cancellation' and evening_id = :'e11'), 1,
+  'Das Lokal bekommt trotzdem die Absage');
+select is((select reserved from app.venue_slots where venue_id = tests.m5_id('venue') and starts_at = tests.m5_at(3, '20:00')), 0,
+  'Tisch frei');
+select is((select actor from app.evening_events where evening_id = :'e2' and event = 'cancel_late'), tests.m5_id('cem'),
+  'Kurzfristige Absage: absagende Person ist actor im Verlauf');
 
 select * from finish();
 rollback;

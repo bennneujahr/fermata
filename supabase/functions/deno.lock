@@ -5,7 +5,8 @@
     "jsr:@std/encoding@1": "1.0.11",
     "jsr:@std/internal@^1.0.12": "1.0.14",
     "npm:postgres@3.4.7": "3.4.7",
-    "npm:web-push@3.6.7": "3.6.7"
+    "npm:web-push@3.6.7": "3.6.7",
+    "npm:zod@4.6.5": "4.6.5"
   },
   "jsr": {
     "@std/assert@1.0.19": {
@@ -108,6 +109,9 @@
         "minimist"
       ],
       "bin": true
+    },
+    "zod@4.6.5": {
+      "integrity": "sha512-v5l/aFXZQeai4awLbOpSoHecE9UiMrnfx75tEXLjNonXVARxQ5mOeipTjROUchszUNCqnE+hqAMujRsRHsut2Q=="
     }
   },
   "workspace": {

@@ -119,3 +119,8 @@ grant execute on function app.berlin_at(date, time), app.iso_utc(timestamptz), a
   app.jsonb_to_times(jsonb) to authenticated, service_role;
 -- Jobs und Edge Functions
 grant execute on function app.evening_transition(uuid, text, uuid, jsonb) to service_role;
+
+-- Abstimmung mit der Integration: PUBLIC verliert das Ausführungsrecht für alle Funktionen in app, api und ops.
+-- Was Mitglieder, Jobs oder die Auswahl aufrufen sollen, hat ein ausdrückliches grant (authenticated,
+-- service_role über die Standardrechte, fermata_matcher, fermata_agent).
+revoke execute on all functions in schema app, api, ops from public;

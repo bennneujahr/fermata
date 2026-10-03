@@ -232,6 +232,22 @@ select throws_ok(format('select app.member_first_name(%L)', tests.m5_id('cem')),
 select throws_ok(format('select * from app.shared_windows(%L, %L, %L)', tests.m5_id('ben'), tests.m5_id('cem'), :'p1'), '42501', null,
   'Gemeinsame Fenster fremder Personen bleiben verborgen');
 select tests.reset_role();
+select ok(not has_function_privilege('authenticated', 'app.evening_after_transition(app.evenings, text, text, uuid, jsonb)', 'execute')
+  and not has_function_privilege('authenticated', 'ops.enqueue_notification(uuid, text, text, jsonb, timestamptz, uuid, text, boolean, boolean, uuid)', 'execute')
+  and not has_function_privilege('authenticated', 'ops.process_evening_deadlines(integer)', 'execute')
+  and not has_function_privilege('authenticated', 'app.evening_reserve_slot(uuid)', 'execute')
+  and not has_function_privilege('authenticated', 'app.evening_resolve_outcome(uuid, boolean)', 'execute')
+  and not has_function_privilege('authenticated', 'app.evening_transition(uuid, text, uuid, jsonb)', 'execute'),
+  'Interne Funktionen (Fristen-Job, Nebenwirkungen, Warteschlange) sind für Mitglieder gesperrt');
+select ok(has_function_privilege('authenticated', 'api.evening_confirm(uuid, timestamptz)', 'execute')
+  and has_function_privilege('service_role', 'ops.process_evening_deadlines(integer)', 'execute')
+  and has_function_privilege('service_role', 'ops.notify_claim(integer, integer)', 'execute'),
+  'Mitglieder-RPCs für authenticated, Jobs für service_role');
+select is((select count(*)::int from pg_proc p join pg_namespace n on n.oid = p.pronamespace, aclexplode(p.proacl) a
+            where n.nspname in ('app', 'api', 'ops') and a.grantee = 0 and a.privilege_type = 'EXECUTE'
+              -- api.my_sanctions entsteht erst in 0700 (nach dieser Migration); das deckt die Integrations-Migration ab.
+              and p.oid <> 'api.my_sanctions()'::regprocedure), 0,
+  'Keine Funktion in app, api, ops (bis M5) ist für PUBLIC ausführbar');
 select is((select count(*)::int from pg_proc p join pg_namespace n on n.oid = p.pronamespace
             where n.nspname in ('app', 'ops', 'api')
               and (p.proname like 'evening%' or p.proname like 'notify%' or p.proname like 'venue%' or p.proname like 'admin_%venue%')

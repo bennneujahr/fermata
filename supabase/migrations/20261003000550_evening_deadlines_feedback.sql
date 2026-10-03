@@ -100,11 +100,13 @@ begin
 
   if v_absent_a and v_absent_b then
     update app.evenings set no_show_user = null where id = e.id;
-    perform app.evening_transition(e.id, 'no_show', null, jsonb_build_object('both', true, 'final', p_final));
+    perform app.evening_transition(e.id, 'no_show', null,
+      jsonb_build_object('both', true, 'no_show_user', null, 'final', p_final));
     return 'no_show';
   elsif v_absent_a or v_absent_b then
     update app.evenings set no_show_user = case when v_absent_a then e.user_a else e.user_b end where id = e.id;
-    perform app.evening_transition(e.id, 'no_show', null, jsonb_build_object('final', p_final));
+    perform app.evening_transition(e.id, 'no_show', null,
+      jsonb_build_object('no_show_user', case when v_absent_a then e.user_a else e.user_b end, 'final', p_final));
     return 'no_show';
   end if;
   perform app.evening_transition(e.id, 'happened', null, jsonb_build_object('final', p_final));
@@ -248,6 +250,7 @@ declare
   v_err text;
   v_done integer := 0;
   v_failed integer := 0;
+  v_busy integer := 0;
   v_results jsonb := '{}'::jsonb;
 begin
   for d in
@@ -257,6 +260,13 @@ begin
      limit greatest(coalesce(p_limit, 500), 1)
      for update skip locked
   loop
+    -- Handelt gerade jemand an diesem Abend (Zeile gesperrt), kommt die Frist beim nächsten Lauf dran.
+    -- Reihenfolge der Sperren wie in den Mitglieder-Funktionen (erst Abend, dann Fristen): keine Verklemmung.
+    perform 1 from app.evenings x where x.id = d.evening_id for update skip locked;
+    if not found then
+      v_busy := v_busy + 1;
+      continue;
+    end if;
     begin
       -- Erst als erledigt markieren: Zustandswechsel beenden dann nur die übrigen Fristen.
       update app.evening_deadlines set done_at = app.now() where id = d.id;
@@ -274,7 +284,7 @@ begin
       v_failed := v_failed + 1;
     end;
   end loop;
-  return jsonb_build_object('done', v_done, 'failed', v_failed, 'by_kind', v_results);
+  return jsonb_build_object('done', v_done, 'failed', v_failed, 'busy', v_busy, 'by_kind', v_results);
 end;
 $$;
 comment on function ops.process_evening_deadlines(integer) is
@@ -670,7 +680,8 @@ begin
     raise exception 'Person gehört nicht zu diesem Abend' using errcode = '22023', hint = 'invalid_user';
   end if;
   update app.evenings set no_show_user = case when p_outcome = 'no_show' then p_no_show_user end where id = e.id;
-  perform app.evening_transition(e.id, p_outcome, admin_id, jsonb_build_object('by', 'admin', 'note', p_note));
+  perform app.evening_transition(e.id, p_outcome, admin_id, jsonb_build_object('by', 'admin', 'note', p_note)
+    || case when p_outcome = 'no_show' then jsonb_build_object('no_show_user', p_no_show_user) else '{}'::jsonb end);
   perform ops.audit('evening.resolve', 'app.evenings', e.id::text,
     jsonb_build_object('outcome', p_outcome, 'no_show_user', p_no_show_user, 'note', p_note));
   return jsonb_build_object('evening_id', e.id, 'state', p_outcome);

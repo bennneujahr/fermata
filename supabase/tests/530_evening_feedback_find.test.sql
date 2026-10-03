@@ -164,6 +164,8 @@ select tests.m5_clock_to(tests.m5_at(6, '09:00'));
 select ops.process_evening_deadlines();
 select is((select state from app.evenings where id = :'e7'), 'no_show', 'e7: kein Widerspruch in 24 h → no_show');
 select is((select no_show_user from app.evenings where id = :'e7'), tests.m5_id('emil'), 'e7: Emil gilt als nicht erschienen');
+select is((select details ->> 'no_show_user' from app.evening_events where evening_id = :'e7' and event = 'no_show'),
+  tests.m5_id('emil')::text, 'no_show_user steht auch im Verlauf (für das Kontingent)');
 update safety.reports set status = 'resolved' where evening_id = :'e8';
 
 select tests.m5_clock_to(tests.m5_at(6, '10:00'));

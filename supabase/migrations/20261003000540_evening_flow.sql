@@ -431,8 +431,12 @@ begin
     perform app.evening_notify(e, e.user_b, 'evening.lapsed', '{}'::jsonb, false, false, null, v_ev);
 
   elsif e.state in ('cancelled_early', 'cancelled_late') then
+    -- Tisch frei und Lokal informieren (immer, auch bei Absagen aus dem Sicherheitsbereich).
     perform app.evening_release_slot(e.id);
-    if p_event = 'cancel_admin' or e.cancelled_by is null or e.cancelled_by not in (e.user_a, e.user_b) then
+    if p_event = 'cancel_admin' and coalesce(p_details ->> 'notify_by', '') = 'safety' then
+      -- Der Sicherheitsbereich (M7) informiert beide selbst und neutral: keine eigene Nachricht.
+      null;
+    elsif p_event = 'cancel_admin' or e.cancelled_by is null or e.cancelled_by not in (e.user_a, e.user_b) then
       perform app.evening_notify(e, e.user_a, 'evening.cancelled', jsonb_build_object('by', 'fermata'), false, false, null, v_ev);
       perform app.evening_notify(e, e.user_b, 'evening.cancelled', jsonb_build_object('by', 'fermata'), false, false, null, v_ev);
     else
@@ -636,6 +640,12 @@ begin
   end if;
   if p_time < app.now() + make_interval(hours => ops.setting_int('evening.confirm_min_lead_hours')) then
     raise exception 'Diese Uhrzeit liegt zu kurzfristig' using errcode = '22023', hint = 'time_too_soon';
+  end if;
+  -- Kontingent (M6): beide brauchen einen verfügbaren Abend. Die Funktion gehört dem Kontingent-Bereich und
+  -- existiert erst nach dessen Migration; deshalb nur aufrufen, wenn sie da ist. Sie wirft selbst einen Fehler.
+  if to_regprocedure('billing.assert_evening_available(uuid)') is not null then
+    execute 'select billing.assert_evening_available($1)' using e.user_a;
+    execute 'select billing.assert_evening_available($1)' using e.user_b;
   end if;
   update app.evenings set starts_at = p_time, confirmed_at = app.now() where id = e.id;
   perform app.evening_transition(e.id, 'confirm', uid, jsonb_build_object('time', app.iso_utc(p_time)));

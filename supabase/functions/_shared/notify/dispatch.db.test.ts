@@ -223,3 +223,62 @@ Deno.test({
     }
   },
 });
+
+Deno.test({
+  name: "DB: Fristen-Job wartet nicht auf einen Abend, an dem gerade jemand handelt (keine Verklemmung)",
+  ignore: !url,
+  sanitizeResources: false,
+  sanitizeOps: false,
+  async fn() {
+    const admin = postgres(url!, { max: 1, onnotice: () => {} });
+    const member = postgres(url!, { max: 1, onnotice: () => {} });
+    const users = [crypto.randomUUID(), crypto.randomUUID()].sort();
+    const runId = crypto.randomUUID();
+    try {
+      for (const u of users) {
+        await admin`select tests.create_user(${`job-${u}@example.test`}, ${u})`;
+        await admin`insert into app.accounts (user_id, status) values (${u}, 'active')`;
+      }
+      await admin`insert into app.match_runs (id, scheduled_for, status) values (${runId}, now(), 'approved')`;
+      const [p] = await admin`insert into app.pairings (run_id, user_a, user_b, total_score, status)
+        values (${runId}, ${users[0]!}, ${users[1]!}, 0.7, 'proposed') returning id`;
+      const [e] = await admin`insert into app.evenings (pairing_id, user_a, user_b) values (${
+        p!.id
+      }, ${users[0]!}, ${users[1]!}) returning id`;
+      await admin`update app.evening_deadlines set due_at = now() - interval '1 minute' where evening_id = ${
+        e!.id
+      } and kind = 'time_request'`;
+
+      let release!: () => void;
+      const gate = new Promise<void>((r) => (release = r));
+      let locked!: () => void;
+      const isLocked = new Promise<void>((r) => (locked = r));
+      const holder = member.begin(async (tx) => {
+        await tx`select 1 from app.evenings where id = ${e!.id} for update`;
+        locked();
+        await gate;
+      });
+      await isLocked;
+
+      const timeout = new Promise<"timeout">((r) => setTimeout(() => r("timeout"), 5000));
+      const run = admin`select ops.process_evening_deadlines() as r`.then((rows) =>
+        rows[0]!.r as Record<string, number>
+      );
+      const first = await Promise.race([run, timeout]);
+      assert(first !== "timeout", "Fristen-Job darf nicht auf die Sperre warten");
+      assert((first as Record<string, number>).busy >= 1, "Abend wurde übersprungen");
+      const [s1] = await admin`select state from app.evenings where id = ${e!.id}`;
+      assertEquals(s1!.state, "proposed");
+
+      release();
+      await holder;
+      await admin`select ops.process_evening_deadlines()`;
+      const [s2] = await admin`select state from app.evenings where id = ${e!.id}`;
+      assertEquals(s2!.state, "lapsed", "nächster Lauf erledigt die Frist");
+    } finally {
+      await admin`delete from auth.users where id in ${admin(users)}`;
+      await admin`delete from app.match_runs where id = ${runId}`;
+      await Promise.all([admin.end(), member.end()]);
+    }
+  },
+});
