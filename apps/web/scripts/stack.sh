@@ -108,13 +108,15 @@ up() {
     -e GOTRUE_SECURITY_REFRESH_TOKEN_ROTATION_ENABLED=true -e GOTRUE_LOG_LEVEL=warn \
     supabase/gotrue:v2.180.0 auth >/dev/null
 
+  # Eigene Sitzung (setsid), damit die Dienste das Ende des aufrufenden Terminals überleben.
   GATEWAY_PORT=$GATEWAY_PORT AUTH_PORT=$AUTH_PORT REST_PORT=$REST_PORT FUNCTIONS_PORT=$FUNCTIONS_PORT \
-    nohup node "$APP_DIR/scripts/gateway.mjs" >"$STATE/gateway.log" 2>&1 &
+    setsid nohup node "$APP_DIR/scripts/gateway.mjs" >"$STATE/gateway.log" 2>&1 </dev/null &
   echo $! >"$STATE/gateway.pid"
 
   (
     cd "$ROOT/supabase/functions"
-    FUNCTIONS_PORT=$FUNCTIONS_PORT nohup deno run --allow-net --allow-env --allow-read dev-server.ts >"$STATE/functions.log" 2>&1 &
+    FUNCTIONS_PORT=$FUNCTIONS_PORT setsid nohup deno run --allow-net --allow-env --allow-read dev-server.ts \
+      >"$STATE/functions.log" 2>&1 </dev/null &
     echo $! >"$STATE/functions.pid"
   )
 

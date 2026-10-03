@@ -34,14 +34,12 @@ http
   .createServer((req, res) => {
     const url = req.url ?? "/";
     if (req.method === "OPTIONS") {
-      res.writeHead(
-        204,
-        cors(req, {
-          "access-control-allow-methods": "GET, POST, PUT, PATCH, DELETE, OPTIONS",
-          "access-control-allow-headers": req.headers["access-control-request-headers"] ?? "*",
-          "access-control-max-age": "600",
-        }),
-      );
+      res.writeHead(204, {
+        ...cors(req, {}),
+        "access-control-allow-methods": "GET, POST, PUT, PATCH, DELETE, OPTIONS",
+        "access-control-allow-headers": req.headers["access-control-request-headers"] ?? "*",
+        "access-control-max-age": "600",
+      });
       res.end();
       return;
     }
