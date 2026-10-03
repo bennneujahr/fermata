@@ -296,7 +296,7 @@ Mitgliedschaft abschließen.
 - **Grundlage:** Vertrag (Art. 6 Abs. 1 lit. b); Aufbewahrung von Vertrags- und Buchungsunterlagen: gesetzliche
   Pflicht (Art. 6 Abs. 1 lit. c i. V. m. § 257 HGB, § 147 AO).
 - **Dauer:** bis zur Löschung Ihres Kontos; Unterlagen zu Bestellung, Kündigung und Widerruf
-  [[6 bzw. 10 Jahre, Steuerberatung bestätigen]] auch danach, ohne Verknüpfung mit Ihrem Konto.
+  [[6 Jahre für Geschäftsbriefe, 8 Jahre für Buchungsbelege – Steuerberatung bestätigen]] auch danach, ohne Verknüpfung mit Ihrem Konto.
 
 ## 14. Sicherheit: Meldungen, Sperren, Sperrliste
 
@@ -371,7 +371,7 @@ Sitz in den USA oder nutzen Rechenzentren außerhalb der EU:
 | Teilwerte der Auswahl | 12 Monate |
 | Erkennungszeichen | bis zum Ende des Finde-Fensters |
 | Erledigte Nachrichten in der Warteschlange | 90 Tage |
-| Vertragsunterlagen | [[6 bzw. 10 Jahre]] |
+| Vertragsunterlagen | [[6 bzw. 8 Jahre]] |
 | Meldungen, Sanktionen, Sperrliste | siehe Abschnitt 14 |
 
 Das vollständige Löschkonzept: [loeschkonzept.md](loeschkonzept.md).

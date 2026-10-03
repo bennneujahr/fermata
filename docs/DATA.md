@@ -205,7 +205,7 @@ oder Kontaktdaten der Mitglieder. Push-Texte enthalten keine Namen; Mails nennen
 | `billing.memberships` | Stufe, Status, Stripe-Kunden- und Abo-ID, Vertragsnummer, Bestell-, Kündigungs-, Widerrufszeit | Vertrag | b | Person (ohne Stripe-IDs), Benn | bis Kontolöschung |
 | `billing.membership_periods` | Zeiträume, Abende, Verlängerung, Stripe-Rechnungs-/Zahlungs-ID, Betrag | Abrechnung, Verlängerungsregel | b, c | Person, Benn | **mit dem Konto gelöscht** (`on delete cascade`); Rechnungen selbst liegen bei Stripe |
 | `billing.evening_ledger` | Kontingent-Buch (Gratis-Abend, Zuteilung, Bindung, Nutzung, Gutschrift, Verfall) | Kontingent | b | Person, Benn | nur anhängen; mit dem Konto gelöscht |
-| `billing.contract_actions` | Bestellung (gezeigte Übersicht, Hash, Knopftext), Kündigung und Widerruf (Name, Kontakt-E-Mail, Art, Grund, Vertragsnummer, Berechnung), Bestätigungs-Mail, Ergebnis | Nachweis Bestellknopf, § 312k, § 356a BGB | b, c | Person, Benn | `user_id` wird bei Kontolöschung `null`, **Name und E-Mail in `details` bleiben**; keine Frist im Code (Vorschlag: 6 bzw. 10 Jahre, Löschkonzept) |
+| `billing.contract_actions` | Bestellung (gezeigte Übersicht, Hash, Knopftext), Kündigung und Widerruf (Name, Kontakt-E-Mail, Art, Grund, Vertragsnummer, Berechnung), Bestätigungs-Mail, Ergebnis | Nachweis Bestellknopf, § 312k, § 356a BGB | b, c | Person, Benn | `user_id` wird bei Kontolöschung `null`, **Name und E-Mail in `details` bleiben**; keine Frist im Code (Vorschlag: 6 Jahre, Löschkonzept) |
 | `billing.contract_requests` | Kündigung/Widerruf ohne Anmeldung: Link-Hash, Formularangaben, Zeiten | Nachweis des Eingangs | b, c | Functions | mit dem Konto; abgelaufene Anfragen werden nicht gelöscht |
 | `billing.stripe_events` | Stripe-Ereignisse **ohne** Karten-, Adress-, Telefon- und Namensfelder (`minimizeEvent`); enthalten weiter z. B. `customer_email` und Rechnungslinks | idempotente Verarbeitung | b, f | Benn | **keine Frist** – offen |
 | bei **Stripe** | Karte bzw. Zahlungsmittel, Rechnungsanschrift, E-Mail, Rechnungen | Zahlung, Rechnung | b, c | Benn im Stripe-Dashboard | laut Stripe (gesetzliche Fristen) |
@@ -314,7 +314,7 @@ Prüfen nach dem Deploy: `select jobname, schedule, command, active from cron.jo
 |---|---|---|
 | `safety.reports`, `safety.safety_flags`, `safety.mail_queue` | dauerhaft | Meldungen 3 Jahre nach Abschluss; Hinweise 1 Jahr nach Prüfung; Mail-Ausgang 90 Tage nach Versand |
 | `billing.stripe_events` | dauerhaft | 90 Tage nach Verarbeitung |
-| `billing.contract_actions` | dauerhaft (Name, E-Mail bleiben nach Kontolöschung) | 6 Jahre (§ 257 HGB) bzw. 10 Jahre für Buchungsbelege (§ 147 AO), Steuerberatung fragen |
+| `billing.contract_actions` | dauerhaft (Name, E-Mail bleiben nach Kontolöschung) | 6 Jahre für Geschäftsbriefe (§ 257 HGB); Buchungsbelege seit 2025 8 Jahre (§ 147 AO) – Steuerberatung fragen |
 | `billing.contract_requests` | bis Kontolöschung | 30 Tage nach Ablauf, wenn nicht bestätigt |
 | `ops.notifications_log` | bis Kontolöschung | 12 Monate |
 | `app.availability_windows` vergangener Zeiträume | bis Kontolöschung | 30 Tage nach Ende des Zeitraums |

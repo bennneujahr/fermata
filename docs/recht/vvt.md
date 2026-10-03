@@ -197,7 +197,7 @@ Abkürzungen der Rechtsgrundlagen: a/b/c/d/f = Art. 6 Abs. 1 lit. a–f DSGVO; 9
 - **Grundlage:** b, c (HGB/AO).
 - **Empfänger:** Stripe (teils eigene Verantwortung), Supabase, Brevo.
 - **Drittland:** Stripe Inc. (USA).
-- **Löschung:** Kontolöschung; Vertragsunterlagen [[6/10 Jahre]]; Stripe-Ereignisse [[90 Tage vorgeschlagen]].
+- **Löschung:** Kontolöschung; Vertragsunterlagen [[6/8 Jahre]]; Stripe-Ereignisse [[90 Tage vorgeschlagen]].
 - **Code:** `20261003000600`–`…000640`, `billing-*`, `stripe-webhook`.
 
 ### V21 Kündigung und Widerruf
