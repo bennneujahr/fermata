@@ -131,21 +131,24 @@ export function OrderForm({
       }
       const result = new URL(resultPath, window.location.origin);
       result.searchParams.set("vertrag", res.data.contractNumber);
+      let status = "succeeded";
       if (stripe && elements && res.data.clientSecret) {
         setPhase("paying");
-        const { error: payError } = await stripe.confirmPayment({
+        const paid = await stripe.confirmPayment({
           elements,
           clientSecret: res.data.clientSecret,
           confirmParams: { return_url: result.toString() },
           redirect: "if_required",
         });
-        if (payError) {
+        if (paid.error) {
           setPhase("failed");
-          setError(payError.message ?? c.paymentFailedText);
+          setError(paid.error.message ?? c.paymentFailedText);
           return;
         }
+        // Lastschrift u. Ä.: Die Bank bestätigt später.
+        if (paid.paymentIntent?.status === "processing") status = "processing";
       }
-      result.searchParams.set("redirect_status", "succeeded");
+      result.searchParams.set("redirect_status", status);
       window.location.assign(result.toString());
     } catch {
       setPhase("idle");

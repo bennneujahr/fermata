@@ -1,16 +1,19 @@
 "use client";
 // Wiederverwendbarer Knopf „Etwas melden“ mit Dialog (api.report). Für Abende, Termine, Gespräch, Konto – überall.
 // Beispiel (Abend-Seite): <ReportButton form={form} eveningId={id} eveningLabel="Sa., 10.10., 19:30 · Café am See" counterpartName="Jonas" />
+// Terminabstimmung: <ReportButton form={form} eveningId={id} context="termin" counterpartName="Jonas" />; Gespräch: <ReportButton form={form} context="gespraech" />
 // Ohne JavaScript bzw. als Link: /sicherheit/melden?abend=<id> (gleiches Formular als eigene Seite).
 import { useState } from "react";
 import { Button, Dialog, type ButtonVariant } from "@/components/ui";
 import type { AddressForm } from "@/copy/form";
 import { report as reportCopy } from "@/copy/sicherheit";
+import type { ReportContext } from "@/lib/safety-types";
 import { ReportForm } from "./ReportForm";
 
 export function ReportButton({
   form = "sie",
   eveningId,
+  context,
   eveningLabel,
   counterpartName = null,
   label,
@@ -21,6 +24,8 @@ export function ReportButton({
   form?: AddressForm;
   /** Meldung zu diesem Abend (Bereich „abend“, betrifft auf Wunsch das Gegenüber). */
   eveningId?: string;
+  /** Fester Bereich (abend, termin, gespraech, rueckmeldung, konto, sonstiges); ohne Angabe wählt die Person. */
+  context?: ReportContext;
   /** Kurze Beschreibung des Abends für die Anzeige, z. B. Datum und Lokal. */
   eveningLabel?: string;
   counterpartName?: string | null;
@@ -54,6 +59,7 @@ export function ReportButton({
             key={round}
             form={form}
             evening={evening}
+            context={context}
             police={police}
             onCancel={() => setOpen(false)}
             doneHeadingLevel={3}

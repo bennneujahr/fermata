@@ -1,4 +1,4 @@
-// Etwas melden (api.report). Auch als Ziel für Links aus Abenden: /sicherheit/melden?abend=<id>.
+// Etwas melden (api.report). Auch als Ziel für Links: /sicherheit/melden?abend=<id> und/oder ?bereich=termin|gespraech|….
 import type { Metadata } from "next";
 import Link from "next/link";
 import { ReportForm, type ReportEveningOption } from "@/components/sicherheit/ReportForm";
@@ -8,12 +8,14 @@ import { requireMember } from "@/lib/data";
 import { eveningLabel } from "@/lib/datetime";
 import { getEvening, getHelpContacts, getMyEvenings } from "@/lib/safety";
 import { reportableEvenings } from "@/lib/safety-rules";
+import { REPORT_CONTEXTS, type ReportContext } from "@/lib/safety-types";
 
 export const metadata: Metadata = { title: titles.melden };
 
 export default async function ReportPage({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
   const sp = await searchParams;
   const abend = typeof sp.abend === "string" ? sp.abend : null;
+  const bereich = typeof sp.bereich === "string" && (REPORT_CONTEXTS as string[]).includes(sp.bereich) ? (sp.bereich as ReportContext) : undefined;
   const { form } = await requireMember(abend ? `/sicherheit/melden?abend=${encodeURIComponent(abend)}` : "/sicherheit/melden");
   const c = reportCopy(form);
   const [contacts, fixed, evenings] = await Promise.all([getHelpContacts(), abend ? getEvening(abend) : Promise.resolve(null), getMyEvenings()]);
@@ -32,7 +34,7 @@ export default async function ReportPage({ searchParams }: { searchParams: Promi
       </p>
       <PageHeader title={c.title} lead={c.lead} />
       <Card>
-        <ReportForm form={form} evening={evening} evenings={evening ? [] : options} police={contacts.police} />
+        <ReportForm form={form} evening={evening} context={bereich} evenings={evening ? [] : options} police={contacts.police} />
       </Card>
     </div>
   );

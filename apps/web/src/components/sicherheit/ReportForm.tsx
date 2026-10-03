@@ -25,6 +25,7 @@ const MAX = 4000;
 export function ReportForm({
   form,
   evening,
+  context: fixedContext,
   evenings = [],
   police = { number: "110", tel: "110" },
   onCancel,
@@ -34,6 +35,8 @@ export function ReportForm({
   form: AddressForm;
   /** Fester Abend (Meldung aus einem Abend heraus). */
   evening?: ReportEveningOption | null;
+  /** Fester Bereich, z. B. „termin“ aus der Terminabstimmung oder „gespraech“ von der Gesprächsseite. */
+  context?: ReportContext;
   /** Eigene Abende zur Auswahl (nur ohne festen Abend). */
   evenings?: ReportEveningOption[];
   police?: { number: string; tel: string };
@@ -43,7 +46,7 @@ export function ReportForm({
 }) {
   const c = reportCopy(form);
   const uid = useId();
-  const [context, setContext] = useState<ReportContext | "">(evening ? "abend" : "");
+  const [context, setContext] = useState<ReportContext | "">(fixedContext ?? (evening ? "abend" : ""));
   const [eveningId, setEveningId] = useState<string>(evening?.id ?? "");
   const [about, setAbout] = useState<"person" | "other">("person");
   const [category, setCategory] = useState<ReportCategory | "">("");
@@ -58,7 +61,7 @@ export function ReportForm({
 
   const selected = evening ?? evenings.find((e) => e.id === eveningId) ?? null;
   const showEveningSelect = !evening && context === "abend" && evenings.length > 0;
-  const showAbout = Boolean(selected) && context === "abend";
+  const showAbout = Boolean(selected) && (Boolean(evening) || context === "abend");
 
   function submit(e: FormEvent) {
     e.preventDefault();
@@ -76,7 +79,7 @@ export function ReportForm({
       const res = await submitReport({
         context: context as ReportContext,
         category: category as ReportCategory,
-        eveningId: context === "abend" ? (selected?.id ?? null) : null,
+        eveningId: evening ? evening.id : context === "abend" ? (selected?.id ?? null) : null,
         aboutCounterpart: showAbout && about === "person",
         description,
         wantsContact,
@@ -126,10 +129,13 @@ export function ReportForm({
         </span>
       </Notice>
 
-      {evening ? (
+      {evening || (fixedContext && fixedContext !== "abend") ? (
         <p className="inline-icon">
-          <Icon name="evening" size={18} />
-          <span>{c.eveningFixed(evening.label)}</span>
+          <Icon name={evening ? "evening" : "flag"} size={18} />
+          <span>
+            {evening ? c.eveningFixed(evening.label) : null}
+            {fixedContext && fixedContext !== "abend" ? `${evening ? " · " : ""}${contextLabels[fixedContext]}` : null}
+          </span>
         </p>
       ) : (
         <fieldset className="fieldset" aria-describedby={fieldErrors.context ? `${uid}-ctx-error` : undefined}>

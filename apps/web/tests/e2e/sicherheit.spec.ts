@@ -236,3 +236,19 @@ test("Hilfe angemeldet: alle Nummern aus api.help_contacts(), Wege zu Melden und
   await expect(page.getByLabel("Um welchen Abend geht es?")).toHaveCount(0);
   c.expectClean();
 });
+
+test("Melden mit festem Bereich (?bereich=gespraech): kein Abend, Bereich steht fest", async ({ page }) => {
+  const c = watchConsole(page);
+  const me = await onboardedMember({ first: "Mira" });
+  await loginByLink(page, me.email);
+  await page.goto("/sicherheit/melden?bereich=gespraech");
+  await expect(page.getByText("Das Gespräch mit Viola")).toBeVisible();
+  await expect(page.getByRole("radio", { name: "Ein Abend" })).toHaveCount(0);
+  await page.getByRole("radio", { name: /Diskriminierung/ }).check();
+  await page.getByRole("button", { name: "Meldung abschicken" }).click();
+  await expect(page.getByRole("heading", { name: "Danke. Ihre Meldung ist bei uns." })).toBeVisible();
+  const [r] = await sql`select context, category, evening_id from safety.reports where reporter = ${me.id}::uuid`;
+  expect(r).toMatchObject({ context: "gespraech", category: "diskriminierung", evening_id: null });
+  await expectAccessible(page, "/sicherheit/melden?bereich=gespraech");
+  c.expectClean();
+});
