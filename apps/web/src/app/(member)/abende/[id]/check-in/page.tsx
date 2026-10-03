@@ -1,8 +1,7 @@
+// Alte Schreibweise aus den Mitteilungen (supabase/functions/_shared/mail/templates/notify-common.ts: /abende/<id>/check-in).
 import { redirect } from "next/navigation";
-import { eveningLinks } from "@/lib/evening-links";
 
-// Mails und Mitteilungen verlinken /abende/<id>/check-in; die Seite selbst (Bereich Sicherheit) liegt unter /checkin.
-export default async function CheckinRedirect({ params }: { params: Promise<{ id: string }> }) {
+export default async function CheckinAlias({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  redirect(eveningLinks(id).checkin);
+  redirect(`/abende/${encodeURIComponent(id)}/checkin`);
 }

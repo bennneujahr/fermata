@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { serviceOrigins } from "./csp";
+import { isMemberPath } from "./routes";
 import { isUpcoming, offeredTimes, toggleTime } from "./evening-types";
 
 describe("Abende", () => {
@@ -21,6 +22,14 @@ describe("Abende", () => {
     for (const t of ["c", "a", "b", "d"]) l = toggleTime(l, t, 3);
     expect(l).toEqual(["a", "b", "c"]);
     expect(toggleTime(l, "b", 3)).toEqual(["a", "c"]);
+  });
+});
+
+describe("Wege", () => {
+  it("freie Abende gehören zum Mitgliederbereich", () => {
+    expect(isMemberPath("/zeiten")).toBe(true);
+    expect(isMemberPath("/zeiten/abc")).toBe(true);
+    expect(isMemberPath("/zeitenx")).toBe(false);
   });
 });
 

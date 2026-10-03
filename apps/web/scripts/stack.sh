@@ -47,14 +47,6 @@ SUPABASE_URL=http://localhost:$GATEWAY_PORT
 SUPABASE_ANON_KEY=$anon
 SUPABASE_SERVICE_ROLE_KEY=$service
 SUPABASE_DB_URL=$DB_URL
-FERMATA_ENV=local
-FERMATA_APP_URL=http://localhost:$APP_PORT
-FERMATA_ALLOWED_ORIGINS=http://localhost:$APP_PORT
-FERMATA_CONTACT_EMAIL=hallo@fermata.example
-DIDIT_MODE=fake
-DIDIT_WEBHOOK_SECRET=fermata-fake-didit-secret
-MAILPIT_URL=http://localhost:$MAIL_HTTP_PORT
-APP_PORT=$APP_PORT
 SUPABASE_JWT_SECRET=$JWT_SECRET
 INTERVIEW_AGENT_SECRET=$VIOLA_AGENT_SECRET
 VIOLA_TEXT_TOKEN_SECRET=$VIOLA_TEXT_SECRET
@@ -66,6 +58,14 @@ LIVEKIT_API_KEY=fermata-local-livekit-key
 LIVEKIT_API_SECRET=fermata-local-livekit-secret-0123456789abcdef
 NEXT_PUBLIC_LIVEKIT_URL=wss://livekit.fake.invalid
 VIOLA_VOICE_MODE=fake
+FERMATA_ENV=local
+FERMATA_APP_URL=http://localhost:$APP_PORT
+FERMATA_ALLOWED_ORIGINS=http://localhost:$APP_PORT
+FERMATA_CONTACT_EMAIL=hallo@fermata.example
+DIDIT_MODE=fake
+DIDIT_WEBHOOK_SECRET=fermata-fake-didit-secret
+MAILPIT_URL=http://localhost:$MAIL_HTTP_PORT
+APP_PORT=$APP_PORT
 ENV
   # Web-Push: lokales VAPID-Schlüsselpaar (einmal je Arbeitskopie erzeugt, liegt nur in .stack/, nie im Repository).
   if [ ! -s "$STATE/vapid" ]; then
