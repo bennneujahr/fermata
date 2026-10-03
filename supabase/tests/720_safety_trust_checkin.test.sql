@@ -19,6 +19,9 @@ declare pid uuid; eid uuid;
 begin
   insert into app.pairings (run_id, user_a, user_b, total_score, status)
   values ('72000000-0000-0000-0000-000000000001', least(a, b), greatest(a, b), 0.8, 'proposed') returning id into pid;
+  -- Seit M5 braucht eine Bestätigung einen freien Tisch im Lokal: Platz zur Abendzeit anlegen.
+  insert into app.venue_slots (venue_id, starts_at, tables) values ('72000000-0000-0000-0000-0000000000f1', app.now() + starts, 1)
+  on conflict (venue_id, starts_at) do update set tables = app.venue_slots.tables + 1;
   insert into app.evenings (pairing_id, user_a, user_b, starts_at, venue_id)
   values (pid, least(a, b), greatest(a, b), app.now() + starts, '72000000-0000-0000-0000-0000000000f1') returning id into eid;
   if confirm then

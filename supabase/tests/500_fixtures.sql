@@ -86,6 +86,14 @@ begin
     (tests.m5_id('emil'), 'Emil', 'Eckert', '1987-04-04', '19059', null),
     (tests.m5_id('fritz'), 'Fritz', 'Faber', '1986-05-05', '19061', null);
   insert into app.admin_users (user_id, display_name) values (tests.m5_id('dora'), 'Dora');
+  -- Wie bei der Kontoerstellung (M2): Mitgliedschaft „free“ mit Gratis-Abend; dazu Testguthaben für mehrere Abende (M6).
+  insert into billing.memberships (user_id)
+    select a.user_id from app.accounts a where a.user_id in (tests.m5_id('anna'), tests.m5_id('ben'), tests.m5_id('cem'),
+      tests.m5_id('emil'), tests.m5_id('fritz'));
+  insert into billing.evening_ledger (user_id, kind, amount, note)
+    select m.user_id, k.kind, k.amount, 'Testguthaben' from billing.memberships m
+    cross join (values ('free_grant', 1), ('adjust', 5)) as k(kind, amount)
+    where m.user_id in (tests.m5_id('anna'), tests.m5_id('ben'), tests.m5_id('cem'), tests.m5_id('emil'), tests.m5_id('fritz'));
 
   insert into app.venues (id, name, street, postal_code, city, lat, lon, contact_name, contact_email, reservation_mode,
                           public_transport, accessibility, agreement)

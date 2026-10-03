@@ -174,8 +174,11 @@ export async function createEvening(
                             values (${opts.venueName ?? "Testlokal"}, 'Teststraße 1', '19053', 'Schwerin', 53.6, 11.4) returning id`;
   const [p] = await sql`insert into app.pairings (run_id, user_a, user_b, total_score, status)
                         values (${run!.id}, ${lo}::uuid, ${hi}::uuid, 0.8, 'proposed') returning id`;
+  // Seit M5 braucht eine Bestätigung einen freien Tisch: Platz zur Abendzeit anlegen (gleicher Zeitpunkt für beide Zeilen).
+  const [t] = await sql`select date_trunc('minute', now() + make_interval(hours => ${opts.startsInHours ?? 48})) as starts_at`;
+  await sql`insert into app.venue_slots (venue_id, starts_at, tables) values (${venue!.id}, ${t!.starts_at}, 1)`;
   const [e] = await sql`insert into app.evenings (pairing_id, user_a, user_b, starts_at, venue_id)
-                        values (${p!.id}, ${lo}::uuid, ${hi}::uuid, now() + make_interval(hours => ${opts.startsInHours ?? 48}), ${venue!.id})
+                        values (${p!.id}, ${lo}::uuid, ${hi}::uuid, ${t!.starts_at}, ${venue!.id})
                         returning id`;
   const state = opts.state ?? "confirmed";
   if (state !== "proposed") {
