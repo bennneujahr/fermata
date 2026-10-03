@@ -57,7 +57,7 @@ export default async function TrustSharePage({ searchParams }: { searchParams: P
         <ul className="list-plain stack">
           {shown.map((e) => (
             <li key={e.evening_id}>
-              <Card title={c.eveningTitle(formatDayTime(e.starts_at), e.venue?.name ?? null)} eyebrow={e.counterpart_first_name ? c.withName(e.counterpart_first_name) : undefined}>
+              <Card id={`abend-${e.evening_id}`} title={c.eveningTitle(formatDayTime(e.starts_at), e.venue?.name ?? null)} eyebrow={e.counterpart_first_name ? c.withName(e.counterpart_first_name) : undefined}>
                 <TrustSharePanel form={form} eveningId={e.evening_id} shares={activeShares(shares ?? [], e.evening_id)} />
               </Card>
             </li>

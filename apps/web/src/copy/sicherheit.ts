@@ -467,6 +467,12 @@ export const checkin = (f: AddressForm) => ({
     "Bei Gefahr ruf bitte sofort 110. Die Hilfe-Nummern findest du über den Hilfe-Knopf oben.",
   ),
   alwaysHelp: af(f, "Notruf jederzeit:", "Notruf jederzeit:"),
+  reportTitle: "Etwas ist vorgefallen?",
+  reportText: af(
+    f,
+    "Sie können es jederzeit melden – jetzt oder später. Die gemeldete Person erfährt nie, wer gemeldet hat.",
+    "Du kannst es jederzeit melden – jetzt oder später. Die gemeldete Person erfährt nie, wer gemeldet hat.",
+  ),
   errors: {
     checkin_not_possible: "Für diesen Abend ist gerade kein Check-in möglich.",
     evening_not_found: "Diesen Abend finden wir nicht.",

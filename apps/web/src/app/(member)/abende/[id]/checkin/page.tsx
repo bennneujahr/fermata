@@ -3,6 +3,7 @@
 import type { Metadata } from "next";
 import { CheckinChoices } from "@/components/sicherheit/CheckinChoices";
 import { PoliceCall } from "@/components/sicherheit/HelpNumbers";
+import { ReportButton } from "@/components/sicherheit/ReportButton";
 import { EmptyState, PageHeader } from "@/components/ui";
 import { checkin as checkinCopy, titles } from "@/copy/sicherheit";
 import { requireMember } from "@/lib/data";
@@ -26,10 +27,26 @@ export default async function CheckinPage({ params }: { params: Promise<{ id: st
       </div>
     );
   }
+  const label = eveningLabel(evening.starts_at, evening.venue?.name);
   return (
     <div className="stack stack-lg">
-      <PageHeader eyebrow={eveningLabel(evening.starts_at, evening.venue?.name)} title={c.title} lead={c.lead(evening.venue?.name ?? null)} />
+      <PageHeader eyebrow={label} title={c.title} lead={c.lead(evening.venue?.name ?? null)} />
       <CheckinChoices eveningId={evening.evening_id} form={form} contacts={contacts} />
+      <section className="card card--sunk stack stack-sm" aria-labelledby="checkin-melden">
+        <h2 id="checkin-melden" className="card__title">
+          {c.reportTitle}
+        </h2>
+        <p className="soft">{c.reportText}</p>
+        <div>
+          <ReportButton
+            form={form}
+            eveningId={evening.evening_id}
+            eveningLabel={label}
+            counterpartName={evening.counterpart_first_name}
+            police={contacts.police}
+          />
+        </div>
+      </section>
     </div>
   );
 }
