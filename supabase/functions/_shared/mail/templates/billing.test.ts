@@ -12,6 +12,18 @@ import {
 } from "./billing.ts";
 import { formatDateTime, formatEur, formatReceipt } from "./billing-format.ts";
 import type { RenderedMail } from "./billing-format.ts";
+import { extractSegments, toAppMarkdown } from "../../legal/markdown.ts";
+
+// Die echte Widerrufsbelehrung aus docs/recht (so steht sie auch in ops.legal_documents).
+const POLICY_SEGMENT = extractSegments(
+  await Deno.readTextFile(new URL("../../../../../docs/recht/widerrufsbelehrung.md", import.meta.url)),
+).find((x) => x.kind === "widerruf")!;
+const POLICY = { title: POLICY_SEGMENT.title, version: POLICY_SEGMENT.version, body_markdown: toAppMarkdown(POLICY_SEGMENT.body) };
+const START = {
+  text: "Ich verlange ausdrücklich, dass Fermata vor Ende der Widerrufsfrist mit der Leistung beginnt. Mir ist bekannt, dass ich bei einem Widerruf Wertersatz für bereits genutzte Abende leisten muss.",
+  version: "2026-10-03-entwurf",
+  at: "2026-10-03T17:45:12Z",
+};
 
 const SUMMARY: OrderSummary = {
   tier_name: "Andante",
@@ -40,8 +52,26 @@ function all(): RenderedMail[] {
     withdrawReceipt({ receivedAt: AT, contractNumber: "FM-ABCD-EFGH", name: "Mara", paidCents: 14900, eveningsUsed: 1, wertersatzCents: 7450, refundCents: 7450, refundStatus: "erstattet" }),
     withdrawReceipt({ receivedAt: AT, contractNumber: "FM-ABCD-EFGH", paidCents: 4900, eveningsUsed: 1, wertersatzCents: 4900, refundCents: 0, refundStatus: "keine" }),
     periodExtended({ extendedUntil: "2026-11-28T17:45:12Z", tierName: "Andante", manageUrl: "https://app/x" }),
+    orderReceived({
+      contractNumber: "FM-ABCD-EFGH", orderedAt: AT, withdrawalUntil: "2026-10-17T17:45:12Z", summary: SUMMARY,
+      manageUrl: "https://app/x", startRequest: START, withdrawalPolicy: POLICY,
+    }),
   ];
 }
+
+Deno.test("Bestellbestätigung: Erklärung zum Leistungsbeginn und vollständige Widerrufsbelehrung mit Formular", () => {
+  const m = all().at(-1)!;
+  assert.ok(m.text.includes(`„${START.text}“`), "Wortlaut der Erklärung");
+  assert.ok(m.text.includes("Fassung 2026-10-03-entwurf"));
+  for (const s of ["WIDERRUFSBELEHRUNG", "Widerrufsrecht".toUpperCase(), "binnen vierzehn Tagen", "Folgen des Widerrufs".toUpperCase(),
+    "MUSTER-WIDERRUFSFORMULAR", "Hiermit widerrufe(n) ich/wir", "Unzutreffendes streichen", "Ende der Widerrufsbelehrung"]) {
+    assert.ok(m.text.includes(s), `fehlt: ${s}`);
+  }
+  assert.ok(m.html.includes("Muster-Widerrufsformular") || m.html.includes("MUSTER-WIDERRUFSFORMULAR"));
+  assert.ok(!m.text.includes("**") && !m.text.includes("<!--"), "kein Markdown, keine Markierungen in der Mail");
+  // Die Fassung ohne Belehrung (alte Aufrufe) bleibt gültig.
+  assert.ok(!all()[0]!.text.includes("MUSTER-WIDERRUFSFORMULAR"));
+});
 
 Deno.test("Formate: Datum, Uhrzeit, Eingang mit Sekunden und Zeitzone, Euro", () => {
   assert.equal(formatDateTime(AT), "Samstag, 3. Oktober 2026, 19:45 Uhr");

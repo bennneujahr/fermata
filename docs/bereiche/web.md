@@ -158,9 +158,9 @@ Alle Regeln liegen in der Datenbank. Die Web-App ruft nur auf. Fehler kommen als
 | `my_overview()` | – | `{onboarding, first_name, membership, available_evenings, is_admin_user, sanctions_active}` |
 | `my_onboarding()` | – | `{has_account, status, address_form, is_founding_member, next_step, complete, steps[{key,state}], consents_ok, facts_done, identity_done, verification{status,…,verified}, verification_attempts_left}`; Schritte `einwilligungen → angaben → identitaet → ausweis → fertig` |
 | `onboarding_settings()` | – | `{collect_street, min_age, required_consents[], verification_alternative_enabled}` |
-| `give_consent(p_kind, p_version)` | Art und **aktuelle** Fassung | neue Zeile in `app.consents`; doppelt ist harmlos; alte Fassung → `version_mismatch` |
-| `revoke_consent(p_kind)` | Art | neue Zeile (Widerruf); löscht sofort, was nur mit der Einwilligung erlaubt ist (art9_profile → Identität, art9_religion/health → Angaben, push → Abos, gespraech → Transkripte); `agb`/`datenschutz_kenntnis` → `delete_account` |
-| `my_consents()` | – | je Art: `kind, required, granted, version, current_version, needs_renewal, at` |
+| `give_consent(p_kind, p_version)` | Art und **aktuelle** Fassung | neue Zeile in `app.consents`; doppelt ist harmlos; alte Fassung → `version_mismatch`; Art, die Phase 1 nicht anbietet (`art9_health`, Einstellung `account.consents_not_offered`) → `not_offered` (Härtung) |
+| `revoke_consent(p_kind)` | Art | neue Zeile (Widerruf); löscht sofort, was nur mit der Einwilligung erlaubt ist (art9_profile → Identität, art9_religion/health → Angaben, push → Abos, gespraech → Transkripte, kontakttausch → noch nicht freigegebene Kontakt-Freigaben, Antwort dann mit `pending_shares_withdrawn`); `agb`/`datenschutz_kenntnis` → `delete_account` |
+| `my_consents()` | – | je Art: `kind, required, granted, version, current_version, needs_renewal, at`; nur angebotene Arten (seit der Härtung **ohne `art9_health`**, außer jemand hätte sie noch erteilt – dann zum Widerrufen). Nach den neuen Fassungen `2026-10-03-m8-entwurf` steht bei erteilten Einwilligungen `needs_renewal: true` → erneut zustimmen lassen |
 | `save_facts(p_first_name, p_last_name, p_birth_date, p_postal_code, p_city?, p_phone?, p_street?)` | Pflicht-Einwilligungen vorher | 18+ mit `app.now()` (Europe/Berlin), PLZ muss in `app.postal_codes` stehen, setzt `app.geo` (nur PLZ-Mittelpunkt) und `profile_core.birth_year`; Straße nur mit `account.collect_street`; nach bestandener Prüfung sind Name und Geburtsdatum fest |
 | `postal_code_lookup(p_postal_code)` | – | `postal_code, place_name, state` |
 | `save_identity(p_gender, p_seeking[], p_orientation?)` *(Kern)* | `art9_profile` | `frau`, `mann`, `nichtbinaer` |
@@ -170,7 +170,7 @@ Alle Regeln liegen in der Datenbank. Die Web-App ruft nur auf. Fehler kommen als
 | `save_push_subscription(p_endpoint, p_p256dh, p_auth, p_platform?)` | `push` | für M5; gleiches Gerät, andere Person → altes Abo weg |
 | `my_export()` | – | ganzer Datenexport (wie Edge Function `account-export`) |
 | `my_admin_status()` | – | `{is_admin_user, aal, is_admin}` (auch mit aal1) |
-| `legal_document(p_kind)`, `public_settings()` *(Kern, auch anon)* | – | Rechtstext (aktuelle Fassung), öffentliche Einstellungen |
+| `legal_document(p_kind)`, `public_settings()` *(Kern, auch anon)* | – | Rechtstext (aktuelle Fassung), öffentliche Einstellungen. Seit der Härtung gibt es für `impressum`, `datenschutz`, `agb`, `widerruf`, `ki_hinweis` (Fassung `2026-10-03-entwurf`) und alle Einwilligungen einen Text aus `docs/recht`; `art9_health` liefert keinen gültigen Text mehr (`abgeloest`) |
 
 ### RPC für den Admin (nur mit aal2, sonst `admin_aal2_required`)
 
@@ -197,7 +197,8 @@ Alle Regeln liegen in der Datenbank. Die Web-App ruft nur auf. Fehler kommen als
 | `ops.verification_complete(p_session_id, p_status, p_first_name?, p_last_name?, p_birth_date?, p_document_number?)` | volljährig, Abgleich Name/Geburtsdatum, Sperrliste; speichert nur erlaubte Felder; Ausweis-Treffer → `blocked`, Konto `suspended`, vorläufige Sperre, Hinweis; Namens-Treffer → nur Hinweis |
 | `app.verification_record_hashes(p_user, p_document_number, p_first_name, p_last_name, p_birth_date)` | **die eine Stelle** für Sperrlisten-Hashes (siehe Integration) |
 | `ops.verification_session_deleted(p_session_id)`, `ops.verifications_pending_deletion(p_limit)` | Nachweis der Löschung bei Didit, Nachholen |
-| `ops.account_deletion_prepare(p_user)`, `ops.account_deletion_done(p_user)` | Audit, Einladungen/Protokolle entfernen, Warteliste mitlöschen, Sicherheits-Hinweis bei laufender Prüfung |
+| `ops.account_deletion_prepare(p_user)`, `ops.account_deletion_done(p_user)` | Audit, Einladungen/Protokolle entfernen, Warteliste mitlöschen, Sicherheits-Hinweis bei laufender Prüfung; seit der Härtung auch: offene Abende absagen (Nachricht an Gegenüber und Lokal bleibt erhalten), Kündigung eines Stripe-Abos festhalten. Rückgabe `{email, first_name, address_form, evenings{cancelled, failed}, stripe{contract_action_id, subscription_id} \| null}`; Ergebnis der Stripe-Kündigung über `ops.account_deletion_stripe_result(action_id, ok, detail)` |
+| `ops.auth_user_id_by_email(p_email)`, `billing.member_contact(p_user)` (Härtung) | E-Mail-Bezug aus `auth.users` für die Functions, die in der engen Rolle `fermata_edge` kein `auth`-Schema lesen |
 | `app.export_account(p_user)` | Inhalt des Datenexports |
 | `ops.is_admin_user(p_user)` | Admin-Prüfung für Edge Functions |
 
@@ -206,7 +207,7 @@ Alle Regeln liegen in der Datenbank. Die Web-App ruft nur auf. Fehler kommen als
 | Function | Aufruf | Antwort |
 |---|---|---|
 | `account-export` | `GET`/`POST`, `Authorization: Bearer <Token>` | JSON-Datei (`content-disposition: attachment; filename="fermata-datenexport-JJJJ-MM-TT.json"`); läuft als die Person (`asUser`) über `api.my_export()` |
-| `account-delete` | `POST {"confirm": true}`, Bearer | `{deleted, mail_sent}`; löscht über die GoTrue-Admin-API, Bestätigungs-Mail `account.deleted` |
+| `account-delete` | `POST {"confirm": true}`, Bearer | `{deleted, mail_sent, evenings_cancelled, subscription_cancelled}` (Härtung); sagt offene Abende ab, beendet ein Stripe-Abo **sofort und ohne anteilige Erstattung** (`subscription_cancelled`: `true`, `false` = Stripe-Fehler, Benn wird informiert, `null` = kein Abo – vorher in der Oberfläche darauf hinweisen), löscht über die GoTrue-Admin-API, Bestätigungs-Mail `account.deleted` |
 | `admin-invite` | `POST {"email", "waitlist_id"?}`, Bearer mit **aal2** | `{invited, user_id, invitation_id, expires_at, is_founding_member, waitlist_linked, mail_sent}`; legt die Person in Auth an (E-Mail bestätigt), Mail `account.invite` mit Link auf `/anmelden` |
 | `verification-start` | `POST`, Bearer | `{url, verification_id, mode}` – Weiterleitung zu Didit bzw. zur Simulation |
 | `verification-webhook` | `POST` von Didit, ohne JWT, `X-Signature` + `X-Timestamp` | `{ok, status, session_deleted}`; unbekannte Sitzung und nicht endgültige Stände werden quittiert |
@@ -223,7 +224,7 @@ Fehlercodes der Functions: `unauthorized` (401), `consent_missing`, `admin_aal2_
 `invalid_city`, `invalid_phone`, `street_not_collected`, `invalid_street`, `facts_locked`, `invalid_address_form`,
 `invalid_subscription`, `invalid_platform`, `invalid_email`, `already_member`, `waitlist_missing`,
 `facts_missing`, `already_verified`, `verification_pending`, `too_many_attempts`, `account_inactive`,
-`admin_aal2_required`, `unknown_setting`, `type_mismatch`, `invalid_value`, `admin_account`.
+`admin_aal2_required`, `unknown_setting`, `type_mismatch`, `invalid_value`, `admin_account`, `not_offered` (Härtung).
 
 ### Neue Einstellungen (`ops.app_settings`)
 
@@ -238,6 +239,16 @@ Fehlercodes der Functions: `unauthorized` (401), `consent_missing`, `admin_aal2_
 
 Rechtstexte (Fassung `2026-10-03-entwurf`, Status `entwurf`): `agb`, `datenschutz_kenntnis`, `art9_profile`,
 `art9_religion`, `art9_health`, `biometrie`, `gespraech`, `push`, `kontakttausch`, `ki_hinweis`.
+
+**Härtung (`20261003000900_legal_documents.sql`, `…000906`):** Die Texte kommen jetzt aus `docs/recht/*.md`
+(Abschnitte zwischen `<!-- db kind="…" version="…" -->` und `<!-- /db -->`, umgewandelt in das Markdown, das die App
+darstellt: Überschriften, Absätze, Listen, fett, kursiv – keine Links und Tabellen). Neue Arten `impressum`,
+`datenschutz`, `widerruf` (Fassung `2026-10-03-entwurf`); `agb` und `ki_hinweis` neu aus den Dokumenten. Die
+Einwilligungen `art9_profile`, `art9_religion`, `biometrie`, `gespraech`, `push`, `kontakttausch`,
+`datenschutz_kenntnis` haben die neue Fassung `2026-10-03-m8-entwurf` (wahrheitsgemäß: ungefragt Erzähltes geht live
+an Spracherkennung und Sprachmodell); die alten Fassungen bleiben als Nachweis (`abgeloest`). `art9_health` wird nicht
+angeboten (PLATZHALTER C10). Ein Test (`supabase/functions/_shared/legal/legal_docs.test.ts`) schlägt fehl, wenn
+Datenbank und `docs/recht` auseinanderlaufen – Fassungen nie ändern, immer neue anlegen.
 
 ## Aufbau der App und Bausteine
 
@@ -317,8 +328,9 @@ Bekannt offen (nicht M2):
 - `billing.available_evenings(uuid)` ist (aus der Kern-Migration 0600) für jede angemeldete Person mit fremder ID
   aufrufbar und verrät so die Zahl verfügbarer Abende einer anderen Person. Vorschlag für M6: `grant` an
   `authenticated` entfernen; die eigene Zahl liefert `api.my_overview()`.
-- Bei Löschung eines Kontos mit bestätigtem Abend verschwindet der Abend auch für das Gegenüber
-  (Kaskade aus dem Kern). M5 sollte das Gegenüber vorher benachrichtigen.
+- ~~Bei Löschung eines Kontos mit bestätigtem Abend verschwindet der Abend auch für das Gegenüber~~ – erledigt in der
+  Härtung: offene Abende werden vorher abgesagt, das Gegenüber und das Lokal erhalten die neutrale M5-Nachricht
+  (`abende.md` Abschnitt 6).
 - Datumsfeld: Das Format folgt der Sprache des Browsers (in den Bildschirmfotos aus dem Testbrowser „mm/dd/yyyy“).
 
 ## Abweichungen von PLAN.md

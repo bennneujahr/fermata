@@ -4,6 +4,7 @@
 > Stand: 03.10.2026. Jede technische Maßnahme nennt die Stelle im Code. Status: **umgesetzt** (im Code und getestet),
 > **Konfiguration** (Benn stellt beim Anbieter ein, siehe [Runbook](../RUNBOOK.md)), **TODO** (noch zu tun).
 > M2 (Web-App, Merge-Commit `2489e06`) und M3 (Viola, Commit `e84647b`) liegen im Hauptzweig `claude/dating-app-build-0uszhn`.
+> Nachgeführt nach der Härtung (Branch `build/hardening`, Migrationen `20261003000900` bis `…000907`).
 
 ## 1. Vertraulichkeit
 
@@ -30,8 +31,10 @@
 | Viola ohne Datenbankzugang; schreibt nur über `interview-agent` mit Geheimnis, dort `set local role fermata_agent` | `supabase/functions/_shared/interview/db.ts` (Hauptzweig) | umgesetzt |
 | Mitglieder sehen von Vorschlägen nur ausgewählte Spalten (Spaltenrechte) | `app.pairings`, `billing.memberships` | umgesetzt |
 | Admin sieht keine Art.-9-Angaben | keine Admin-Funktion liest `sensitive.*` (M2) | umgesetzt |
-| **Edge Functions verbinden sich als `postgres`** (Mitglied von `fermata_sensitive`, Zugriff auf Vault) | `supabase/functions/_shared/db.ts` | **TODO:** eigene Login-Rolle mit engen Rechten (DSFA M-1) |
-| Einsicht in Transkripte im Sicherheitsfall nur über eine Funktion mit Audit | – | **TODO** (DSFA M-2); bis dahin keine Einsicht |
+| **Edge Functions in enger Rolle `fermata_edge`** (`FERMATA_DB_ROLE`, Login-Rolle `fermata_edge_login` über `FERMATA_DB_URL`): Rechte wie `service_role` in den Fermata-Schemas, aber kein `sensitive.*`, kein Vault, kein `auth`; E-Mail-Adressen nur über zwei security-definer-Funktionen | `supabase/functions/_shared/db.ts`, `20261003000907_edge_role.sql`; Tests `907_edge_role.test.sql`, `_shared/db.test.ts`, ganze Deno-Testreihe mit `FERMATA_DB_ROLE=fermata_edge` | umgesetzt (DSFA M-1); Login-Rolle im gehosteten Projekt: **Konfiguration** (Runbook 5). Ohne sie verbinden sich die Functions weiter als `postgres` |
+| `service_role` liest im Supabase-Abbild Vault (`vault.decrypted_secrets`) | Fund der Härtung, Test `907_edge_role` | bekannt; deshalb `fermata_edge` statt `service_role`; `SUPABASE_SERVICE_ROLE_KEY` nur in den Functions |
+| Einsicht in Transkripte im Sicherheitsfall nur über eine Funktion mit Zwei-Faktor, Anlass (offener Hinweis/offene Meldung), Begründung und Audit ohne Inhalt | `api.admin_safety_transcript` (`…000902`), Test `902_admin_transcript.test.sql` | umgesetzt (DSFA M-2); nur für `authenticated` freigegeben, nicht für `service_role` |
+| Kontaktdaten nach Widerruf von `kontakttausch`: noch nicht freigegebene Freigaben werden zurückgezogen, dem Gegenüber nicht mehr gezeigt | `api.revoke_consent`, `app.contact_share_for` (`…000906`) | umgesetzt |
 
 ### 1.3 Trennung
 
@@ -52,7 +55,8 @@
 | **Spaltenverschlüsselung Art. 9** mit `pgp_sym_encrypt` (AES-256), Schlüssel `fermata_sensitive_key` in Supabase Vault, nie im Code | `sensitive.enc/dec/key` | umgesetzt |
 | Sperrliste nur als HMAC-SHA256 mit eigenem Vault-Schlüssel `fermata_blocklist_key`; Ausweisnummer und Name werden nie gespeichert | `safety.blocklist_hash`, `app.verification_record_hashes` | umgesetzt |
 | IP-Adressen nur als HMAC mit Tagessalz; Salze nach 2 Tagen gelöscht | `ops.daily_hash`, `api.waitlist_cleanup` | umgesetzt |
-| Links in Mails: nur SHA-256-Hash des Schlüssels gespeichert (Warteliste, Kündigung/Widerruf ohne Anmeldung, „Abend teilen“ mit 192 Bit); Statuslink im URL-Fragment (nicht in Server-Logs); Bestätigungslink der Lokale signiert (`VENUE_LINK_SECRET`) | `20261003000100`, `…000630`, `…000710`, `venue-confirm` | umgesetzt |
+| Links in Mails: nur SHA-256-Hash des Schlüssels gespeichert (Warteliste, Kündigung/Widerruf ohne Anmeldung, „Abend teilen“ mit 192 Bit); Statuslink, „Abend teilen“ (`/teilen#t=…`) und Lokal-Bestätigung (`/lokal/bestaetigen#t=…`) tragen das Token im URL-Fragment (nicht in Server-Logs, nicht im Referrer); Bestätigungslink der Lokale signiert (`VENUE_LINK_SECRET`) | `20261003000100`, `…000630`, `…000710`, `…000903`, `venue-confirm`, `trust-view` | umgesetzt |
+| Stripe-Ereignisse ohne Karten-, Adress-, Namens-, E-Mail- und Rechnungslink-Felder gespeichert (Function und Datenbank entfernen dieselbe Liste) | `_shared/stripe/events.ts` `DROP_KEYS`, `billing.stripe_strip_personal` (`…000905`) | umgesetzt |
 | Push-Inhalte Ende-zu-Ende verschlüsselt (RFC 8291, VAPID RFC 8292) | `supabase/functions/_shared/push` | umgesetzt |
 | E-Mail der Warteliste im Konto nur als SHA-256 (`app.accounts.waitlist_email_hash`) | M2 | umgesetzt; Hinweis: ungesalzener Hash einer E-Mail ist nur schwach pseudonym |
 | Auswahl-LLM erhält keine Namen, PLZ, IDs, Art. 9; Entfernung gerundet | `services/matcher` | umgesetzt |
@@ -62,7 +66,9 @@
 | Maßnahme | Umsetzung | Status |
 |---|---|---|
 | **Audit-Protokoll** aller Admin-Handlungen und Einsichten (Konten, Meldungen, Vorschläge, Polizeivorlage, Einstellungen), nur anhängen | `ops.audit_log` + Trigger `audit_log_append_only`; `ops.app_settings_history` | umgesetzt |
-| Tabellen nur zum Anhängen: Einwilligungen, Abend-Verlauf, Kontingent-Buch, Vertragserklärungen (Art, Zeit, Inhalt) | Trigger `ops.forbid_change` | umgesetzt |
+| Tabellen nur zum Anhängen: Einwilligungen, Abend-Verlauf, Kontingent-Buch, Vertragserklärungen (Art, Zeit, Inhalt) | Trigger `ops.forbid_change`; Kontingent-Buch `billing.ledger_append_only` (erlaubt nur, dass der Abend- bzw. Zeitraum-Bezug bei einer Kontolöschung leer wird) | umgesetzt |
+| Bestellung nur mit ausdrücklichem Verlangen auf Leistungsbeginn (`start_request: true`); Wortlaut und Version werden mit der Bestellung gespeichert; Bestätigungsmail enthält Widerrufsbelehrung und Muster-Formular | `billing.record_order`, `billing-checkout` (`…000901`), Test `901_billing_start_request` | umgesetzt |
+| Rechtstexte in der Datenbank genau wie in `docs/recht` (Fassungen werden nie geändert, nur neu angelegt) | `ops.legal_documents` (`…000900`), `_shared/legal/legal_docs.test.ts` | umgesetzt |
 | Zustandsautomat für Abende; direkte Änderung des Zustands abgelehnt | `app.evening_transition`, `app.guard_evening_state` | umgesetzt |
 | Eingaben in der Datenbank geprüft (Formate, Grenzen), Fehler mit fester Kennung | alle `api.*` | umgesetzt |
 | Interne Aufrufe nur mit Geheimnis, Vergleich in konstanter Zeit (`FERMATA_INTERNAL_SECRET`, `NOTIFY_DISPATCH_SECRET`, `INTERVIEW_AGENT_SECRET` ≥ 32 Zeichen) | `_shared/crypto.ts`, `interview-agent` | umgesetzt |
@@ -94,11 +100,12 @@
 | Schriften selbst gehostet; keine Anfragen an Dritte aus dem Browser (Ausnahmen: Stripe beim Bezahlen, Didit, LiveKit) | `packages/brand`, CSP | umgesetzt |
 | **Kein Rohaudio**: LiveKit `record=False`, kein Egress; Test prüft, dass keine Dateien entstehen | `services/viola` (Hauptzweig) | umgesetzt |
 | Transkripte 30 Tage, Art.-9-Sätze ersetzt | `ops.purge_transcripts`, `interview.redact_art9_in_transcripts` | umgesetzt |
-| Löschjobs (14 pg_cron-Jobs, davon 5 mit Löschwirkung) | [`docs/DATA.md`](../DATA.md) Abschnitt 6 | umgesetzt |
-| Sparsame Voreinstellungen: Straße nicht abgefragt, Orientierung freiwillig, Erkennungsfoto nicht gebaut (B7), Kontakte nur in der App | Einstellungen | umgesetzt |
+| Löschjobs (15 pg_cron-Jobs, davon 6 mit Löschwirkung; neu `fermata-retention` für Meldungen, Hinweise, Sicherheits-Mails, Stripe-Ereignisse, Vertragsanfragen, Vertragshandlungen, Versandprotokoll, Zeitfenster, Entwürfe, Scores, angenommene Einladungen, Auth-Protokolle) | [`docs/DATA.md`](../DATA.md) Abschnitt 6, `ops.apply_retention` (`…000905`), Test `905_retention` | umgesetzt; Fristen als Einstellungen `retention.*` (Platzhalter C11) |
+| Kontolöschung: offene Abende vorher abgesagt (Gegenüber und Lokal neutral informiert), Stripe-Abo sofort beendet, Fehler als Hinweis an Benn | `ops.account_deletion_prepare`, `account-delete` (`…000904`), Tests `904_account_deletion`, `account-delete/handler.test.ts` | umgesetzt |
+| Sparsame Voreinstellungen: Straße nicht abgefragt, Orientierung freiwillig, Erkennungsfoto nicht gebaut (B7), Kontakte nur in der App; Einwilligung `art9_health` wird in Phase 1 nicht angeboten | Einstellungen, `account.consents_not_offered` | umgesetzt |
 | Sicherheits-Hinweise ohne Freitext; Mails an Benn ohne Namen | `api.agent_flag_safety`, `safety.mail_queue` | umgesetzt |
 | Viola in Produktion: keine Attrappen, nur EU-Wege | `services/viola/src/viola/config.py` | umgesetzt |
-| Auswahl-Job in Produktion: Attrappen verweigern | – | **TODO** (Standard `fake`) |
+| Auswahl-Job in Produktion: Attrappen verweigern (auch, wenn die Datenbank ihre Umgebung nicht nennen kann) | `services/matcher/src/fermata_matcher/config.py` (`ensure_production_safe`), `runner.py`, `cli.py` (Ausgang 3); Test `tests/test_production_guard.py` | umgesetzt |
 
 ## 5. Verfahren zur regelmäßigen Überprüfung
 
@@ -124,9 +131,11 @@
 
 ## Offene Punkte für Benn/Anwalt
 
-1. Edge Functions mit eigener, enger Login-Rolle (statt `postgres`).
-2. Transkript-Einsicht mit Audit bauen.
-3. Auswahl-Job: Attrappen in Produktion verweigern.
+1. Edge Functions: Rolle `fermata_edge` ist gebaut – Login-Rolle `fermata_edge_login` im gehosteten Projekt anlegen
+   und `FERMATA_DB_URL`/`FERMATA_DB_ROLE` setzen (Runbook Abschnitt 5).
+2. ~~Transkript-Einsicht mit Audit bauen~~ – erledigt (`api.admin_safety_transcript`).
+3. ~~Auswahl-Job: Attrappen in Produktion verweigern~~ – erledigt.
 4. Zwei-Faktor für alle Anbieter-Konten, Wiederherstellungstest, Überwachung einrichten.
 5. GraphQL-Schnittstelle im Supabase-Projekt prüfen/abschalten.
 6. Zertifikate der Anbieter ablegen; jährliche Prüfung mit dem Datenschutzbeauftragten.
+7. Höchstdauer für das Audit-Protokoll festlegen (Löschkonzept); bis dahin keine automatische Löschung.

@@ -5,9 +5,14 @@
 > (Datenkarte: [`docs/DATA.md`](../DATA.md)). Platzhalter stehen in `[[doppelten eckigen Klammern]]`.
 > Diese Erklärung gilt für Mitglieder (Web-App, Gespräch, Abende, Mitgliedschaft). Für die Landingpage gilt
 > [datenschutzerklaerung-landing.md](datenschutzerklaerung-landing.md).
+> Der Teil zwischen `<!-- db … -->` und `<!-- /db -->` steht (in App-Markdown umgewandelt: Tabellen als Listen, Links
+> als Text) in `ops.legal_documents` (Art `datenschutz`, Fassung `2026-10-03-entwurf`, Migration
+> `20261003000900_legal_documents.sql`); ein Deno-Test prüft die Übereinstimmung. Stand der Löschfristen: Härtung
+> (`20261003000905_retention.sql`, [loeschkonzept.md](loeschkonzept.md)).
 
 ---
 
+<!-- db kind="datenschutz" version="2026-10-03-entwurf" title="Datenschutzerklärung" -->
 ## 1. Wer verantwortlich ist
 
 [[Vor- und Nachname oder Firma]]
@@ -23,7 +28,8 @@ E-Mail: [[datenschutz@… (Frage A7)]] · Telefon: [[… (Frage A7)]]
 - Alle Daten liegen in einer Datenbank in **Frankfurt am Main**. Wir verkaufen keine Daten, zeigen keine Werbung und
   nutzen keine Analyse- oder Werbe-Cookies.
 - **Viola ist eine künstliche Intelligenz**, kein Mensch. Ihre Stimme wird nicht aufgezeichnet. Der Text des
-  Gesprächs wird nach **30 Tagen** gelöscht.
+  Gesprächs wird nach **30 Tagen** gelöscht. Was Sie im Gespräch sagen, verarbeiten Spracherkennung und Sprachmodell
+  live (Abschnitt 9).
 - Vorschläge für einen Abend berechnet ein Programm mit Hilfe eines Sprachmodells. **Jeden Vorschlag prüft und
   gibt ein Mensch frei.** Besonders geschützte Angaben (Geschlecht, Orientierung, Religion, Gesundheit) sieht das
   Sprachmodell der Auswahl nie.
@@ -65,7 +71,10 @@ Warteliste kamen, übernehmen wir Ihren Gründungsstatus und vermerken die Einla
 - **Zweck und Grundlage:** Durchführung des Nutzungsvertrags (Art. 6 Abs. 1 lit. b DSGVO); Schutz des Kontos
   (Art. 6 Abs. 1 lit. f DSGVO).
 - **Dauer:** bis zur Löschung Ihres Kontos. Nehmen Sie eine Einladung nicht innerhalb von 7 Tagen an, löschen wir das
-  vorbereitete Konto automatisch.
+  vorbereitete Konto automatisch. Sobald Sie die Einladung angenommen haben, löschen wir Ihren Eintrag auf der
+  Warteliste; Ihr Gründungsstatus steht dann in Ihrem Konto.
+- **Anmeldeprotokolle:** Unser Anmeldedienst protokolliert Anmeldungen mit IP-Adresse. Diese Einträge löschen wir
+  nach 30 Tagen [[Frist bestätigen]].
 
 ## 5. Einwilligungen und deren Nachweis
 
@@ -115,10 +124,10 @@ Wunsch „gleiche Religion“ angeben. Grundlage: ausdrückliche Einwilligung (A
 7.1; die Auswahl erhält nur „passt“ oder „passt nicht“, und nur dann, wenn eine der beiden Personen gleiche Religion
 verlangt. Widerruf: sofortige Löschung.
 
-### 7.3 Gesundheit (freiwillig)
+### 7.3 Gesundheit
 
-[[Derzeit gibt es in der App keine Eingabe für Gesundheitsangaben (siehe Offene Punkte). Abschnitt streichen oder
-nach Entscheidung ausfüllen.]]
+Wir fragen in der App **keine Gesundheitsangaben** ab und speichern keine. Was Sie im Gespräch von sich aus dazu
+erzählen, behandeln wir wie in 7.4 beschrieben.
 
 ### 7.4 Was Sie im Gespräch von sich aus erzählen
 
@@ -184,7 +193,8 @@ statt zu sprechen auch schreiben.
 | Ihre Stimme (Audio) | **nirgends** | – |
 | Text des Gesprächs (Ihre und Violas Beiträge), geschützte Angaben ersetzt | Datenbank Frankfurt | **30 Tage**, dann automatisch gelöscht; bei Widerruf der Einwilligung sofort |
 | Ablauf des Gesprächs (Art, Dauer, Zeitpunkt des KI-Hinweises, Ende-Grund) | Datenbank | bis zur Löschung Ihres Kontos |
-| Entwurf und bestätigte Zusammenfassung, daraus abgeleitetes Profil (Persönlichkeit, Werte, Wünsche, Ausschlüsse, Lebensumstände, Fahrbereitschaft) | Datenbank | bis zur Löschung Ihres Kontos; Sie können die Zusammenfassung jederzeit korrigieren |
+| Entwurf der Zusammenfassung | Datenbank | 30 Tage nach Bestätigung, Korrektur, Verwerfen oder Ende des Gesprächs, dann geleert |
+| Bestätigte Zusammenfassung, daraus abgeleitetes Profil (Persönlichkeit, Werte, Wünsche, Ausschlüsse, Lebensumstände, Fahrbereitschaft) | Datenbank | bis zur Löschung Ihres Kontos; Sie können die Zusammenfassung jederzeit korrigieren |
 | Kosten und Antwortzeiten des Gesprächs (ohne Inhalte) | Datenbank | dauerhaft, nach Löschung Ihres Kontos ohne Bezug zu Ihnen |
 | Hinweis auf eine mögliche Gefahr (Art des Hinweises, keine Zitate) | Datenbank, nur für die Sicherheitsprüfung | siehe Abschnitt 14 |
 
@@ -193,7 +203,10 @@ schlägt eine Zusammenfassung vor. **Sie lesen sie und bestätigen, korrigieren 
 bestätigte Fassung nutzen wir für die Auswahl.
 
 **Sicherheit im Gespräch:** Erkennt Viola Hinweise auf eine Krise, auf Minderjährigkeit, Gewalt oder Belästigung,
-nennt sie Hilfsangebote, beendet das Gespräch, wenn nötig, und hinterlässt uns einen Hinweis ohne Freitext.
+nennt sie Hilfsangebote, beendet das Gespräch, wenn nötig, und hinterlässt uns einen Hinweis ohne Freitext. Den
+Gesprächstext liest bei Fermata nur [[Benn]] und nur, solange zu Ihrem Konto ein offener Sicherheitshinweis oder eine
+offene Meldung besteht; dafür ist eine Zwei-Faktor-Anmeldung und eine schriftliche Begründung nötig, und jede
+Einsicht wird protokolliert (ohne den Inhalt).
 
 **Grundlage:** Ihre Einwilligung „Gespräch mit Viola“ (Art. 6 Abs. 1 lit. a DSGVO) [[und für in Abschnitt 7.4
 genannte Inhalte Art. 9 Abs. 2 lit. a]]; das bestätigte Profil: Vertrag (Art. 6 Abs. 1 lit. b), weil es für die
@@ -242,27 +255,29 @@ darlegen und eine Erklärung erhalten, warum Sie (noch) keinen Vorschlag bekomme
 
 **Grundlage:** Art. 6 Abs. 1 lit. b DSGVO; für die Ja/Nein-Prüfung zu Geschlecht und Religion Ihre Einwilligung nach
 Art. 9 Abs. 2 lit. a.
-**Dauer:** Teilwerte der Bewertung 12 Monate; Bericht je Lauf (Summen, keine Einzelpersonen) dauerhaft; Ihr
-Vorschlag bis zur Löschung Ihres Kontos oder des Kontos Ihres Gegenübers.
+**Dauer:** Teilwerte, Gesamtbewertung und Prüfnotizen der Bewertung 12 Monate; Bericht je Lauf (Summen, keine
+Einzelpersonen) dauerhaft; Ihr Vorschlag (ohne Bewertung) bis zur Löschung Ihres Kontos oder des Kontos Ihres
+Gegenübers.
 
 ## 11. Abende
 
 | Schritt | Welche Daten | Wer sieht was |
 |---|---|---|
-| Zeitenabfrage | Ihre freien Zeitfenster je Zeitraum | nur Sie und die Auswahl |
+| Zeitenabfrage | Ihre freien Zeitfenster je Zeitraum | nur Sie und die Auswahl; gelöscht 30 Tage nach Ende des Zeitraums |
 | Vorschlag und Terminabstimmung | Lokal, Uhrzeiten, Ihre Wunschzeiten, Fristen | Sie beide; Ihr Gegenüber sieht Ihren **Vornamen** und den Text „Warum Sie beide“ |
 | Reservierung | Datum, Uhrzeit, Name „Fermata“, 4-stelliger Tisch-Code, 2 Personen | das Lokal – **nie Ihr Name oder Ihre Kontaktdaten** |
 | Finde-Fenster (15 Minuten vor bis 45 Minuten nach Beginn) | Tisch-Code, Vorname, freiwilliges Erkennungszeichen (z. B. „dunkelblauer Schal“) | Ihr Gegenüber, nur in diesem Zeitfenster; das Erkennungszeichen löschen wir danach |
 | Check-in 30 Minuten nach Beginn | „alles gut“, „unsicher“ oder „Hilfe“ | Fermata; bei „Hilfe“ sofortige Nachricht an [[Benn/Sicherheitskontakt]] |
 | Abend teilen | ein Link für eine Vertrauensperson mit Lokal, Adresse, Uhrzeit, Ihrem Vornamen | die Person, der Sie den Link geben; nichts über Ihr Gegenüber; ungültig 24 Stunden nach Beginn oder wenn Sie ihn zurückziehen |
 | Rückmeldung am nächsten Tag | war ich da, war das Gegenüber da, sicher gefühlt, Bewertungen, Notiz, Kontakt ja/nein | Fermata; **nie Ihr Gegenüber** |
-| Kontakttausch | E-Mail und/oder Telefon, nur wenn Sie **beide** „Ja“ sagen | Ihr Gegenüber, nur in der App, nie per E-Mail; ein „Nein“ sieht niemand |
+| Kontakttausch | E-Mail und/oder Telefon, nur wenn Sie **beide** „Ja“ sagen | Ihr Gegenüber, nur in der App, nie per E-Mail; ein „Nein“ sieht niemand. Nach einem Widerruf zeigt die App Ihre Daten nicht mehr an; was Ihr Gegenüber schon notiert hat, können wir nicht zurückholen |
 | Blockieren | wer wen blockiert | niemand außer Ihnen und der Auswahl |
 
 **Grundlage:** Vertrag (Art. 6 Abs. 1 lit. b); Check-in und Hilfe: Art. 6 Abs. 1 lit. d und f; Kontakttausch: Ihre
 Einwilligung „Kontakt teilen“ (Art. 6 Abs. 1 lit. a), die Sie für jeden Abend durch Ihr „Ja“ bestätigen.
-**Dauer:** bis zur Löschung Ihres Kontos. Löscht Ihr Gegenüber sein Konto, entfällt auch der gemeinsame Abend samt
-Rückmeldungen [[Benn/Anwalt: so lassen?]].
+**Dauer:** bis zur Löschung Ihres Kontos. Löscht Ihr Gegenüber sein Konto, sagen wir offene Abende ab (Sie erhalten
+eine neutrale Nachricht und Ihren Abend zurück), und der gemeinsame Abend entfällt samt Rückmeldungen [[Benn/Anwalt:
+so lassen?]].
 
 **Partner-Lokale** erhalten von uns keine Daten über Sie außer der Reservierung oben. Was Sie im Lokal bestellen und
 bezahlen, regelt das Lokal selbst.
@@ -277,7 +292,8 @@ bezahlen, regelt das Lokal selbst.
   der Dienst sieht nur die Adresse Ihres Abos und den Zeitpunkt. Die Texte sind kurz und enthalten keine Namen.
   Zwischen 22 und 8 Uhr schicken wir keine Mitteilungen außer zur Sicherheit.
 - **Protokoll:** Wir speichern, welche Nachricht wann über welchen Weg verschickt wurde – ohne Inhalt und ohne
-  Adresse. [[Dauer festlegen, Vorschlag 12 Monate]]
+  Adresse – für 12 Monate [[Frist bestätigen]]. Sicherheits-Mails löschen wir 30 Tage nach dem Versand aus unserem
+  Ausgang.
 - **Grundlage:** Vertrag (Art. 6 Abs. 1 lit. b); Mitteilungen: Einwilligung (Art. 6 Abs. 1 lit. a, § 25 Abs. 1
   TDDDG). Widerruf: Wir löschen Ihre Push-Abos sofort.
 
@@ -291,13 +307,24 @@ Mitgliedschaft abschließen.
   Kennungen von Kunde, Abo und Rechnung bei Stripe.
 - **Bei Stripe** (Stripe Payments Europe Ltd., Dublin, Irland): Ihre Zahlungsdaten geben Sie direkt bei Stripe ein;
   sie erreichen Fermata nie. Stripe erhält von uns Ihre E-Mail-Adresse und eine interne Kennung. Nachrichten von
-  Stripe an uns speichern wir ohne Karten-, Adress-, Telefon- und Namensangaben. Stripe verarbeitet Daten teilweise
+  Stripe an uns speichern wir ohne Karten-, Adress-, Telefon-, Namens- und E-Mail-Angaben und ohne Rechnungslinks und
+  löschen sie nach 13 Monaten [[Frist bestätigen]]. Stripe verarbeitet Daten teilweise
   in eigener Verantwortung (zum Beispiel zur Betrugsvorbeugung) und kann Daten an Stripe, Inc. (USA) übermitteln
   [[Grundlage und Datenschutzhinweise von Stripe verlinken]].
 - **Grundlage:** Vertrag (Art. 6 Abs. 1 lit. b); Aufbewahrung von Vertrags- und Buchungsunterlagen: gesetzliche
   Pflicht (Art. 6 Abs. 1 lit. c i. V. m. § 257 HGB, § 147 AO).
-- **Dauer:** bis zur Löschung Ihres Kontos; Unterlagen zu Bestellung, Kündigung und Widerruf
-  [[6 Jahre für Geschäftsbriefe, 8 Jahre für Buchungsbelege – Steuerberatung bestätigen]] auch danach, ohne Verknüpfung mit Ihrem Konto.
+- **Bestellung und Widerrufsrecht:** Bei der Bestellung verlangen Sie ausdrücklich, dass wir vor Ende der
+  Widerrufsfrist beginnen. Diese Erklärung speichern wir mit Wortlaut, Fassung und Zeitpunkt als Nachweis.
+- **Konto löschen:** Löschen Sie Ihr Konto während einer laufenden Mitgliedschaft, beenden wir das Abo bei Stripe
+  sofort und halten das Ende des Vertrags fest (Vertragsnummer, Zeitpunkt, Grund „Konto gelöscht“, ohne Name und
+  E-Mail-Adresse).
+- **Dauer:** bis zur Löschung Ihres Kontos. Unterlagen zu Bestellung, Kündigung und Widerruf (bei Kündigung und
+  Widerruf mit dem Namen und der Kontakt-E-Mail, die Sie im Formular angegeben haben) bewahren wir auch danach auf,
+  ohne Verknüpfung mit Ihrem Konto, weil wir den Eingang und die Wirkung dieser Erklärungen nachweisen müssen
+  (Art. 6 Abs. 1 lit. c und f DSGVO): [[3 Jahre ab Ende des Jahres, in dem der Vertrag endete (regelmäßige
+  Verjährung, § 195 BGB); soweit es Handels- oder Geschäftsbriefe bzw. Buchungsbelege sind, 6 bzw. 8 Jahre (§ 257
+  HGB, § 147 AO) – Steuerberatung bestätigen]]. Anfragen zur Kündigung oder zum Widerruf ohne Anmeldung löschen wir 30
+  Tage nach Bestätigung oder Ablauf des Links.
 
 ## 14. Sicherheit: Meldungen, Sperren, Sperrliste
 
@@ -317,14 +344,17 @@ Mitgliedschaft abschließen.
 - **Grundlage:** Schutz aller Mitglieder (Art. 6 Abs. 1 lit. f), Nutzungsbedingungen (lit. b); bei Gefahr für Leib
   und Leben lit. d. Meldungen können besonders geschützte Angaben oder Angaben zu Straftaten enthalten
   [[Anwalt: Art. 9 Abs. 2 lit. f, Art. 10 DSGVO]].
-- **Dauer:** [[Vorschlag aus dem Löschkonzept: Meldungen 3 Jahre nach Abschluss; Sperren bis zum Ende bzw. zur
-  Kontolöschung; Sperrliste solange der Ausschluss gilt]].
+- **Dauer:** abgeschlossene Meldungen 24 Monate nach der Entscheidung, solange keine Sperre aus dieser Meldung mehr
+  gilt; geprüfte Sicherheitshinweise 24 Monate nach der Prüfung [[beide Fristen bestätigen]]; Sperren bis zum Ende
+  bzw. zur Kontolöschung; Sperrliste, solange der Ausschluss gilt.
 
 ## 15. Verwaltung, Protokolle, Sicherungen
 
 - Verwaltungsaufgaben erledigt nur [[Benn]] mit Zwei-Faktor-Anmeldung. Jede Freigabe, jede Einsicht in eine Meldung
   oder ein Konto und jede Änderung von Einstellungen protokollieren wir (Handlung, Zeit, handelnde Person).
-  Grundlage: Art. 6 Abs. 1 lit. c und f i. V. m. Art. 5 Abs. 2, Art. 32 DSGVO. Dauer: [[festlegen]].
+  Grundlage: Art. 6 Abs. 1 lit. c und f i. V. m. Art. 5 Abs. 2, Art. 32 DSGVO. Das Protokoll enthält keine Inhalte
+  (keine Gesprächstexte, keine Schilderungen), nur Kennungen. Dauer: [[festlegen; heute dauerhaft, weil das
+  Protokoll nur angehängt und nie geändert werden kann]].
 - Server-Protokolle (Supabase, Vercel, Amazon Web Services) enthalten technische Daten wie IP-Adressen. Dauer:
   [[laut Verträgen eintragen]].
 - Die Datenbank wird regelmäßig gesichert [[Tarif, Dauer]]. Gelöschte Daten verschwinden aus den Sicherungen mit
@@ -367,13 +397,20 @@ Sitz in den USA oder nutzen Rechenzentren außerhalb der EU:
 | Konto, Angaben, Profil, Einwilligungen, Abende | bis zur Löschung Ihres Kontos |
 | Besonders geschützte Angaben | bis zum Widerruf der Einwilligung oder zur Kontolöschung |
 | Gesprächstext | 30 Tage |
+| Entwurf der Zusammenfassung | 30 Tage nach Bestätigung oder Ende des Gesprächs |
+| Freie Zeitfenster | 30 Tage nach Ende des Zeitraums |
+| Wartelisten-Eintrag | bis Sie die Einladung in die App angenommen haben |
+| Anmeldeprotokolle mit IP-Adresse | 30 Tage |
 | Stimme | wird nicht gespeichert |
 | Ausweisbilder und -video | nur bei Didit, gelöscht direkt nach dem Ergebnis |
-| Teilwerte der Auswahl | 12 Monate |
+| Teilwerte, Gesamtbewertung und Prüfnotizen der Auswahl | 12 Monate |
 | Erkennungszeichen | bis zum Ende des Finde-Fensters |
 | Erledigte Nachrichten in der Warteschlange | 90 Tage |
-| Vertragsunterlagen | [[6 bzw. 8 Jahre]] |
-| Meldungen, Sanktionen, Sperrliste | siehe Abschnitt 14 |
+| Versandprotokoll (ohne Inhalt) | 12 Monate |
+| Sicherheits-Mails im Ausgang | 30 Tage nach Versand |
+| Nachrichten von Stripe (gekürzt) | 13 Monate |
+| Vertragsunterlagen | [[3 Jahre bzw. 6 oder 8 Jahre, siehe Abschnitt 13]] |
+| Meldungen, Hinweise, Sanktionen, Sperrliste | siehe Abschnitt 14 |
 
 Das vollständige Löschkonzept: [loeschkonzept.md](loeschkonzept.md).
 
@@ -384,7 +421,7 @@ Das vollständige Löschkonzept: [loeschkonzept.md](loeschkonzept.md).
 - **Berichtigung** (Art. 16): Angaben ändern Sie in der App; Ihre Zusammenfassung korrigieren Sie jederzeit. Name und
   Geburtsdatum nach der Ausweisprüfung ändern wir auf Anfrage.
 - **Löschung** (Art. 17): In der App unter „Konto → Konto löschen“. Wir löschen alles, was nicht aus gesetzlichen
-  Gründen aufbewahrt werden muss.
+  Gründen aufbewahrt werden muss. Eine laufende Mitgliedschaft endet dabei sofort, offene Abende sagen wir ab.
 - **Einschränkung** (Art. 18) und **Widerspruch** (Art. 21) gegen Verarbeitungen auf Grundlage berechtigter
   Interessen: per E-Mail an [[Kontakt]].
 - **Widerruf von Einwilligungen** (Art. 7 Abs. 3): jederzeit einzeln unter „Konto → Einwilligungen“, mit Wirkung
@@ -404,7 +441,8 @@ Orientierung, Telefonnummer, Mitteilungen und Kontakttausch sind freiwillig.
 Wir passen diese Erklärung an, wenn sich Fermata ändert. Die jeweils gültige Fassung steht in der App unter
 „Rechtliches“. Ändert sich eine Einwilligung, fragen wir Sie neu.
 
-*Entwurf vom 03.10.2026.*
+*Entwurf vom 03.10.2026. Der verbindliche Text folgt nach rechtlicher Prüfung.*
+<!-- /db -->
 
 ---
 
@@ -419,9 +457,10 @@ Wir passen diese Erklärung an, wenn sich Fermata ändert. Die jeweils gültige 
 4. **LiveKit-Weg** (B3) und **Stimme** (B4) eintragen.
 5. **Art. 22:** Einordnung des „kein Vorschlag“-Falls und der Hinweis auf die Verlängerungsregel prüfen.
 6. **Fairness-Statistik** als Zweck in die Einwilligung `art9_profile` aufnehmen.
-7. **Gesundheit:** Abschnitt 7.3 streichen oder Funktion bauen (heute keine Eingabe im Code).
+7. **Gesundheit:** in Phase 1 nicht angeboten (Abschnitt 7.3, PLATZHALTER C10).
 8. **Meldungen:** Art. 9 Abs. 2 lit. f und Art. 10 DSGVO für Schilderungen von Übergriffen prüfen.
-9. **Löschfristen** für Meldungen, Protokolle, Vertragsunterlagen festlegen (Löschkonzept) und hier eintragen.
+9. **Löschfristen** (Härtung: als Einstellungen `retention.*` gebaut, Werte mit PLATZHALTER) bestätigen; Frist für
+   das Admin-Protokoll festlegen.
 10. Drittland-Grundlage je Anbieter (DPF-Zertifizierung prüfen) und AV-Verträge (av-liste.md).
 11. Local Storage für das Farbschema: § 25 Abs. 2 Nr. 2 TDDDG ausreichend?
 12. Quellenangabe der PLZ-Mittelpunkte aufnehmen (Abschnitt 6) – Pflicht nach CC BY 4.0.

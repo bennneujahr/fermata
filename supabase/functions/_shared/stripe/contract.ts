@@ -14,9 +14,8 @@ import { isEmail, LABELS, rpc, str } from "./support.ts";
 type Obj = Record<string, any>;
 
 export async function userContact(sql: Sql, userId: string): Promise<{ email?: string; firstName?: string; name?: string }> {
-  const [row] = await sql`
-    select u.email::text as email, f.first_name, trim(coalesce(f.first_name, '') || ' ' || coalesce(f.last_name, '')) as name
-    from auth.users u left join private.account_facts f on f.user_id = u.id where u.id = ${userId}::uuid`;
+  // Über eine security-definer-Funktion, damit die Functions mit der engen Rolle service_role auskommen.
+  const [row] = await sql`select c.email, c.first_name, c.name from billing.member_contact(${userId}::uuid) c`;
   return { email: row?.email ?? undefined, firstName: row?.first_name ?? undefined, name: row?.name || undefined };
 }
 

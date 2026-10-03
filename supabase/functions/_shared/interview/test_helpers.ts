@@ -1,7 +1,7 @@
 // Nur für Tests der Interview-Functions: Verbindung zur Test-Datenbank, Testpersonen, Tokens.
 // Erwartet eine migrierte Test-Datenbank (scripts/db.sh migrate), Standard-Port 54352 (Bereich Viola).
 import postgres from "postgres";
-import { setDb, type Sql } from "../db.ts";
+import { connect, dbRole, setDb, type Sql } from "../db.ts";
 import { signHs256 } from "./jwt.ts";
 
 export const JWT_SECRET = "super-secret-jwt-token-with-at-least-32-characters-long";
@@ -21,19 +21,24 @@ export function setTestEnv(): void {
 }
 
 let sqlInstance: Sql | undefined;
+let fnInstance: Sql | undefined;
 export function testDb(): Sql {
   if (!sqlInstance) {
     const url = Deno.env.get("SUPABASE_DB_URL") ??
       `postgres://postgres:postgres@localhost:${Deno.env.get("DB_PORT") ?? "54352"}/postgres`;
     sqlInstance = postgres(url, { prepare: false, max: 3, onnotice: () => {} });
-    setDb(sqlInstance);
+    // Testdaten als postgres; die Functions selbst laufen wie in Produktion (FERMATA_DB_ROLE=service_role → enge Rolle).
+    fnInstance = dbRole() ? connect(url, { max: 3, applicationName: "fermata-edge-test" }) : sqlInstance;
+    setDb(fnInstance);
   }
   return sqlInstance;
 }
 
 export async function closeDb(): Promise<void> {
+  if (fnInstance && fnInstance !== sqlInstance) await fnInstance.end({ timeout: 2 });
   if (sqlInstance) await sqlInstance.end({ timeout: 2 });
   sqlInstance = undefined;
+  fnInstance = undefined;
   setDb(undefined);
 }
 

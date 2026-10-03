@@ -3,9 +3,14 @@
 > **ENTWURF – nicht rechtsverbindlich, Prüfung durch Anwalt/Datenschutzbeauftragten ausstehend.**
 > Stand: 03.10.2026. Platzhalter stehen in `[[doppelten eckigen Klammern]]`. Gilt für Landingpage und Web-App.
 > Seitenentwurf der Landingpage: `apps/landing/src/content/legal.ts` (gleiche Gliederung).
+> Der Teil zwischen den Markierungen `<!-- db … -->` und `<!-- /db -->` steht wortgleich (in App-Markdown umgewandelt)
+> in `ops.legal_documents` (Art `impressum`, Fassung `2026-10-03-entwurf`, Migration
+> `20261003000900_legal_documents.sql`); ein Deno-Test (`supabase/functions/_shared/legal/legal_docs.test.ts`) prüft
+> die Übereinstimmung.
 
 ---
 
+<!-- db kind="impressum" version="2026-10-03-entwurf" title="Impressum" -->
 ## Angaben gemäß § 5 DDG
 
 [[Vor- und Nachname, bei einer Gesellschaft: Firma und Rechtsform]]
@@ -45,6 +50,11 @@ Verbraucherschlichtungsstelle teilzunehmen.
 
 *Fassung B (Teilnahme):* Wir nehmen an Streitbeilegungsverfahren vor folgender Verbraucherschlichtungsstelle teil:
 [[Name, Anschrift und Website der Stelle, z. B. Universalschlichtungsstelle des Bundes]].
+
+*Entwurf vom 03.10.2026. Der verbindliche Text folgt nach rechtlicher Prüfung.*
+<!-- /db -->
+
+### Hinweise für Benn (nicht Teil des Impressums)
 
 Hinweis: Die Hinweispflicht nach § 36 VSBG trifft Unternehmen mit Website oder AGB; ausgenommen sind Unternehmen,
 die am 31.12. des Vorjahres höchstens 10 Personen beschäftigt haben (§ 36 Abs. 3 VSBG). Unabhängig davon gilt

@@ -3,8 +3,10 @@
 Umgebungsvariablen (siehe docs/bereiche/matcher.md):
   FERMATA_MATCHER_DB_URL     Verbindung (Login-Rolle des Jobs); Standard: Test-Datenbank auf Port 54362
   FERMATA_MATCHER_DB_ROLE    Rolle nach dem Verbinden (Standard fermata_matcher; „none“ = keine)
-  FERMATA_LLM_BACKEND        fake | bedrock | bedrock-mantle | none   (Standard fake)
-  FERMATA_EMBEDDING_BACKEND  fake | titan | none                      (Standard fake)
+  FERMATA_LLM_BACKEND        fake | bedrock | bedrock-mantle | none   (Standard fake; in Produktion nie fake)
+  FERMATA_EMBEDDING_BACKEND  fake | titan | none                      (Standard fake; in Produktion nie fake)
+  FERMATA_ENV                production | staging | local | test | ci (production sperrt Attrappen, ebenso die
+                             Datenbank, wenn ops.environment() production meldet)
   FERMATA_AWS_REGION         Standard eu-central-1
   FERMATA_LLM_MODEL_ID       überschreibt analysis.llm_model_id (z. B. für bedrock-mantle)
 """
@@ -16,8 +18,8 @@ import json
 import sys
 from typing import Any
 
-from .config import RuntimeConfig
-from .db import connect, load_settings
+from .config import ProductionGuardError, RuntimeConfig, ensure_production_safe
+from .db import connect, environment_or_none, load_settings
 from .embeddings import make_embedder
 from .llm.client import make_llm
 from .runner import RunError, Runner, RunOptions, run_report
@@ -70,6 +72,14 @@ def _print_summary(report: dict[str, Any], run_id: str, status: str, out=sys.std
 def cmd_run(args: argparse.Namespace) -> int:
     cfg = RuntimeConfig.from_env()
     conn = connect(args.db_url or cfg.db_url, None if args.role == "none" else (args.role or cfg.db_role))
+    llm_name = args.llm or cfg.llm_backend
+    emb_name = args.embeddings or cfg.embedding_backend
+    # Produktionssperre vor allem anderen (DSFA M-3): keine erfundenen Bewertungen für echte Menschen.
+    try:
+        ensure_production_safe(llm_name, emb_name, cfg.env, environment_or_none(conn))
+    except ProductionGuardError as e:
+        print(str(e), file=sys.stderr)
+        return 3
     settings = load_settings(conn)
     llm = make_llm(
         args.llm or cfg.llm_backend,
@@ -88,8 +98,9 @@ def cmd_run(args: argparse.Namespace) -> int:
             embedder=embedder,
             art9_check=args.art9_check,
             assignment_engine=args.engine,
-            llm_backend_name=args.llm or cfg.llm_backend,
-            embedding_backend_name=args.embeddings or cfg.embedding_backend,
+            llm_backend_name=llm_name,
+            embedding_backend_name=emb_name,
+            env=cfg.env,
         ),
     )
     try:

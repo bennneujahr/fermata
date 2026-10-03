@@ -2,7 +2,7 @@
 // Datenbank-Tests laufen nur, wenn SUPABASE_DB_URL (oder DATABASE_URL) gesetzt ist (Test-Datenbank aus scripts/db.sh).
 import postgres from "postgres";
 import { encodeBase64Url } from "@std/encoding";
-import { setDb, type Sql } from "../db.ts";
+import { connect, dbRole, setDb, type Sql } from "../db.ts";
 import { MemoryMailer, setMailer } from "../mail/mod.ts";
 import { setStripe, StripeClient } from "./client.ts";
 
@@ -25,7 +25,18 @@ export function setupEnv(): void {
 
 export function testSql(): Sql {
   const sql = postgres(TEST_DB_URL!, { max: 2, prepare: false, onnotice: () => {} });
-  setDb(sql);
+  // Testdaten als postgres; die Functions selbst laufen wie in Produktion (FERMATA_DB_ROLE=service_role → enge Rolle).
+  if (dbRole()) {
+    const fn = connect(TEST_DB_URL!, { max: 2, applicationName: "fermata-edge-test" });
+    setDb(fn);
+    const end = sql.end.bind(sql);
+    (sql as unknown as { end: typeof sql.end }).end = async (opts?: { timeout?: number }) => {
+      await fn.end(opts);
+      return await end(opts);
+    };
+  } else {
+    setDb(sql);
+  }
   return sql;
 }
 
@@ -155,7 +166,7 @@ export async function activateMember(
   const tag = userId.slice(0, 8);
   const tier = opts.tier ?? "andante";
   const subscriptionId = `sub_t_${tag}`, customerId = `cus_t_${tag}`, invoiceId = `in_t_${tag}`;
-  const [o] = await sql`select billing.record_order(${userId}::uuid, ${tier}, billing.order_summary(${tier}), ${customerId}, ${subscriptionId}) as r`;
+  const [o] = await sql`select billing.record_order(${userId}::uuid, ${tier}, billing.order_summary(${tier}), ${customerId}, ${subscriptionId}, 'web', true) as r`;
   await sql`select billing.apply_invoice_paid(${subscriptionId}, ${customerId}, ${invoiceId}, now(), now() + interval '28 days',
             ${opts.amountCents ?? 14900}::integer, ${opts.withPaymentIntent === false ? null : `pi_t_${tag}`})`;
   return { contractNumber: (o!.r as Record<string, string>).contract_number!, subscriptionId, customerId, invoiceId };

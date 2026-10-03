@@ -99,7 +99,7 @@ Deno.test({
           e2!.id
         }`;
         assertStringIncludes(venue[0]!.text, `Tisch-Code: ${res!.table_code}`);
-        assertMatch(venue[0]!.text, /venue-confirm\?t=/);
+        assertMatch(venue[0]!.text, /https:\/\/app\.fermata\.example\/lokal\/bestaetigen#t=/);
         assert(!/Cem|Emil|Celik|Eckert|example\.test/.test(venue[0]!.text), "Lokal erfährt keine Mitgliederdaten");
         assert(res!.venue_notified_at, "Reservierung als verschickt markiert");
 
@@ -158,6 +158,9 @@ Deno.test({
       for (const u of users) {
         await admin`select tests.create_user(${`race-${u}@example.test`}, ${u})`;
         await admin`insert into app.accounts (user_id, status) values (${u}, 'active')`;
+        // Wie bei der Kontoerstellung (M2/M6): Mitgliedschaft mit Gratis-Abend, sonst lehnt evening_confirm ab.
+        await admin`insert into billing.memberships (user_id) values (${u})`;
+        await admin`insert into billing.evening_ledger (user_id, kind, amount, note) values (${u}, 'free_grant', 1, 'Test')`;
       }
       await admin`insert into app.venues (id, name, street, postal_code, city, lat, lon, contact_email)
         values (${venueId}, 'Rennbahn-Café', 'Weg 1', '19053', 'Schwerin', 53.6, 11.4, 'race@cafe.example')`;
@@ -238,6 +241,9 @@ Deno.test({
       for (const u of users) {
         await admin`select tests.create_user(${`job-${u}@example.test`}, ${u})`;
         await admin`insert into app.accounts (user_id, status) values (${u}, 'active')`;
+        // Wie bei der Kontoerstellung (M2/M6): Mitgliedschaft mit Gratis-Abend, sonst lehnt evening_confirm ab.
+        await admin`insert into billing.memberships (user_id) values (${u})`;
+        await admin`insert into billing.evening_ledger (user_id, kind, amount, note) values (${u}, 'free_grant', 1, 'Test')`;
       }
       await admin`insert into app.match_runs (id, scheduled_for, status) values (${runId}, now(), 'approved')`;
       const [p] = await admin`insert into app.pairings (run_id, user_a, user_b, total_score, status)

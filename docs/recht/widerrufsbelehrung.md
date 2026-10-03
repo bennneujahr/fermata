@@ -6,11 +6,15 @@
 > angepasst an Fermata. [[Anwalt: Wortlaut mit der seit 19.06.2026 geltenden Fassung (Widerrufsbutton, § 356a BGB)
 > abgleichen; das Muster kann sich dadurch geändert haben.]]
 > Im Code: Edge Function `billing-withdraw`, SQL `billing.record_withdrawal` (`20261003000630_billing_contract.sql`),
-> Beschreibung `docs/bereiche/mitgliedschaft.md` Abschnitt 7. Die Datenbank kennt die Art `widerruf` in
-> `ops.legal_documents`, es gibt aber noch keinen Eintrag – nach Freigabe diesen Text dort hinterlegen.
+> Beschreibung `docs/bereiche/mitgliedschaft.md` Abschnitt 7. Der Teil zwischen `<!-- db … -->` und `<!-- /db -->`
+> steht (in App-Markdown umgewandelt) in `ops.legal_documents` (Art `widerruf`, Fassung `2026-10-03-entwurf`,
+> Migration `20261003000900_legal_documents.sql`). Die Web-App zeigt ihn unter `/rechtliches/widerruf`; die
+> Bestellbestätigung per E-Mail enthält ihn vollständig (dauerhafter Datenträger, § 312f Abs. 2 BGB). Ein Deno-Test
+> prüft die Übereinstimmung.
 
 ---
 
+<!-- db kind="widerruf" version="2026-10-03-entwurf" title="Widerrufsbelehrung und Muster-Widerrufsformular" -->
 ## Widerrufsbelehrung
 
 ### Widerrufsrecht
@@ -63,6 +67,10 @@ Höchstens zahlen Sie den bereits gezahlten Betrag. Der kostenlose erste Abend u
 Den Rest erstatten wir über Stripe auf Ihr ursprüngliches Zahlungsmittel. Bevor Sie den Widerruf bestätigen, zeigt
 Ihnen die App die Berechnung.
 
+Wertersatz fällt nur an, weil Sie bei der Bestellung ausdrücklich verlangt haben, dass wir vor Ende der
+Widerrufsfrist mit der Leistung beginnen. Den Wortlaut dieser Erklärung und den Zeitpunkt finden Sie in Ihrer
+Bestellbestätigung.
+
 ### Was bei einem Widerruf in Fermata geschieht
 
 - Ihre Mitgliedschaft endet sofort; noch nicht genutzte Abende aus der Mitgliedschaft verfallen.
@@ -89,24 +97,28 @@ Ihnen die App die Berechnung.
 
 (\*) Unzutreffendes streichen.
 
+*Entwurf vom 03.10.2026. Der verbindliche Text folgt nach rechtlicher Prüfung.*
+<!-- /db -->
+
 ---
 
 ## Wo und wann die Belehrung gezeigt wird (für Benn)
 
 | Stelle | Heute im Code | Soll |
 |---|---|---|
-| Bestellübersicht vor dem Knopf „Mitgliedschaft zahlungspflichtig abschließen“ | Kurzhinweis aus `billing.withdrawal_note` (ENTWURF) | Kurzhinweis + Link auf diese Belehrung + **Erklärung „Ich verlange, dass Fermata vor Ablauf der Widerrufsfrist beginnt“** (fehlt) |
-| Eingangsbestätigung der Bestellung (E-Mail) | Mail-Vorlage `_shared/mail/templates/billing.ts`: nur Kurzhinweis (`billing.withdrawal_note`) und Ende der Widerrufsfrist | vollständige Belehrung und Formular als Text oder Anhang (Vertragsbestätigung auf dauerhaftem Datenträger, § 312f Abs. 2 BGB) |
+| Bestellübersicht vor dem Knopf „Mitgliedschaft zahlungspflichtig abschließen“ | Kurzhinweis aus `billing.withdrawal_note` (ENTWURF), Verweis `withdrawal_policy_url` = `/rechtliches/widerruf` und die Erklärung `start_request_text` (`billing.order_summary`, `20261003000901_billing_start_request.sql`); ohne `start_request: true` lehnt `billing-checkout` die Bestellung mit 422 `start_request_required` ab | wie gebaut; Wortlaut der Erklärung vom Anwalt bestätigen |
+| Eingangsbestätigung der Bestellung (E-Mail) | `orderReceived` in `_shared/mail/templates/billing.ts`: Kurzhinweis, Ende der Widerrufsfrist, Wortlaut und Zeitpunkt der Erklärung zum Leistungsbeginn **und die vollständige Belehrung mit Muster-Formular** aus `ops.legal_documents` (Art `widerruf`) | wie gebaut |
 | Seite „Vertrag widerrufen“ | Edge Function `billing-withdraw` (Schritt 1 Vorschau, Schritt 2 Bestätigung), 14 Tage ab Bestellung (`billing.withdrawal_days`) | wie gebaut |
 | Rechtliches in der App | – | diese Belehrung |
 
 ## Offene Punkte für Benn/Anwalt
 
-1. **Ausdrückliches Verlangen** des Leistungsbeginns vor Ablauf der Widerrufsfrist wird bei der Bestellung nicht
-   abgefragt und nicht gespeichert. Ohne diese Erklärung entfällt nach § 357a Abs. 2 BGB in der Regel der
-   Wertersatz. Code-Änderung nötig (`billing.order_summary`, `billing-checkout`, `contract_actions.details`).
+1. **Ausdrückliches Verlangen** des Leistungsbeginns: seit der Härtung abgefragt und gespeichert (Satz in
+   `billing.start_request_text`, Fassung `billing.start_request_version`, Ablage in `contract_actions.details`).
+   Offen: Wortlaut bestätigen; reicht ein Pflicht-Häkchen mit diesem Satz?
 2. **Wertersatz-Methode** (B13) bestätigen, insbesondere „kurzfristig abgesagt/nicht erschienen = erbracht“.
 3. Muster an die ab 19.06.2026 geltende Fassung anpassen (Hinweis auf die Widerrufsschaltfläche).
-4. Mail-Vorlage der Bestellbestätigung um die vollständige Belehrung und das Formular ergänzen (heute nur Kurzhinweis).
+4. Die Bestellbestätigung enthält die vollständige Belehrung und das Formular als Text in der Mail (kein Anhang).
+   Reicht das als dauerhafter Datenträger?
 5. Widerrufsfrist beginnt mit Vertragsschluss: Zeitpunkt festlegen (Klick oder Eingangsbestätigung, siehe AGB § 7).
-6. Belehrung als `ops.legal_documents` (Art `widerruf`) mit Version hinterlegen.
+6. Nach Freigabe: neue Fassung in `ops.legal_documents` (Art `widerruf`) anlegen und diese Datei mitziehen.

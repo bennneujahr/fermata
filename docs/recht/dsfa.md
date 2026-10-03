@@ -5,7 +5,9 @@
 > Verantwortlich: [[Name/Firma]] · Datenschutzbeauftragter: [[Name (B15)]] – Stellungnahme nach Art. 35 Abs. 2:
 > [[ausstehend]].
 > Stand des Codes: M0, M1, M4–M7 (Branch `build/docs`); M3 Viola (Commit `e84647b`) und M2 Web-App (Merge-Commit
-> `2489e06`) im Hauptzweig `claude/dating-app-build-0uszhn`.
+> `2489e06`) im Hauptzweig `claude/dating-app-build-0uszhn`. **Nachgeführt nach der Härtung** (Branch
+> `build/hardening`, Migrationen `20261003000900` bis `…000907`): M-1 bis M-5 im Code umgesetzt (M-1 braucht noch die
+> Einrichtung der Login-Rolle im gehosteten Projekt), M-9 als Textentwurf.
 
 ---
 
@@ -21,7 +23,9 @@
 - Der Code setzt viele Maßnahmen bereits technisch um (Verschlüsselung, enge Rollen, Ja/Nein-Prüffunktionen,
   menschliche Freigabe, kein Rohaudio, Löschjobs, Sperrliste nur mit Hashes, Beziehungsprüfung bei Meldungen).
 - **Restrisiko:** nach Umsetzung der offenen Maßnahmen (Abschnitt 6) aus unserer Sicht **vertretbar**; ohne sie
-  **hoch** bei R1, R6 und R9. Eine Konsultation der Aufsichtsbehörde (Art. 36) halten wir dann nicht für nötig
+  **hoch** bei R1, R6 und R9. Seit der Härtung sind die technischen Maßnahmen M-1 bis M-5 gebaut; offen bleiben vor
+  allem Verträge (M-6), Anbieter-Einstellungen (M-7, M-8), die Prüfung der Texte (M-9) und die Einrichtung der
+  Login-Rolle `fermata_edge_login` (M-1, Runbook Abschnitt 5). Eine Konsultation der Aufsichtsbehörde (Art. 36) halten wir dann nicht für nötig
   [[DSB bewerten]].
 
 ## 1. Warum eine DSFA nötig ist
@@ -93,12 +97,12 @@ Siehe [loeschkonzept.md](loeschkonzept.md) und DATA.md Abschnitt 6 (pg_cron-Jobs
 
 | Grundsatz | Umsetzung | Nachweis im Code |
 |---|---|---|
-| Rechtsgrundlage | Einwilligungen einzeln (Art. 9: `art9_profile`, `art9_religion`, `biometrie`), Vertrag, berechtigtes Interesse für Sicherheit | `app.consents` (nur anhängen), `api.give_consent` nur aktuelle Fassung (M2) |
+| Rechtsgrundlage | Einwilligungen einzeln (Art. 9: `art9_profile`, `art9_religion`, `biometrie`, `gespraech`), Vertrag, berechtigtes Interesse für Sicherheit; `art9_health` wird in Phase 1 nicht angeboten | `app.consents` (nur anhängen), `api.give_consent` nur aktuelle Fassung und nur angebotene Arten (`account.consents_not_offered`) |
 | Zweckbindung | Art.-9-Daten nur für Ja/Nein-Prüfung und k-anonyme Fairness-Zählung; Formulardaten nie für die Auswahl | `sensitive.gender_compatible(_pairs)`, `sensitive.religion_compatible(_pairs)`, `sensitive.match_run_fairness`; `private.account_facts` ohne Recht für `fermata_matcher` |
 | Datenminimierung | keine Straße (B1), nur PLZ-Mittelpunkt, keine Ausweisbilder/-nummer, IP nur als Tages-HMAC, kein Rohaudio, Lokal erfährt keine Namen, Push ohne Namen, Mails ohne Namen des Gegenübers, Sicherheits-Hinweise ohne Freitext, Stripe-Ereignisse gekürzt | `account.collect_street = false`, `app.geo.source = plz_centroid`, `ops.verification_complete`, `ops.daily_hash`, `record=False` (Viola), `minimizeEvent` |
 | Richtigkeit | Zusammenfassung wird von der Person bestätigt/korrigiert; Name/Geburtsdatum per Ausweis geprüft | `api.interview_confirm_summary`, `facts_locked` |
-| Speicherbegrenzung | 14 pg_cron-Jobs; Transkripte 30 Tage; Teil-Scores 12 Monate; unbestätigte Warteliste 7 Tage; Drossel 24 h | DATA.md Abschnitt 6 |
-| Transparenz | Datenschutzerklärung, KI-Hinweis (gesprochen, angezeigt, schriftlich), Einwilligungstexte | `ai_notice_at`, `ops.legal_documents` |
+| Speicherbegrenzung | 15 pg_cron-Jobs (neu: `fermata-retention` mit 11 Fristen `retention.*`); Transkripte 30 Tage; Teil- und Gesamtscores 12 Monate; unbestätigte Warteliste 7 Tage, angenommene Einladung löscht den Eintrag; Drossel 24 h | DATA.md Abschnitt 6, `ops.apply_retention` |
+| Transparenz | Datenschutzerklärung, KI-Hinweis (gesprochen, angezeigt, schriftlich), Einwilligungstexte – in der Datenbank genau wie in `docs/recht` (Abgleich-Test) | `ai_notice_at`, `ops.legal_documents`, `_shared/legal/legal_docs.test.ts` |
 | Betroffenenrechte | Export als Datei, Löschung per Knopf, Widerruf je Einwilligung, Widerspruch gegen Sanktionen, menschliche Prüfung jedes Vorschlags | `api.my_export`, `account-delete`, `api.revoke_consent`, `api.appeal`, `api.admin_approve_pairing` |
 | Auftragsverarbeitung, Drittland | AV-Verträge, EU-Regionen und EU-Endpunkte gewählt | av-liste.md (Verträge noch offen) |
 
@@ -143,8 +147,8 @@ Risiko = Kombination, vor Maßnahmen („roh“) und danach („rest“).
 | Gespräch: Art.-9-Sätze nicht notiert, nicht in Zusammenfassung/Profil, im Transkript ersetzt; Datenbank lehnt Treffer erneut ab | `app.art9_categories`, `api.agent_save_*` (`…000310`) | umgesetzt |
 | Mitglieder sehen von Vorschlägen nur ausgewählte Spalten; Gegenüber nie Nachname, Kontakt (vor beidseitigem Ja), Rückmeldung, Scores | Spaltenrechte `app.pairings`, `api.evening_detail` | umgesetzt |
 | Push ohne Namen, Mails ohne Namen des Gegenübers, Lokal ohne Namen | `notify-dispatch`, Vorlagen | umgesetzt |
-| Edge Functions verbinden sich als `postgres` (Mitglied von `fermata_sensitive`, Zugriff auf Vault) | `_shared/db.ts` | **offen:** eigene Login-Rolle ohne Art.-9-Zugriff für alle Functions außer Speichern/Export |
-| Einwilligungstext: Rückschluss des Gegenübers aus einem Vorschlag offen benennen | einwilligungen.md | **offen** |
+| Edge Functions mit enger Rolle `fermata_edge` (`FERMATA_DB_ROLE`): kein `sensitive.*`, kein Vault, kein `auth`; Speichern/Export laufen über security-definer-Funktionen | `_shared/db.ts`, `20261003000907_edge_role.sql`, Tests `907_edge_role`, `_shared/db.test.ts`, ganze Deno-Testreihe mit `FERMATA_DB_ROLE=fermata_edge` | **umgesetzt im Code**; Einrichtung der Login-Rolle im gehosteten Projekt **offen** (Runbook Abschnitt 5) |
+| Einwilligungstext: Rückschluss des Gegenübers aus einem Vorschlag offen benennen | einwilligungen.md (`art9_profile`, Fassung `2026-10-03-m8-entwurf`) | Entwurf, Prüfung Anwalt |
 
 **Rest:** mittel → nach offener Maßnahme gering–mittel. Rückschluss durch das Gegenüber lässt sich bei einer
 Dating-App nicht vermeiden; Transparenz ist die Maßnahme.
@@ -160,7 +164,7 @@ Dating-App nicht vermeiden; Transparenz ist die Maßnahme.
 | LLM-Ablehnung oder Fehler → nur Regeln, markiert | Auswahl-Job | umgesetzt |
 | Verlängerungsregel: kein Abend ohne eigenes Zutun → Zeitraum kostenlos verlängert | `billing.apply_extension_rule` | umgesetzt (B12 offen) |
 | Erklärung und menschliche Prüfung auf Anfrage („warum kein Vorschlag?“), Bericht nennt Gründe je Person (`match_run_members.unmatched_reason`) | Datenschutzerklärung Abschnitt 10 | Prozess **offen** (Runbook) |
-| Matcher-Attrappe statt echtem Modell in Produktion verhindern | `services/matcher` | **offen:** Standard ist `FERMATA_LLM_BACKEND=fake`; ohne gesetzte Variable rechnet der Job mit erfundenen Bewertungen (Viola verweigert Attrappen in Produktion, der Auswahl-Job nicht) |
+| Matcher-Attrappe statt echtem Modell in Produktion verhindern | `services/matcher` (`config.ensure_production_safe`, `Runner.ensure_production_safe`, CLI Ausgang 3) | **umgesetzt:** bei `FERMATA_ENV=production` oder Datenbank `production` (bzw. unbekannt) bricht der Job vor jeder Arbeit ab, wenn LLM oder Embeddings `fake` sind; Test `test_production_guard.py` |
 
 **Rest:** gering–mittel.
 
@@ -187,7 +191,7 @@ Dating-App nicht vermeiden; Transparenz ist die Maßnahme.
 | Art.-9-Gegenprüfung durch Regeln + Modell; Datenbank prüft erneut | `analysis.py`, `app.art9_categories` | umgesetzt |
 | Bedrock-Invocation-Logging ohne Inhalte; AWS speichert/trainiert nicht | AWS-Konto | **offen** (Runbook, AV-Vertrag) |
 | Ablehnung durch das Modell → fester Satz bzw. „nur Regeln“; kein Ausweichmodell (ein Datenweg) | Code | umgesetzt |
-| Transparenz: ungefragt erzählte Art.-9-Inhalte gehen live an das Modell | einwilligungen.md, ki-hinweis.md | **offen** (Texte) |
+| Transparenz: ungefragt erzählte Art.-9-Inhalte gehen live an das Modell | einwilligungen.md (`gespraech`), ki-hinweis.md Abschnitt 4 (neue Fassungen, alte bleiben als Nachweis; Mitglieder werden um erneute Zustimmung gebeten) | Entwurf, Prüfung Anwalt |
 | Entscheidung EU-Geo-Profil (London, Zürich) oder regional Frankfurt | – | **offen** |
 
 **Rest:** mittel.
@@ -215,7 +219,8 @@ Dating-App nicht vermeiden; Transparenz ist die Maßnahme.
 | Tokens in Links nur als SHA-256-Hash gespeichert; Statuslink im URL-Fragment | Warteliste, `trust_shares`, `contract_requests` | umgesetzt |
 | CSP ohne `unsafe-inline` (Landingpage), CSP mit Nonce (Web-App), HSTS, keine Drittanbieter-Skripte | `apps/landing/vercel.json`, `apps/web/src/lib/csp.ts` | umgesetzt |
 | Testuhr in Produktion technisch gesperrt; Mail-Ersatz in Produktion gesperrt | `ops.deployment`, Trigger | umgesetzt |
-| Edge Functions als `postgres` | `_shared/db.ts` | **offen** (siehe R1) |
+| Edge Functions in enger Rolle `fermata_edge` statt `postgres` | `_shared/db.ts`, `…000907` | umgesetzt im Code; Login-Rolle einrichten **offen** (siehe R1). Fund: `service_role` liest im Supabase-Abbild Vault – deshalb nicht `service_role`, sondern `fermata_edge` |
+| Links „Abend teilen“ und Lokal-Bestätigung tragen das Token im URL-Fragment (`#t=…`) der Web-App; es erreicht weder Server-Protokolle noch Referrer | `api.create_trust_share`, `venueConfirmLink` (`…000903`) | umgesetzt |
 | Backups verschlüsselt, Wiederherstellungstest, Zugriff auf das Supabase-Dashboard nur mit 2FA | Runbook | **offen** (organisatorisch) |
 | Meldeprozess bei Datenpanne (72 h) | Runbook | beschrieben |
 
@@ -231,7 +236,8 @@ Dating-App nicht vermeiden; Transparenz ist die Maßnahme.
 | Erkennungszeichen nur im Finde-Fenster, danach gelöscht | `api.evening_find_info`, `ops.purge_evening_data` | umgesetzt |
 | Blockieren; Abstimmung ruht bei Blockierung oder Sperre | `app.blocks`, `evening_on_hold` | umgesetzt |
 | Melden überall, Drossel 5/24 h, **automatische Sperre nur bei Beziehung** (gemeinsamer Abend oder gezeigter Vorschlag) gegen Falschmeldungen; meldende Person bleibt anonym | `api.report` (`…000710`) | umgesetzt |
-| „Abend teilen“: 192-Bit-Schlüssel nur als Hash, höchstens 3 Links, Ablauf 24 h nach Beginn, zurückziehbar, nichts über das Gegenüber | `api.create_trust_share`, `trust-view` | umgesetzt |
+| „Abend teilen“: 192-Bit-Schlüssel nur als Hash, höchstens 3 Links, Ablauf 24 h nach Beginn, zurückziehbar, nichts über das Gegenüber; Link auf die App-Seite `/teilen#t=…` | `api.create_trust_share`, `trust-view` | umgesetzt |
+| Widerruf der Einwilligung `kontakttausch` zieht noch nicht freigegebene Kontakt-Freigaben zurück; dem Gegenüber werden widerrufene Kontaktdaten nicht mehr gezeigt | `api.revoke_consent`, `app.contact_share_for` (`…000906`), Test `900_legal_consents` | umgesetzt |
 | Check-in, Hilfe-Knopf, Sofort-Mail an Benn | `api.checkin_respond` | umgesetzt |
 | Sperrliste gegen Wiederanmeldung | `safety.blocklist` | umgesetzt |
 | Kontolöschung während einer Prüfung hinterlässt Benn die Hashes | `ops.account_deletion_prepare` (M2) | umgesetzt |
@@ -258,8 +264,8 @@ Dating-App nicht vermeiden; Transparenz ist die Maßnahme.
 | Transkript 30 Tage, stündlicher Löschjob; Widerruf löscht sofort | umgesetzt |
 | Art.-9-Sätze im Transkript ersetzt | umgesetzt |
 | Längere Aufbewahrung bei Sicherheitsfällen nur per Einstellung (B5), heute aus | umgesetzt (aus) |
-| **Admin-Einsicht in Transkripte** im Sicherheitsfall nur über eine Funktion mit Audit und Zwei-Faktor | **offen** – heute gibt es keine Funktion; Einsicht ginge nur über den SQL-Editor ohne Protokoll |
-| Entwurf der Zusammenfassung (`summary_draft`) nach Bestätigung löschen | **offen** |
+| **Admin-Einsicht in Transkripte** im Sicherheitsfall nur über eine Funktion mit Audit und Zwei-Faktor | umgesetzt: `api.admin_safety_transcript` (`…000902`) – nur `aal2`, nur bei offenem Hinweis oder offener Meldung zur Person, Begründung ≥ 10 Zeichen, Audit ohne Inhalt; Test `902_admin_transcript`. Einsicht im SQL-Editor bleibt technisch möglich (Runbook: verboten) |
+| Entwurf der Zusammenfassung (`summary_draft`) nach Bestätigung löschen | umgesetzt: 30 Tage nach Bestätigung/Korrektur/Ende (`retention.summary_draft_days`) |
 
 **Rest:** gering–mittel nach den offenen Maßnahmen.
 
@@ -282,9 +288,10 @@ an Benn ohne Namen (nur Art, Stufe, Link). **Rest:** gering.
 | Maßnahme | Stand |
 |---|---|
 | Kontolöschung kaskadiert über alle Tabellen; Warteliste, Einladungen, Versandprotokoll werden mitgelöscht | umgesetzt (M2) |
-| Lücken ohne Frist (Meldungen, Stripe-Ereignisse, Mail-Ausgang, Versandprotokoll, Audit, `auth.audit_log_entries`) | **offen** (Löschkonzept) |
-| **Stripe-Abo nach Kontolöschung:** `account-delete` kündigt das Abo bei Stripe nicht | **offen – Fehler**, Abbuchungen würden weiterlaufen |
-| Löscht eine Person ihr Konto, verschwindet der gemeinsame Abend auch für das Gegenüber | bewusst entscheiden |
+| Lücken ohne Frist (Meldungen, Hinweise, Sicherheits-Mails, Stripe-Ereignisse, Vertragsanfragen, Vertragshandlungen, Versandprotokoll, Zeitfenster, Entwurf der Zusammenfassung, Scores, angenommene Einladungen, `auth.audit_log_entries`) | umgesetzt: täglicher Job `fermata-retention` (`ops.apply_retention`, `…000905`), Fristen als Einstellungen (Platzhalter C11), Test `905_retention`. `auth.audit_log_entries`: nur, wenn die Rolle es darf – sonst Aufbewahrung im Dashboard (Runbook) |
+| Audit-Protokoll (`ops.audit_log`) | **bewusst ohne automatische Löschung** (Nachweis nach Art. 5 Abs. 2, enthält keine Inhalte); Höchstdauer offen – [loeschkonzept.md](loeschkonzept.md) |
+| **Stripe-Abo nach Kontolöschung** | umgesetzt: `account-delete` beendet das Abo sofort (`DELETE /v1/subscriptions/{id}`), Vertragshandlung `cancel` mit Grund `konto_geloescht` (ohne Name/E-Mail, Personenbezug fällt mit der Löschung weg); scheitert Stripe, wird trotzdem gelöscht und Benn bekommt einen Hinweis „hoch“. Erstattung ungenutzter Zeiträume offen (C15) |
+| Löscht eine Person ihr Konto, verschwindet der gemeinsame Abend auch für das Gegenüber | entschieden: offene Abende werden vorher über den Zustandsautomaten abgesagt (`cancel_admin`), Gegenüber und Lokal erhalten die neutrale M5-Nachricht (Inhalt festgehalten, überlebt die Löschung); das Gegenüber bekommt den Abend gutgeschrieben. Vergangene Abende verschwinden mit dem Konto; die Kontingent-Buchungen des Gegenübers bleiben, ohne Bezug auf den Abend – Test `904_account_deletion` |
 
 ### R13 Sperrliste
 
@@ -304,15 +311,15 @@ Siehe [polizeimeldung-vorlage.md](polizeimeldung-vorlage.md). **Rest:** gering. 
 
 | Nr. | Maßnahme | Risiko | Wer |
 |---|---|---|---|
-| M-1 | Eigene Login-Rolle für Edge Functions ohne Art.-9- und Vault-Zugriff (außer Speichern/Export) | R1, R6 | Technik |
-| M-2 | Admin-Funktion für Transkripte im Sicherheitsfall mit Audit; `summary_draft` leeren | R9 | Technik |
-| M-3 | Auswahl-Job: Attrappen in Produktion verweigern (`FERMATA_LLM_BACKEND`, `FERMATA_EMBEDDING_BACKEND`) | R2 | Technik |
-| M-4 | Kontolöschung kündigt Stripe-Abo bzw. verlangt vorher Kündigung | R12 | Technik |
-| M-5 | Löschfristen für die Lücken (Löschkonzept) als Jobs | R12 | Technik, Benn |
+| M-1 | Eigene Login-Rolle für Edge Functions ohne Art.-9- und Vault-Zugriff (außer Speichern/Export) | R1, R6 | Technik: **Code umgesetzt** (`fermata_edge`); Benn: Login-Rolle und Secrets im gehosteten Projekt (Runbook 5) |
+| M-2 | Admin-Funktion für Transkripte im Sicherheitsfall mit Audit; `summary_draft` leeren | R9 | **umgesetzt** (`api.admin_safety_transcript`, `retention.summary_draft_days`) |
+| M-3 | Auswahl-Job: Attrappen in Produktion verweigern (`FERMATA_LLM_BACKEND`, `FERMATA_EMBEDDING_BACKEND`) | R2 | **umgesetzt** |
+| M-4 | Kontolöschung kündigt Stripe-Abo bzw. verlangt vorher Kündigung | R12 | **umgesetzt** (sofortige Kündigung; Erstattung C15 offen) |
+| M-5 | Löschfristen für die Lücken (Löschkonzept) als Jobs | R12 | **umgesetzt** (`fermata-retention`); Benn: Fristen C11 bestätigen |
 | M-6 | AV-Verträge, SCC/DPF, TIA je Anbieter | R3, R4, R5 | Benn, Anwalt |
 | M-7 | Didit: Aufbewahrung 1 Monat, Training aus | R3 | Benn |
 | M-8 | Bedrock-Invocation-Logging ohne Inhalte, AI-Services-Opt-out (Polly), Weg festlegen | R4 | Benn |
-| M-9 | Texte: Einwilligung `gespraech` (Art. 9), KI-Hinweis, Rückschluss des Gegenübers | R1, R4 | Anwalt |
+| M-9 | Texte: Einwilligung `gespraech` (Art. 9), KI-Hinweis, Rückschluss des Gegenübers | R1, R4 | Entwürfe geschrieben (Fassung `2026-10-03-m8-entwurf`); Anwalt prüft |
 | M-10 | Runbook-Routinen: Fairness-Bericht lesen, Meldungen in 24 h, Vertretung | R2, R7, R10 | Benn |
 | M-11 | Einweisung Lokal-Personal | R7 | Benn |
 | M-12 | Backup-Wiederherstellungstest, 2FA für alle Anbieter-Konten | R6 | Benn |
@@ -321,7 +328,8 @@ Siehe [polizeimeldung-vorlage.md](polizeimeldung-vorlage.md). **Rest:** gering. 
 
 Nach Umsetzung von M-1 bis M-12: Restrisiko **mittel bis gering** in allen Bereichen; die Verarbeitung ist aus unserer
 Sicht zulässig. Ohne M-1, M-2, M-4 und M-6 bleibt das Restrisiko bei R1, R6, R9 und R12 **hoch**; dann sollte der
-Start verschoben werden.
+Start verschoben werden. Stand nach der Härtung: M-2 und M-4 sind umgesetzt, M-1 im Code; vor dem Start fehlen die
+Login-Rolle (M-1) und die Verträge (M-6).
 
 [[Stellungnahme des Datenschutzbeauftragten]] · [[Entscheidung des Verantwortlichen, Datum, Unterschrift]]
 
@@ -334,7 +342,11 @@ Modell, bei Wechsel des LiveKit-Wegs oder der Stimme, spätestens jährlich.
 
 1. Stellungnahme des externen Datenschutzbeauftragten (B15).
 2. Bewertungsskala und Einstufungen bestätigen.
-3. Offene Maßnahmen M-1 bis M-12 terminieren.
+3. Offene Maßnahmen M-1 (Einrichtung), M-6 bis M-12 terminieren; M-2 bis M-5 sind umgesetzt.
 4. Art. 10 DSGVO (Meldungen über Straftaten) und Art. 22 (Fall „kein Vorschlag“) rechtlich einordnen.
 5. Begründung und Überprüfungsrhythmus der dauerhaften Sperrliste.
 6. Abgleich mit dem Auftrag (15 Sicherheitsstandards) und mit dem Stand von M2 nach der Zusammenführung.
+7. `service_role` liest im Supabase-Abbild Vault (Test `907_edge_role`): bewerten, ob das als Restrisiko bei R6
+   reicht (Schlüssel nur in den Functions) oder ob Supabase das ändern muss.
+8. Kontolöschung: Nachweis der Einwilligungen entfällt mit dem Konto (Kaskade) – bewusst so? Alternativ pseudonymisiert
+   aufbewahren (Art. 7 Abs. 1 vs. Art. 17).
