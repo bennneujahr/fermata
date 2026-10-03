@@ -27,7 +27,7 @@ export default handler(["POST"], async (req) => {
 
   const [s] = await rpc(sql`select billing.order_summary(${tier}) as summary, billing.tier_config(${tier}) as tier_config`);
   const summary = s!.summary as Obj;
-  const [h] = await sql`select billing.summary_hash(${JSON.stringify(summary)}::jsonb) as hash`;
+  const [h] = await sql`select billing.summary_hash(${sql.json(summary as any)}::jsonb) as hash`;
   const summaryHash = String(h!.hash);
 
   if (action === "summary") {
@@ -90,7 +90,7 @@ export default handler(["POST"], async (req) => {
   let order: Obj;
   try {
     const [o] = await rpc(sql`
-      select billing.record_order(${member.id}::uuid, ${tier}, ${JSON.stringify(summary)}::jsonb, ${customerId}, ${subscription.id}, 'web') as r`);
+      select billing.record_order(${member.id}::uuid, ${tier}, ${sql.json(summary as any)}::jsonb, ${customerId}, ${subscription.id}, 'web') as r`);
     order = o!.r as Obj;
   } catch (err) {
     await client.request("DELETE", `/v1/subscriptions/${subscription.id}`).catch(() => undefined);

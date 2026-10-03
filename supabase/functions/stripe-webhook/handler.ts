@@ -55,7 +55,7 @@ export default handler(["POST"], async (req) => {
   if (typeof event?.id !== "string" || typeof event?.type !== "string") return json(req, { error: "invalid_event" }, 400);
 
   const sql = db();
-  const [accepted] = await sql`select billing.accept_stripe_event(${event.id}, ${event.type}, ${payload}::jsonb) as fresh`;
+  const [accepted] = await sql`select billing.accept_stripe_event(${event.id}, ${event.type}, ${sql.json(event as any)}::jsonb) as fresh`;
   if (!accepted?.fresh) return json(req, { received: true, duplicate: true });
 
   let outcome: EventOutcome | undefined;

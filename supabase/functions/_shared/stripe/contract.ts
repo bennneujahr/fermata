@@ -21,11 +21,11 @@ export async function userContact(sql: Sql, userId: string): Promise<{ email?: s
 }
 
 async function audit(sql: Sql, action: string, targetId: string, details: Obj): Promise<void> {
-  await sql`select ops.audit(${action}, 'billing.contract_actions', ${targetId}, ${JSON.stringify(details)}::jsonb)`;
+  await sql`select ops.audit(${action}, 'billing.contract_actions', ${targetId}, ${sql.json(details as any)}::jsonb)`;
 }
 
 async function alertAdmin(sql: Sql, kind: string, details: Obj): Promise<void> {
-  await sql`select safety.enqueue_mail(null, true, 'safety.admin_alert', ${JSON.stringify({ kind, severity: "mittel", ...details })}::jsonb)`;
+  await sql`select safety.enqueue_mail(null, true, 'safety.admin_alert', ${sql.json({ kind, severity: "mittel", ...details } as any)}::jsonb)`;
 }
 
 function errorText(err: unknown): string {
@@ -52,7 +52,7 @@ export function parseCancelInput(body: Obj, channel: CancelDetails["channel"]): 
 }
 
 export async function executeCancellation(sql: Sql, userId: string, details: CancelDetails): Promise<Obj> {
-  const [row] = await rpc(sql`select billing.record_cancellation(${userId}::uuid, ${JSON.stringify(details)}::jsonb) as r`);
+  const [row] = await rpc(sql`select billing.record_cancellation(${userId}::uuid, ${sql.json(details as any)}::jsonb) as r`);
   const r = row!.r as Obj;
   const actionId = String(r.contract_action_id);
   let stripeResult: Obj = { status: "skipped" };
@@ -73,7 +73,7 @@ export async function executeCancellation(sql: Sql, userId: string, details: Can
       await alertAdmin(sql, "kuendigung_stripe_fehler", { contract_number: r.contract_number });
     }
   }
-  await sql`select billing.set_contract_result(${actionId}::uuid, ${JSON.stringify({ stripe: stripeResult })}::jsonb)`;
+  await sql`select billing.set_contract_result(${actionId}::uuid, ${sql.json({ stripe: stripeResult } as any)}::jsonb)`;
 
   const contact = await userContact(sql, userId);
   const to = details.contact_email ?? contact.email;
@@ -125,7 +125,7 @@ export async function executeWithdrawal(
   details: WithdrawDetails,
   afterRecord?: () => Promise<void>,
 ): Promise<Obj> {
-  const [row] = await rpc(sql`select billing.record_withdrawal(${userId}::uuid, ${JSON.stringify(details)}::jsonb) as r`);
+  const [row] = await rpc(sql`select billing.record_withdrawal(${userId}::uuid, ${sql.json(details as any)}::jsonb) as r`);
   const r = row!.r as Obj;
   const actionId = String(r.contract_action_id);
   const s = stripe();
@@ -161,7 +161,7 @@ export async function executeWithdrawal(
       refundResult = { status: "manual", amount_cents: refundCents, error: errorText(err) };
     }
   }
-  await sql`select billing.set_contract_result(${actionId}::uuid, ${JSON.stringify({ stripe_cancel: cancelResult, refund: refundResult })}::jsonb)`;
+  await sql`select billing.set_contract_result(${actionId}::uuid, ${sql.json({ stripe_cancel: cancelResult, refund: refundResult } as any)}::jsonb)`;
   if (cancelResult.status === "failed" || refundResult.status === "manual") {
     await audit(sql, "billing.withdraw_needs_manual_step", actionId, { cancel: cancelResult, refund: refundResult });
     await alertAdmin(sql, "widerruf_von_hand", { contract_number: r.contract_number });
@@ -231,7 +231,7 @@ export async function requestContractLink(
     throw new HttpError(400, "reason_required", "Bitte nennen Sie bei einer außerordentlichen Kündigung den Grund.");
   }
   const [row] = await rpc(sql`
-    select billing.create_contract_request(${kind}, ${email}, ${contractNumber}, ${JSON.stringify(details)}::jsonb) as r`);
+    select billing.create_contract_request(${kind}, ${email}, ${contractNumber}, ${sql.json(details as any)}::jsonb) as r`);
   const r = row?.r as Obj | null;
   if (!r?.token) return { sent: false };
   const url = `${functionUrl(req, kind === "cancel" ? "billing-cancel" : "billing-withdraw")}?t=${encodeURIComponent(r.token)}`;
