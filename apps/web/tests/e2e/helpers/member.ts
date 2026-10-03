@@ -2,21 +2,24 @@
 import { expect, type Page } from "@playwright/test";
 import { createAdmin, createInvitedMember, magicLinkPath, sql, uniqueEmail } from "./backend";
 
-export async function onboardedMember(opts: { verified?: boolean; first?: string } = {}): Promise<{ id: string; email: string }> {
+export async function onboardedMember(opts: { verified?: boolean; first?: string; identity?: boolean } = {}): Promise<{ id: string; email: string }> {
   const adminId = await createAdmin(uniqueEmail("admin"));
   const email = uniqueEmail(opts.first?.toLowerCase() ?? "mitglied");
   const id = await createInvitedMember(email, adminId);
   await sql.begin(async (tx) => {
     await tx`select set_config('request.jwt.claims', ${JSON.stringify({ sub: id, role: "authenticated" })}, true)`;
     await tx`set local role authenticated`;
-    for (const k of ["agb", "datenschutz_kenntnis", "art9_profile", "art9_religion", "biometrie"]) {
+    const kinds = opts.identity === false ? ["agb", "datenschutz_kenntnis", "art9_profile"] : ["agb", "datenschutz_kenntnis", "art9_profile", "art9_religion", "biometrie"];
+    for (const k of kinds) {
       await tx`select api.give_consent(${k}, (select d.version from api.legal_document(${k}) d))`;
     }
     await tx`select api.save_facts(${opts.first ?? "Mira"}, 'Mertens', '1988-03-04', '23966', null, '+49 170 1234567')`;
-    await tx`select api.save_identity('frau', array['mann', 'frau'], null)`;
-    await tx`select api.save_religion('evangelisch', 'etwas', false)`;
+    if (opts.identity !== false) {
+      await tx`select api.save_identity('frau', array['mann', 'frau'], null)`;
+      await tx`select api.save_religion('evangelisch', 'etwas', false)`;
+    }
   });
-  if (opts.verified !== false) {
+  if (opts.verified !== false && opts.identity !== false) {
     await sql`select ops.verification_begin(${id}::uuid)`;
     const [v] = await sql`select id from app.verifications where user_id = ${id}::uuid and status = 'started'`;
     await sql`select ops.verification_attach_session(${v!.id}::uuid, ${`fake_e2e_${id}`})`;

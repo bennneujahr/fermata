@@ -78,7 +78,7 @@ In der Entwicklung erlaubt die CSP zusätzlich `'unsafe-eval'` (React-Fehleranze
 | Datenbank (pgTAP, inkl. Kern-Tests) | `DB_PORT=54342 DB_CONTAINER=fermata-db-web bash scripts/db.sh test` | 6 Dateien, 457 Prüfungen grün |
 | Edge Functions (Deno) | `cd supabase/functions && SUPABASE_DB_URL=postgres://postgres:postgres@localhost:54342/postgres deno test --allow-env --allow-net --allow-read _shared/didit verification-webhook account-export account-delete admin-invite` | 18 Tests grün (braucht die Test-DB aus der Zeile darüber) |
 | Unit (Vitest) | `pnpm --filter @fermata/web test` | 24 Tests grün |
-| E2E (Playwright, axe, CSP) | Stapel + `serve-e2e.sh`, dann `pnpm --filter @fermata/web test:e2e` | 13 Tests grün |
+| E2E (Playwright, axe, CSP) | Stapel + `serve-e2e.sh`, dann `pnpm --filter @fermata/web test:e2e` | 15 Tests grün |
 | Bildschirmfotos | `pnpm --filter @fermata/web screenshots` | 75 Bilder |
 | Typen, Lint, Build | `pnpm --filter @fermata/web typecheck`, `… lint`, `… build` | grün |
 | Tonalität, Kontraste | `pnpm checks` | grün |
