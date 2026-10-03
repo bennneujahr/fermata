@@ -5,6 +5,7 @@ import { LogoutButton } from "@/components/shell/LogoutButton";
 import { ButtonLink, Card, Notice, PageHeader } from "@/components/ui";
 import { actions } from "@/copy/common";
 import { konto } from "@/copy/member";
+import { push as pushCopy } from "@/copy/push";
 import { getFacts, getSession, requireMember } from "@/lib/data";
 import { formatDate } from "@/lib/format";
 import { AddressFormSwitch } from "./AddressFormSwitch";
@@ -92,8 +93,16 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
         >
           <p className="soft">{c.identityText}</p>
         </Card>
-        <Card title={c.notificationsTitle} id="mitteilungen">
-          <p className="soft">{c.notificationsText}</p>
+        <Card
+          title={c.notificationsTitle}
+          id="mitteilungen"
+          footer={
+            <ButtonLink href="/konto/mitteilungen" variant="secondary" size="sm" iconAfter="arrowRight">
+              {pushCopy(form).kontoCta}
+            </ButtonLink>
+          }
+        >
+          <p className="soft">{pushCopy(form).kontoText}</p>
         </Card>
       </div>
 

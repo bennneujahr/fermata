@@ -1,6 +1,6 @@
 // Wege der Web-App. Eine Stelle für Navigation, Schutz und Weiterleitungen.
 
-export const MEMBER_PREFIXES = ["/start", "/gespraech", "/abende", "/mitgliedschaft", "/konto", "/onboarding"] as const;
+export const MEMBER_PREFIXES = ["/start", "/gespraech", "/abende", "/zeiten", "/mitgliedschaft", "/konto", "/onboarding"] as const;
 
 export function isMemberPath(path: string): boolean {
   return MEMBER_PREFIXES.some((p) => path === p || path.startsWith(`${p}/`));

@@ -17,6 +17,20 @@ export function originOf(url: string): string | null {
   }
 }
 
+/**
+ * Origins eines Echtzeit-Dienstes für connect-src: die Adresse selbst und das Gegenstück
+ * (wss ↔ https, ws ↔ http). LiveKit braucht beides (Signalisierung per WebSocket, Prüfung per HTTPS).
+ */
+export function serviceOrigins(url: string | undefined | null): string[] {
+  if (!url) return [];
+  const origin = originOf(url);
+  if (!origin) return [];
+  const pairs: Record<string, string> = { "wss:": "https:", "https:": "wss:", "ws:": "http:", "http:": "ws:" };
+  const proto = new URL(origin).protocol;
+  const other = pairs[proto];
+  return other ? [origin, origin.replace(/^[a-z]+:/, other)] : [origin];
+}
+
 export function buildCsp(o: CspOptions): string {
   const supabase = originOf(o.supabaseUrl);
   const wss = supabase ? supabase.replace(/^http/, "ws") : null;

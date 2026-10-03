@@ -5,7 +5,7 @@
 //    Ob jemand Admin ist, prüfen zusätzlich die Admin-Seiten und die Datenbank (app.is_admin()).
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
-import { buildCsp, newNonce } from "@/lib/csp";
+import { buildCsp, newNonce, serviceOrigins } from "@/lib/csp";
 import { isAdminPath, isMemberPath, isMfaPath, loginRedirectTarget } from "@/lib/routes";
 
 export async function proxy(request: NextRequest) {
@@ -14,7 +14,12 @@ export async function proxy(request: NextRequest) {
     nonce,
     supabaseUrl: process.env.NEXT_PUBLIC_SUPABASE_URL ?? "",
     dev: process.env.NODE_ENV === "development",
-    extraConnect: (process.env.FERMATA_CSP_EXTRA_CONNECT ?? "").split(/\s+/).filter(Boolean),
+    extraConnect: [
+      ...(process.env.FERMATA_CSP_EXTRA_CONNECT ?? "").split(/\s+/).filter(Boolean),
+      // Gespräch mit Viola: LiveKit (Stimme) und Viola-Textdienst, nur wenn eingerichtet.
+      ...serviceOrigins(process.env.NEXT_PUBLIC_LIVEKIT_URL),
+      ...serviceOrigins(process.env.NEXT_PUBLIC_VIOLA_TEXT_URL).filter((o) => /^https?:/.test(o)),
+    ],
     extraFrame: (process.env.FERMATA_CSP_EXTRA_FRAME ?? "").split(/\s+/).filter(Boolean),
   });
 

@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import "@/styles/gespraech-abende.css";
+import { StartNextStep } from "@/components/abende/StartNextStep";
 import { Badge, ButtonLink, Card, PageHeader, Stepper } from "@/components/ui";
 import { Icon } from "@/components/ui/Icon";
 import { start } from "@/copy/member";
@@ -27,14 +29,18 @@ export default async function StartPage() {
       />
 
       <div className="grid-auto">
-        <Card title={nextCopy.title} eyebrow={c.nextTitle} variant={done ? "night" : "accent"} id="naechster-schritt">
-          <p className={done ? "soft" : "soft"}>{nextCopy.text}</p>
-          <div>
-            <ButtonLink href={done ? "/gespraech" : onboardingPath(next)} iconAfter="arrowRight" variant={done ? "secondary" : "primary"}>
-              {nextCopy.cta}
-            </ButtonLink>
-          </div>
-        </Card>
+        {done ? (
+          <StartNextStep form={form} />
+        ) : (
+          <Card title={nextCopy.title} eyebrow={c.nextTitle} variant="accent" id="naechster-schritt">
+            <p className="soft">{nextCopy.text}</p>
+            <div>
+              <ButtonLink href={onboardingPath(next)} iconAfter="arrowRight" variant="primary">
+                {nextCopy.cta}
+              </ButtonLink>
+            </div>
+          </Card>
+        )}
 
         <Card title={c.progressTitle} id="stand">
           <Stepper
