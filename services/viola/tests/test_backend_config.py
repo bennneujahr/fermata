@@ -133,3 +133,41 @@ def test_config_rejects_unknown_values() -> None:
             Config.from_env(env)
     with pytest.raises(ValueError, match="INTERVIEW_AGENT_SECRET"):
         Config.from_env({"VIOLA_BACKEND": "http", "INTERVIEW_AGENT_URL": "https://x", "INTERVIEW_AGENT_SECRET": "kurz"})
+
+
+async def test_http_backend_retries_transient_errors() -> None:
+    calls = {"n": 0}
+
+    def handler(req: httpx.Request) -> httpx.Response:
+        calls["n"] += 1
+        if calls["n"] == 1:
+            raise httpx.ConnectError("weg")
+        if calls["n"] == 2:
+            return httpx.Response(502, json={"error": "bad_gateway"})
+        return httpx.Response(200, json={"total": 1})
+
+    b = HttpBackend("https://x", SECRET, client=httpx.AsyncClient(transport=httpx.MockTransport(handler)), backoff=0)
+    assert await b.append_turns("sid", [{"role": "person", "text": "x"}]) == 1
+    assert calls["n"] == 3
+
+
+async def test_http_backend_does_not_retry_business_errors() -> None:
+    calls = {"n": 0}
+
+    def handler(req: httpx.Request) -> httpx.Response:
+        calls["n"] += 1
+        return httpx.Response(409, json={"error": "ai_notice_missing"})
+
+    b = HttpBackend("https://x", SECRET, client=httpx.AsyncClient(transport=httpx.MockTransport(handler)), backoff=0)
+    with pytest.raises(BackendError, match="ai_notice_missing"):
+        await b.append_turns("sid", [{"role": "person", "text": "x"}])
+    assert calls["n"] == 1
+
+
+async def test_http_backend_gives_up_when_unreachable() -> None:
+    def handler(req: httpx.Request) -> httpx.Response:
+        raise httpx.ConnectError("weg")
+
+    b = HttpBackend("https://x", SECRET, client=httpx.AsyncClient(transport=httpx.MockTransport(handler)), backoff=0)
+    with pytest.raises(BackendError, match="agent_unreachable"):
+        await b.context("sid")

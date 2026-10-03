@@ -498,7 +498,7 @@ begin
   end if;
   result := jsonb_build_object(
     'session', jsonb_build_object(
-      'id', s.id, 'user_id', s.user_id, 'kind', s.kind, 'mode', s.mode, 'status', s.status,
+      'id', s.id, 'kind', s.kind, 'mode', s.mode, 'status', s.status,
       'address_form', s.address_form, 'tier_depth', s.tier_depth, 'room_name', s.room_name,
       'started_at', s.started_at, 'ai_notice_at', s.ai_notice_at, 'expires_at', s.expires_at,
       'covered_blocks', to_jsonb(s.covered_blocks), 'summary_status', s.summary_status,

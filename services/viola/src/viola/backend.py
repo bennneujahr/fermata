@@ -9,6 +9,7 @@ Es werden nur Text, Zahlen und Zeitpunkte übertragen. Audio kommt hier nie vor.
 
 from __future__ import annotations
 
+import asyncio
 import copy
 import uuid
 from dataclasses import dataclass, field
@@ -58,12 +59,23 @@ def _assert_no_audio(payload: Any) -> None:
 
 
 class HttpBackend:
-    def __init__(self, url: str, secret: str, *, client: httpx.AsyncClient | None = None, timeout: float = 10.0) -> None:
+    def __init__(
+        self,
+        url: str,
+        secret: str,
+        *,
+        client: httpx.AsyncClient | None = None,
+        timeout: float = 10.0,
+        attempts: int = 3,
+        backoff: float = 0.3,
+    ) -> None:
         if len(secret) < 32:
             raise ValueError("INTERVIEW_AGENT_SECRET muss mindestens 32 Zeichen haben")
         self._url = url
         self._secret = secret
         self._client = client or httpx.AsyncClient(timeout=timeout)
+        self._attempts = max(1, attempts)
+        self._backoff = backoff
 
     async def aclose(self) -> None:
         await self._client.aclose()
@@ -71,11 +83,24 @@ class HttpBackend:
     async def _call(self, action: str, session_id: str, **body: Any) -> Any:
         payload = {"action": action, "session_id": session_id, **body}
         _assert_no_audio(payload)
-        res = await self._client.post(
-            self._url,
-            json=payload,
-            headers={"x-agent-secret": self._secret, "content-type": "application/json"},
-        )
+        res: httpx.Response | None = None
+        for attempt in range(self._attempts):
+            try:
+                res = await self._client.post(
+                    self._url,
+                    json=payload,
+                    headers={"x-agent-secret": self._secret, "content-type": "application/json"},
+                )
+            except httpx.TransportError:
+                if attempt == self._attempts - 1:
+                    raise BackendError(503, "agent_unreachable") from None
+                await asyncio.sleep(self._backoff * (attempt + 1))
+                continue
+            # Kurze Störungen (5xx) noch einmal versuchen; Fachfehler (4xx) sofort melden.
+            if res.status_code < 500 or attempt == self._attempts - 1:
+                break
+            await asyncio.sleep(self._backoff * (attempt + 1))
+        assert res is not None
         data: Any
         try:
             data = res.json()
@@ -163,7 +188,6 @@ class MemoryBackend:
         ctx = {
             "session": {
                 "id": sid,
-                "user_id": str(uuid.uuid4()),
                 "kind": kind.value,
                 "mode": mode.value,
                 "status": "requested",

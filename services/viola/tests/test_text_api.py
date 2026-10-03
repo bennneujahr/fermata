@@ -188,3 +188,20 @@ async def test_text_mode_without_secret_is_unavailable(secret: str) -> None:
     client = httpx.AsyncClient(transport=httpx.ASGITransport(app=app), base_url="http://viola.test")
     r = await client.post(f"/v1/text/sessions/{sid}/start", headers=auth(sid))
     assert r.status_code == 503
+
+
+async def test_idle_sessions_are_closed_and_analyzed() -> None:
+    now = {"t": 1000.0}
+    backend = MemoryBackend()
+    sid = backend.create_session()
+    cfg = Config.from_env({"VIOLA_TEXT_TOKEN_SECRET": SECRET})
+    app = create_app(cfg, backend=backend, model=FakeChatModel(), clock=lambda: now["t"])
+    client = httpx.AsyncClient(transport=httpx.ASGITransport(app=app), base_url="http://viola.test")
+    await client.post(f"/v1/text/sessions/{sid}/start", headers=auth(sid))
+    now["t"] += 21 * 60
+    other = backend.create_session()
+    await client.post(f"/v1/text/sessions/{other}/start", headers=auth(other))
+    await app.state.registry.drain()
+    assert backend.sessions[sid].status == "failed" and backend.sessions[sid].end_reason == "technik"
+    assert backend.sessions[sid].costs, "Kostenprotokoll auch bei Abbruch"
+    assert backend.sessions[other].status == "active"

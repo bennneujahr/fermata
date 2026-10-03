@@ -118,7 +118,6 @@ class PreviousSession:
 @dataclass(frozen=True, slots=True)
 class SessionContext:
     session_id: str
-    user_id: str
     kind: Kind
     mode: Mode
     status: str
@@ -151,7 +150,6 @@ class SessionContext:
         )
         return cls(
             session_id=str(s["id"]),
-            user_id=str(s.get("user_id", "")),
             kind=Kind(s["kind"]),
             mode=Mode(s["mode"]),
             status=str(s.get("status", "requested")),

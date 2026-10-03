@@ -2,7 +2,7 @@
 // Aufruf nur vom Python-Dienst mit dem Geheimnis im Header x-agent-secret (= INTERVIEW_AGENT_SECRET),
 // Vergleich in konstanter Zeit. Jede Aktion ruft genau eine SQL-Funktion api.agent_* in der Rolle fermata_agent.
 // Die SQL-Funktionen prüfen Art.-9-Inhalte erneut (Zusammenfassung, Auswertung) und lehnen Treffer ab.
-import { timingSafeEqual } from "../_shared/crypto.ts";
+import { sha256Hex, timingSafeEqual } from "../_shared/crypto.ts";
 import { db } from "../_shared/db.ts";
 import { optionalEnv } from "../_shared/env.ts";
 import { handler, HttpError, json, readJson } from "../_shared/http.ts";
@@ -11,12 +11,13 @@ import { asAgent } from "../_shared/interview/db.ts";
 
 type Body = Record<string, unknown> & { action?: unknown; session_id?: unknown };
 
-function requireSecret(req: Request): void {
+async function requireSecret(req: Request): Promise<void> {
   const expected = optionalEnv("INTERVIEW_AGENT_SECRET");
   if (!expected || expected.length < 32) throw new HttpError(503, "agent_secret_not_configured");
   const given = req.headers.get("x-agent-secret") ?? "";
-  // timingSafeEqual vergleicht in konstanter Zeit; die Länge allein verrät nichts Verwertbares.
-  if (!timingSafeEqual(given, expected)) throw new HttpError(401, "invalid_agent_secret");
+  // Vergleich der SHA-256-Werte in konstanter Zeit: gleich lang, verrät weder Inhalt noch Länge.
+  const [a, b] = await Promise.all([sha256Hex(given), sha256Hex(expected)]);
+  if (!timingSafeEqual(a, b)) throw new HttpError(401, "invalid_agent_secret");
 }
 
 function str(v: unknown, name: string, max = 200): string {
@@ -52,7 +53,7 @@ export const ACTIONS = [
 ] as const;
 
 export default handler(["POST"], async (req) => {
-  requireSecret(req);
+  await requireSecret(req);
   const body = await readJson<Body>(req, 512 * 1024);
   const action = str(body.action, "action", 40);
   if (!isUuid(body.session_id)) throw new HttpError(400, "invalid_session_id");

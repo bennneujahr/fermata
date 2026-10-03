@@ -51,6 +51,7 @@ class _Entry:
     messages: int = 0
     last_activity: float = 0.0
     switch_from_voice: bool = False
+    closing: bool = False
 
 
 def verify_text_token(token: str, secret: str, session_id: str) -> dict[str, Any]:
@@ -82,6 +83,7 @@ class SessionRegistry:
         model: ChatModel,
         options: EngineOptions,
         clock: Callable[[], float] = time.monotonic,
+        idle_seconds: float = 20 * 60,
     ) -> None:
         self.backend = backend
         self.model = model
@@ -89,9 +91,32 @@ class SessionRegistry:
         self.clock = clock
         self.entries: dict[str, _Entry] = {}
         self.finishing: set[asyncio.Task[None]] = set()
+        # Ohne Nachricht so lange → Ende „technik“ (fortsetzbar). Länger als die Höchstdauer im Textmodus plus Puffer.
+        self.idle_seconds = idle_seconds
         self._lock = asyncio.Lock()
 
+    def sweep(self) -> int:
+        """Beendet Gespräche ohne Aktivität (Person hat das Fenster geschlossen). Läuft bei jedem Aufruf mit."""
+        now = self.clock()
+        stale = [
+            e
+            for e in self.entries.values()
+            if not e.closing and not e.conversation.ended and e.conversation.opened and now - e.last_activity > self.idle_seconds
+        ]
+        for entry in stale:
+            entry.closing = True
+
+            async def end_and_finish(e: _Entry = entry) -> None:
+                await e.conversation.end_by_technical_problem()
+                self.schedule_finish(e)
+
+            task = asyncio.create_task(end_and_finish(), name="viola-idle-end")
+            self.finishing.add(task)
+            task.add_done_callback(self.finishing.discard)
+        return len(stale)
+
     async def get(self, session_id: str, *, create: bool) -> _Entry | None:
+        self.sweep()
         async with self._lock:
             entry = self.entries.get(session_id)
             if entry is None and create:
@@ -120,7 +145,7 @@ class SessionRegistry:
         task.add_done_callback(self.finishing.discard)
 
     async def drain(self) -> None:
-        if self.finishing:
+        while self.finishing:
             await asyncio.gather(*list(self.finishing), return_exceptions=True)
 
 
