@@ -1,3 +1,4 @@
+import "@/components/admin/admin.css";
 import { redirect } from "next/navigation";
 import type { ReactNode } from "react";
 import { AdminShell } from "@/components/shell/Shells";

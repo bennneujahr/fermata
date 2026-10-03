@@ -3,6 +3,8 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Badge, Card, Notice, PageHeader, TableWrap } from "@/components/ui";
 import { admin } from "@/copy/admin";
+import { adminMembership } from "@/copy/admin-mitgliedschaft";
+import { adminSafety } from "@/copy/admin-sicherheit";
 import { consents as consentCopy } from "@/copy/member";
 import { adminRpc } from "@/lib/admin";
 import { formatDate, formatDateTime } from "@/lib/format";
@@ -50,6 +52,10 @@ export default async function AdminAccount({ params }: { params: Promise<{ id: s
         <div className="cluster">
           <Badge>{admin.status[a.status] ?? a.status}</Badge>
           {a.is_founding_member ? <Badge tone="brass">{admin.accounts.founding}</Badge> : null}
+        </div>
+        <div className="cluster text-sm">
+          <Link href={`/admin/mitgliedschaft?person=${a.user_id}`}>{adminMembership.ledger.title}</Link>
+          <Link href={`/admin/sicherheit/sanktionen/neu?person=${a.user_id}`}>{adminSafety.sanction.title}</Link>
         </div>
       </PageHeader>
       <Notice tone="info">{c.noArt9}</Notice>

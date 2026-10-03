@@ -4,7 +4,12 @@ export const admin = {
   area: "Admin",
   navLabel: "Admin-Navigation",
   nav: {
-    overview: "Übersicht",
+    overview: "Heute",
+    runs: "Auswahl",
+    safety: "Sicherheit",
+    venues: "Lokale & Plätze",
+    waitlist: "Warteliste",
+    membership: "Mitgliedschaft",
     accounts: "Konten",
     invite: "Einladen",
     verifications: "Ausweisprüfungen",
