@@ -12,7 +12,8 @@
     "typecheck": "astro check",
     "test:e2e": "playwright test",
     "screenshots": "playwright test --config playwright.screenshots.config.ts",
-    "lighthouse": "node scripts/lighthouse.mjs"
+    "lighthouse": "node scripts/lighthouse.mjs",
+    "preview:artifact": "node scripts/build-preview.mjs"
   },
   "dependencies": {
     "@astrojs/vercel": "11.0.11",

@@ -42,3 +42,4 @@ supabase/.branches/
 
 # Arbeitskopien der Bau-Agenten
 .claude/worktrees/
+dist-preview/

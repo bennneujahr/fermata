@@ -1812,3 +1812,13 @@ mark.ph {
 [data-unsubscribe] {
   min-height: 78vh;
 }
+
+/* Nur im Vorschau-Build (PUBLIC_PREVIEW=1). */
+.preview-banner {
+  margin: 0;
+  padding: var(--space-2) var(--layout-gutter);
+  background: var(--color-night);
+  color: var(--color-on-night);
+  font-size: var(--text-sm);
+  text-align: center;
+}

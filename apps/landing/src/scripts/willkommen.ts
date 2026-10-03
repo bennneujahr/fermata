@@ -1,6 +1,6 @@
 // Persönliche Seite: liest den Statuslink aus dem Fragment (#t=…) und fragt waitlist-status per POST.
 // Daten werden nur mit textContent eingesetzt (kein HTML aus Antworten).
-import { callFunction, fragmentParam } from "./api";
+import { callFunction, fragmentParam, pageUrl } from "./api";
 
 interface Status {
   first_name: string;
@@ -74,6 +74,6 @@ async function init(root: HTMLElement): Promise<void> {
       }
     });
   }
-  (part(root, "unsubscribe") as HTMLAnchorElement).href = `/abmelden#t=${token}`;
+  (part(root, "unsubscribe") as HTMLAnchorElement).href = pageUrl(`/abmelden#t=${token}`);
   show(root, "ready");
 }

@@ -1,5 +1,5 @@
 // Abmeldung mit Rückfrage: erst der Knopf löscht den Eintrag (Link-Vorschauen in Mailprogrammen lösen nichts aus).
-import { callFunction, fragmentParam } from "./api";
+import { callFunction, fragmentParam, pageUrl } from "./api";
 
 const root = document.querySelector<HTMLElement>("[data-unsubscribe]");
 if (root) init(root);
@@ -22,7 +22,7 @@ function init(root: HTMLElement): void {
     try {
       const res = await callFunction("waitlist-unsubscribe", { t: token });
       if (res.ok) {
-        location.replace("/abgemeldet");
+        location.replace(pageUrl("/abgemeldet"));
         return;
       }
     } catch {

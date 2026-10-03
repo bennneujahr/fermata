@@ -5,6 +5,8 @@ interface ImportMetaEnv {
   readonly PUBLIC_FUNCTIONS_URL?: string;
   /** Öffentliche Adresse der Landingpage (Frage A3) */
   readonly PUBLIC_SITE_URL?: string;
+  /** "1" nur für die Vorschau zum Ansehen: keine Verbindung nach außen, Antworten werden nachgestellt. */
+  readonly PUBLIC_PREVIEW?: string;
 }
 interface ImportMeta {
   readonly env: ImportMetaEnv;

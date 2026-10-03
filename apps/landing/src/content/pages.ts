@@ -129,3 +129,9 @@ export const notFound = {
   text: "Diese Seite gibt es nicht oder nicht mehr. Vielleicht hilft die Startseite weiter.",
   cta: { href: "/", label: "Zur Startseite" },
 };
+
+/** Nur im Vorschau-Build (PUBLIC_PREVIEW=1) sichtbar. */
+export const vorschau = {
+  banner: "Vorschau zum Ansehen. Das Formular sendet nichts, die Willkommensseite zeigt Beispieldaten.",
+  openConfirm: "Vorschau: so geht es nach dem Klick auf den Bestätigungslink weiter",
+};

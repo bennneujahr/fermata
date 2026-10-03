@@ -1,6 +1,6 @@
 // Wartelisten-Formular: Prüfung im Browser (die verbindliche Prüfung machen Edge Function und Datenbank),
 // Fehler mit aria-live (role="alert") und am Feld (aria-invalid, aria-describedby), neutraler Erfolg → /bestaetigen.
-import { callFunction } from "./api";
+import { callFunction, pageUrl } from "./api";
 
 type FieldName = "first_name" | "email" | "region" | "postal_code" | "consent";
 type FieldError = "required" | "invalid";
@@ -151,7 +151,7 @@ function init(form: HTMLFormElement): void {
         fill_ms: Math.round(performance.now() - startedAt),
       });
       if (res.status === 202) {
-        location.assign("/bestaetigen");
+        location.assign(pageUrl("/bestaetigen"));
         return;
       }
       const body = (await res.json().catch(() => ({}))) as { error?: string; fields?: Partial<Record<FieldName, FieldError>> };

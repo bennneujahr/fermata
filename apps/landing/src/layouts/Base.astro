@@ -11,6 +11,7 @@ import { tokens } from "@fermata/tokens";
 import Footer from "../components/Footer.astro";
 import Header from "../components/Header.astro";
 import { site } from "../content/site";
+import { vorschau } from "../content/pages";
 import { functionsOrigin } from "../settings";
 
 interface Props {
@@ -71,6 +72,7 @@ const csp = [
   </head>
   <body>
     <a class="skip-link" href="#inhalt">{site.skipLink}</a>
+    {import.meta.env.PUBLIC_PREVIEW === "1" && <p class="preview-banner" role="note">{vorschau.banner}</p>}
     <Header showNav={showNav} />
     <main id="inhalt" tabindex="-1">
       <slot />
