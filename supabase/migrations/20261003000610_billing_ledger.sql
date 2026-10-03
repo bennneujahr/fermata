@@ -168,6 +168,17 @@ as $$
   limit 1;
 $$;
 
+-- Kontingent-Regeln gelten für Personen mit Mitgliedschaftszeile. Die legt die Web-App bei der Kontoerstellung
+-- an (status free, dazu +1 free_grant). Ohne Zeile wird nichts gebucht; billing.can_receive_proposal lehnt solche
+-- Personen ab, damit für sie gar kein Abend entsteht.
+create or replace function billing.is_managed(p_user uuid)
+returns boolean
+language sql
+stable
+security definer
+set search_path = ''
+as $$ select exists (select 1 from billing.memberships m where m.user_id = p_user); $$;
+
 create or replace function billing.ensure_membership(p_user uuid)
 returns billing.memberships
 language plpgsql
@@ -196,6 +207,9 @@ as $$
 declare
   new_id bigint;
 begin
+  if not billing.is_managed(p_user) then
+    return null;
+  end if;
   insert into billing.evening_ledger (user_id, at, kind, amount, evening_id, expires_at, note)
   values (p_user, app.now(), 'credit', 1, p_evening,
           app.now() + make_interval(months => ops.setting_int('evening.credit_validity_months')), p_note)
@@ -217,6 +231,9 @@ declare
   new_id bigint;
   who text := case when p_actor is not null and p_actor = p_user then 'self' else 'counterpart' end;
 begin
+  if not billing.is_managed(p_user) then
+    return null;
+  end if;
   perform billing.lock_user(p_user);
   select * into r from billing.open_reservation(p_user, p_evening);
   if r.outstanding > 0 then
@@ -249,6 +266,9 @@ declare
   r record;
   exp timestamptz;
 begin
+  if not billing.is_managed(p_user) then
+    return false;
+  end if;
   perform billing.lock_user(p_user);
   select * into r from billing.open_reservation(p_user, p_evening);
   if r.outstanding <= 0 then
@@ -276,6 +296,9 @@ declare
   r record;
   b bigint;
 begin
+  if not billing.is_managed(p_user) then
+    return;
+  end if;
   perform billing.lock_user(p_user);
   select * into r from billing.open_reservation(p_user, p_evening);
   if r.outstanding > 0 then
@@ -424,6 +447,9 @@ begin
   if safety.is_suspended(p_user) then
     raise exception 'Dieses Konto ist gesperrt.' using errcode = 'P0001', hint = 'suspended';
   end if;
+  if not billing.is_managed(p_user) then
+    raise exception 'Für dieses Konto gibt es keine Mitgliedschaftszeile.' using errcode = 'P0001', hint = 'no_membership_row';
+  end if;
   if billing.available_evenings(p_user) < 1 then
     raise exception 'Im Kontingent ist kein Abend frei.' using errcode = 'P0001', hint = 'no_evening_available';
   end if;
@@ -455,14 +481,16 @@ begin
     return jsonb_build_object('eligible', false, 'reason', 'account_inactive');
   end if;
   select * into m from billing.memberships where user_id = p_user;
+  if m.user_id is null then
+    return jsonb_build_object('eligible', false, 'reason', 'no_membership_row');
+  end if;
   avail := billing.available_evenings(p_user);
   select count(*)::integer into pending from app.evenings e
   where p_user in (e.user_a, e.user_b) and e.state in ('proposed', 'time_requested', 'time_countered');
-  free_phase := ops.setting_bool('billing.free_until_first_evening') and (m.user_id is null or m.free_phase_ended_at is null);
+  free_phase := ops.setting_bool('billing.free_until_first_evening') and m.free_phase_ended_at is null;
 
   if not free_phase then
-    if m.user_id is null
-       or not (m.status = 'active' or (m.status = 'cancelled' and (m.cancel_at is null or m.cancel_at > app.now()))) then
+    if not (m.status = 'active' or (m.status = 'cancelled' and (m.cancel_at is null or m.cancel_at > app.now()))) then
       return jsonb_build_object('eligible', false, 'reason', 'no_active_membership', 'available', avail);
     end if;
   end if;

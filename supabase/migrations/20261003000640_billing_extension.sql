@@ -165,3 +165,29 @@ exception when others then
   raise notice 'pg_cron für die Mitgliedschaft nicht eingerichtet: %', sqlerrm;
 end
 $$;
+
+-- ---------------------------------------------------------------------------
+-- Rechte. Wichtig: ALTER DEFAULT PRIVILEGES ... IN SCHEMA kann das globale PUBLIC-Ausführungsrecht für
+-- Funktionen nicht entziehen (Postgres fügt schemaweite Standardrechte nur hinzu). Ohne diesen Block
+-- könnten angemeldete Personen interne Funktionen wie billing.apply_invoice_paid aufrufen.
+-- ---------------------------------------------------------------------------
+do $$
+declare
+  f record;
+begin
+  for f in select p.oid::regprocedure as sig from pg_proc p where p.pronamespace = 'billing'::regnamespace and p.prokind = 'f' loop
+    execute format('revoke execute on function %s from public, anon, authenticated', f.sig);
+  end loop;
+  for f in select p.oid::regprocedure as sig from pg_proc p
+           where p.pronamespace = 'api'::regnamespace and p.prokind = 'f'
+             and p.proname in ('billing_overview', 'billing_order_summary', 'billing_tiers', 'admin_contract_actions', 'admin_ledger_adjust') loop
+    execute format('revoke execute on function %s from public, anon', f.sig);
+  end loop;
+end
+$$;
+grant execute on function billing.available_evenings(uuid) to authenticated, service_role, fermata_matcher;
+grant execute on function billing.can_receive_proposal(uuid), billing.proposal_eligibility(uuid), billing.reserved_evenings(uuid)
+  to service_role, fermata_matcher;
+grant execute on function api.billing_overview(), api.billing_order_summary(text), api.admin_contract_actions(text, integer),
+  api.admin_ledger_adjust(uuid, integer, text, timestamptz) to authenticated;
+grant execute on function api.billing_tiers() to anon, authenticated;
