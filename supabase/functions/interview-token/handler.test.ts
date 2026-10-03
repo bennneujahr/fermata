@@ -136,6 +136,28 @@ Deno.test({
 });
 
 Deno.test({
+  name: "interview-token: Wechsel von Stimme zu Text für die laufende Sitzung",
+  ...opts,
+  fn: async () => {
+    const p = await createPerson();
+    const other = await createPerson();
+    people.push(p, other);
+    const voice = await call({ kind: "erstgespraech", mode: "voice" }, await memberToken(p.id));
+    const sid = voice.body.session.id as string;
+    const sw = await call({ session_id: sid, mode: "text" }, await memberToken(p.id));
+    assertEquals(sw.status, 200);
+    assertEquals(sw.body.session.id, sid);
+    assertEquals(sw.body.session.mode, "text");
+    const claims = await verifyHs256(sw.body.text.token, TEXT_SECRET);
+    assertEquals(claims.sid, sid);
+    const rows = await testDb()`select count(*)::int as n from app.interview_sessions where user_id = ${p.id}`;
+    assertEquals(rows[0]!.n, 1, "keine neue Sitzung");
+    assertEquals((await call({ session_id: sid, mode: "text" }, await memberToken(other.id))).status, 404);
+    assertEquals((await call({ session_id: sid, mode: "voice" }, await memberToken(p.id))).status, 400);
+  },
+});
+
+Deno.test({
   name: "interview-token: aufräumen",
   ...opts,
   fn: async () => {

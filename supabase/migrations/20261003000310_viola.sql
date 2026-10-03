@@ -364,6 +364,35 @@ comment on function api.interview_request(text, text, uuid, uuid) is
 revoke execute on function api.interview_request(text, text, uuid, uuid) from public, anon;
 grant execute on function api.interview_request(text, text, uuid, uuid) to authenticated, service_role;
 
+-- Wechsel „Text statt Stimme“: Zugang zum Textmodus für die eigene, noch offene Sitzung (keine neue Sitzung).
+create or replace function api.interview_text_access(p_session uuid)
+returns jsonb
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  uid uuid := auth.uid();
+  s app.interview_sessions;
+begin
+  if uid is null then raise exception 'not_authenticated' using errcode = '28000'; end if;
+  select * into s from app.interview_sessions x where x.id = p_session and x.user_id = uid;
+  if not found then raise exception 'session_not_found' using errcode = 'P0002'; end if;
+  if s.status not in ('requested', 'active') then raise exception 'session_closed' using errcode = '55000'; end if;
+  if safety.is_suspended(uid) then raise exception 'suspended' using errcode = '42501'; end if;
+  if not app.has_consent(uid, 'gespraech') then raise exception 'consent_missing' using errcode = '42501'; end if;
+  return jsonb_build_object(
+    'id', s.id, 'kind', s.kind, 'mode', 'text', 'address_form', s.address_form, 'tier_depth', s.tier_depth,
+    'room_name', s.room_name, 'expires_at', s.expires_at,
+    'max_minutes', app.interview_max_minutes(s.kind, 'text', s.tier_depth),
+    'continues_session_id', s.continues_session_id, 'evening_id', s.evening_id,
+    'ai_notice_version', ops.setting_text('interview.ai_notice_version'), 'switched_from', s.mode);
+end;
+$$;
+comment on function api.interview_text_access(uuid) is 'Zugang zum Textmodus für die eigene offene Sitzung (Wechsel von Stimme zu Text).';
+revoke execute on function api.interview_text_access(uuid) from public, anon;
+grant execute on function api.interview_text_access(uuid) to authenticated, service_role;
+
 -- ---------------------------------------------------------------------------
 -- 5. Zusammenfassung bestätigen oder korrigieren (Mitglied, über interview-summary)
 -- ---------------------------------------------------------------------------

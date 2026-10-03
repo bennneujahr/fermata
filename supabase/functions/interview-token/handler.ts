@@ -9,7 +9,14 @@ import { asMember } from "../_shared/interview/db.ts";
 import { signHs256 } from "../_shared/interview/jwt.ts";
 import { createLiveKitToken } from "../_shared/interview/livekit.ts";
 
-type Body = { kind?: unknown; mode?: unknown; evening_id?: unknown; continues_session_id?: unknown };
+type Body = {
+  kind?: unknown;
+  mode?: unknown;
+  evening_id?: unknown;
+  continues_session_id?: unknown;
+  /** Wechsel „Text statt Stimme“: Zugang zum Textmodus für diese eigene, offene Sitzung (keine neue Sitzung). */
+  session_id?: unknown;
+};
 type SessionInfo = {
   id: string;
   kind: string;
@@ -48,6 +55,8 @@ export default handler(["POST"], async (req) => {
   if (typeof kind !== "string" || typeof mode !== "string") throw new HttpError(400, "invalid_request");
   const eveningId = optionalUuid(body.evening_id, "evening_id");
   const continues = optionalUuid(body.continues_session_id, "continues_session_id");
+  const switchSession = optionalUuid(body.session_id, "session_id");
+  if (switchSession && mode !== "text") throw new HttpError(400, "switch_only_to_text");
 
   // Stimme nur, wenn LiveKit eingerichtet ist – sonst gleich sagen, dass Text geht.
   const lk = {
@@ -61,7 +70,9 @@ export default handler(["POST"], async (req) => {
   if (mode === "text" && (!textSecret || !textUrl)) throw new HttpError(503, "text_unavailable");
 
   const session = await asMember(db(), claims, async (tx) => {
-    const rows = await tx`select api.interview_request(${kind}, ${mode}, ${eveningId}, ${continues}) as s`;
+    const rows = switchSession
+      ? await tx`select api.interview_text_access(${switchSession}) as s`
+      : await tx`select api.interview_request(${kind}, ${mode}, ${eveningId}, ${continues}) as s`;
     return rows[0].s as SessionInfo;
   });
 

@@ -290,3 +290,43 @@ async def test_no_audio_reaches_disk_or_database(tmp_path: Path, monkeypatch: py
     no_bytes(s.costs)
     assert all(set(t) == {"role", "text", "at", "mode"} for t in s.turns)
     assert s.costs[0]["tts_characters"] > 0 and s.costs[0]["details"]["mode"] == "voice"
+
+
+async def test_agent_closes_voice_part_when_model_switches_to_text() -> None:
+    backend = MemoryBackend()
+    sid, parts = await voice_parts(
+        backend, [FakeReply("Gern, dann schreiben wir weiter.", [("switch_to_text", {"reason": "wunsch_der_person"})])]
+    )
+    closed: list[bool] = []
+
+    async def on_finished() -> None:
+        closed.append(True)
+
+    published: list[dict[str, Any]] = []
+
+    async def publish(payload: dict[str, Any]) -> None:
+        published.append(payload)
+
+    agent = ViolaAgent(parts.conv, parts.greeting, publish=publish, on_finished=on_finished)
+    async with AgentSession(llm=EngineLLM("m")) as session:
+        await session.start(agent, record=False)
+        await session.run(user_input="Ich schreibe lieber.")
+        import asyncio
+
+        for _ in range(50):
+            if closed:
+                break
+            await asyncio.sleep(0.01)
+    await parts.conv.flush()
+    assert closed == [True]
+    assert {"type": "switch_to_text", "reason": "wunsch_der_person"} in published
+    assert backend.sessions[sid].mode == "text" and not parts.conv.ended
+
+
+async def test_ui_switch_keeps_session_open_for_text_mode() -> None:
+    backend = MemoryBackend()
+    sid, parts = await voice_parts(backend, [])
+    await parts.conv.greeting_delivered()
+    parts.conv.switch_to_text()
+    await parts.conv.flush()
+    assert backend.sessions[sid].mode == "text" and backend.sessions[sid].status == "active"

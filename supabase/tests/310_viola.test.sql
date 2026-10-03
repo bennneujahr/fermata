@@ -1,6 +1,6 @@
 -- Viola (M3): Gespräch anfragen, Agent-Funktionen, Art.-9-Prüfung, Transkript-Löschung, Rechte.
 begin;
-select plan(75);
+select plan(78);
 
 -- ---------------------------------------------------------------------------
 -- Testpersonen: Vera (geprüft, eingewilligt), Nils (ohne Einwilligung), Ute (ungeprüft), Sven (gesperrt),
@@ -68,6 +68,20 @@ select is((select address_form from app.interview_sessions limit 1), 'du', 'Anre
 select is((api.interview_request('erstgespraech', 'text') ->> 'mode'), 'text', 'Neue Anfrage im Textmodus');
 select is((select count(*)::int from app.interview_sessions where status = 'requested'), 1, 'Die ältere Anfrage verfällt dabei');
 select is((select count(*)::int from app.interview_sessions where status = 'aborted'), 1, 'Die ältere Anfrage ist abgebrochen');
+select tests.reset_role();
+
+-- Wechsel zu Text: nur für die eigene offene Sitzung
+select tests.act_as('00000000-0000-0000-0000-0000000000a1');
+select is((api.interview_text_access((select id from app.interview_sessions where status = 'requested' limit 1)) ->> 'mode'), 'text',
+  'Text-Zugang für die eigene offene Sitzung');
+select tests.reset_role();
+select tests.act_as('00000000-0000-0000-0000-0000000000a2');
+select throws_ok($$ select api.interview_text_access((select id from app.interview_sessions limit 1)) $$, 'P0002', 'session_not_found',
+  'Kein Text-Zugang zu fremden Sitzungen');
+select tests.reset_role();
+select tests.act_as('00000000-0000-0000-0000-0000000000a1');
+select throws_ok($$ select api.interview_text_access((select id from app.interview_sessions where status = 'aborted' limit 1)) $$,
+  '55000', 'session_closed', 'Kein Text-Zugang zu beendeten Sitzungen');
 select tests.reset_role();
 
 -- Nils sieht Veras Gespräch nicht

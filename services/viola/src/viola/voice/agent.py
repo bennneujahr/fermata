@@ -21,6 +21,7 @@ from livekit.agents.llm import ChatContext
 from livekit.agents.types import DEFAULT_API_CONNECT_OPTIONS, NOT_GIVEN, NotGivenOr
 from livekit.agents.voice.agent import ModelSettings
 
+from viola.domain import Mode
 from viola.engine import Conversation, EngineEvent
 from viola.voice.gate import FLUSH, SpeechGate
 
@@ -104,7 +105,8 @@ class ViolaAgent(Agent):
         async for sentence in self.conv.respond(text):
             yield sentence + " "
         await self.flush_events()
-        if self.conv.ended:
+        if self.conv.ended or self.conv.mode is Mode.TEXT:
+            # Ende oder Wechsel zu Text (Werkzeug switch_to_text): ausreden lassen, dann auflegen.
             self.schedule_close()
 
     def first_audio(self) -> None:

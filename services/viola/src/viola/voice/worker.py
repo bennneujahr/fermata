@@ -179,12 +179,25 @@ async def run_job(ctx: JobContext, cfg: Config, backend: Backend, model: ChatMod
         if getattr(item, "role", None) == "assistant" and getattr(item, "interrupted", False):
             conv.note_interruption(item.text_content or "")  # type: ignore[union-attr]
 
+    @ctx.room.on("data_received")
+    def _data(packet: Any) -> None:
+        # Knopf „Text statt Stimme“ in der Web-App: {"type": "switch_to_text"} auf dem Topic „viola“.
+        if getattr(packet, "topic", "") != DATA_TOPIC:
+            return
+        with contextlib.suppress(ValueError, TypeError, AttributeError):
+            if json.loads(bytes(packet.data).decode()).get("type") == "switch_to_text":
+                conv.switch_to_text()
+                finished.set()
+
     @ctx.room.on("participant_disconnected")
     def _left(_p: Any) -> None:
-        if not conv.ended:
+        if not conv.ended and conv.mode is Mode.VOICE:
             asyncio.get_running_loop().create_task(_lost())
+        else:
+            finished.set()
 
     async def _lost() -> None:
+        # Verbindung weg ohne Abschied: Ende „technik“, damit die Person fortsetzen kann.
         await conv.end_by_technical_problem()
         finished.set()
 
@@ -207,8 +220,9 @@ async def run_job(ctx: JobContext, cfg: Config, backend: Backend, model: ChatMod
         with contextlib.suppress(asyncio.CancelledError):
             await tick_task
         if conv.mode is Mode.TEXT and not conv.ended:
-            # Wechsel zu Text: Die Sitzung läuft im Textmodus weiter; hier nur auflegen.
+            # Wechsel zu Text: Die Sitzung läuft im Textmodus weiter (Textdienst setzt mit dem Verlauf fort).
             log.info("Sitzung wechselt zu Text")
+            await conv.flush()
         else:
             await conv.finish()
         await session.aclose()
