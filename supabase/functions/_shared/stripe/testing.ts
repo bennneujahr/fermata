@@ -103,6 +103,10 @@ export function fakeStripe(responder?: Responder): { client: StripeClient; calls
       res = { body: { id: `cus_fake_${++n}` } };
     } else if (method === "GET" && url.pathname === "/v1/prices") {
       res = { body: { data: [{ id: "price_fake" }] } };
+    } else if (method === "POST" && url.pathname === "/v1/products") {
+      res = { body: { id: "prod_fake" } };
+    } else if (method === "POST" && url.pathname === "/v1/prices") {
+      res = { body: { id: "price_fake_new" } };
     } else if (method === "POST" && url.pathname === "/v1/subscriptions") {
       res = { body: { id: `sub_fake_${++n}`, status: "incomplete", latest_invoice: { confirmation_secret: { client_secret: "pi_fake_secret_abc" } } } };
     } else if (url.pathname.startsWith("/v1/subscriptions/")) {
@@ -140,4 +144,54 @@ export function request(path: string, init: RequestInit & { json?: unknown; toke
     headers,
     body: init.json !== undefined ? JSON.stringify(init.json) : init.body,
   });
+}
+
+/** Bestellung und erste Zahlung wie im echten Ablauf (record_order + invoice.paid). */
+export async function activateMember(
+  sql: Sql,
+  userId: string,
+  opts: { tier?: string; amountCents?: number; withPaymentIntent?: boolean } = {},
+): Promise<{ contractNumber: string; subscriptionId: string; customerId: string; invoiceId: string }> {
+  const tag = userId.slice(0, 8);
+  const tier = opts.tier ?? "andante";
+  const subscriptionId = `sub_t_${tag}`, customerId = `cus_t_${tag}`, invoiceId = `in_t_${tag}`;
+  const [o] = await sql`select billing.record_order(${userId}::uuid, ${tier}, billing.order_summary(${tier}), ${customerId}, ${subscriptionId}) as r`;
+  await sql`select billing.apply_invoice_paid(${subscriptionId}, ${customerId}, ${invoiceId}, now(), now() + interval '28 days',
+            ${opts.amountCents ?? 14900}::integer, ${opts.withPaymentIntent === false ? null : `pi_t_${tag}`})`;
+  return { contractNumber: (o!.r as Record<string, string>).contract_number!, subscriptionId, customerId, invoiceId };
+}
+
+/** Abend zwischen zwei Personen anlegen und optional bestätigen bzw. stattfinden lassen. */
+export async function createEvening(
+  sql: Sql,
+  a: string,
+  b: string,
+  opts: { startsInHours?: number; state?: "proposed" | "confirmed" | "happened"; venueName?: string } = {},
+): Promise<string> {
+  const [lo, hi] = a < b ? [a, b] : [b, a];
+  const [run] = await sql`insert into app.match_runs (scheduled_for, status) values (now(), 'approved') returning id`;
+  const [venue] = await sql`insert into app.venues (name, street, postal_code, city, lat, lon)
+                            values (${opts.venueName ?? "Testlokal"}, 'Teststraße 1', '19053', 'Schwerin', 53.6, 11.4) returning id`;
+  const [p] = await sql`insert into app.pairings (run_id, user_a, user_b, total_score, status)
+                        values (${run!.id}, ${lo}::uuid, ${hi}::uuid, 0.8, 'proposed') returning id`;
+  const [e] = await sql`insert into app.evenings (pairing_id, user_a, user_b, starts_at, venue_id)
+                        values (${p!.id}, ${lo}::uuid, ${hi}::uuid, now() + make_interval(hours => ${opts.startsInHours ?? 48}), ${venue!.id})
+                        returning id`;
+  const state = opts.state ?? "confirmed";
+  if (state !== "proposed") {
+    await sql`select app.evening_transition(${e!.id}::uuid, 'request_time', ${lo}::uuid)`;
+    await sql`select app.evening_transition(${e!.id}::uuid, 'confirm', ${hi}::uuid)`;
+  }
+  if (state === "happened") await sql`select app.evening_transition(${e!.id}::uuid, 'happened')`;
+  return e!.id as string;
+}
+
+export async function cleanupEvenings(sql: Sql, userIds: string[]): Promise<void> {
+  const runs = await sql`select distinct p.run_id, e.venue_id from app.evenings e join app.pairings p on p.id = e.pairing_id
+                         where e.user_a = any(${userIds}::uuid[]) or e.user_b = any(${userIds}::uuid[])`;
+  await deleteUsers(sql, userIds);
+  for (const r of runs) {
+    await sql`delete from app.match_runs where id = ${r.run_id} and not exists (select 1 from app.pairings where run_id = ${r.run_id})`;
+    if (r.venue_id) await sql`delete from app.venues where id = ${r.venue_id} and not exists (select 1 from app.evenings where venue_id = ${r.venue_id})`;
+  }
 }

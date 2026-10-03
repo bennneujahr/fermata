@@ -242,7 +242,7 @@ export async function requestContractLink(
 
 export async function consumeContractLink(sql: Sql, token: string, kind: "cancel" | "withdraw"): Promise<{ userId: string; details: Obj; requestId: string }> {
   const [peek] = await sql`select billing.peek_contract_request(${token}) as p`;
-  if (!peek?.p || peek.p.kind !== kind) throw new HttpError(404, "invalid_link", "Der Link ist nicht mehr gültig.");
+  if (!peek?.p || peek.p.kind !== kind || !peek.p.valid) throw new HttpError(404, "invalid_link", "Der Link ist nicht mehr gültig.");
   const [row] = await rpc(sql`select billing.consume_contract_request(${token}) as r`);
   const r = row!.r as Obj;
   return { userId: r.user_id, details: r.details, requestId: r.request_id };
