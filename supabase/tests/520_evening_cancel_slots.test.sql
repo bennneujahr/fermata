@@ -137,6 +137,26 @@ select tests.act_as_anon();
 select throws_ok(format('select api.evening_detail(%L)', :'e7'), '42501', null, 'Ohne Anmeldung kein Zugriff');
 select tests.reset_role();
 
+-- Gesperrt oder blockiert: keine Terminabstimmung, Ablehnen bleibt möglich
+select tests.m5_new_evening(tests.m5_id('cem'), tests.m5_id('fritz'), array[tests.m5_at(5, '19:00')]) as e9 \gset
+insert into safety.sanctions (user_id, kind, reason, starts_at) values (tests.m5_id('fritz'), 'vorlaeufige_sperre', 'Test', now() - interval '1 minute');
+select tests.act_as(tests.m5_id('fritz'));
+select is(tests.hint_of(format('select api.evening_request_time(%L, %L::timestamptz[])', :'e9', array[tests.m5_at(5, '19:00')])),
+  'account_suspended', 'Gesperrte Person kann keine Zeit wählen');
+select tests.reset_role();
+select tests.act_as(tests.m5_id('cem'));
+select is(tests.hint_of(format('select api.evening_request_time(%L, %L::timestamptz[])', :'e9', array[tests.m5_at(5, '19:00')])),
+  'evening_on_hold', 'Gegenüber gesperrt: Abend angehalten (ohne Grund)');
+select tests.reset_role();
+update safety.sanctions set lifted_at = now() where user_id = tests.m5_id('fritz');
+insert into app.blocks (blocker, blocked) values (tests.m5_id('fritz'), tests.m5_id('cem'));
+select tests.act_as(tests.m5_id('cem'));
+select is(tests.hint_of(format('select api.evening_request_time(%L, %L::timestamptz[])', :'e9', array[tests.m5_at(5, '19:00')])),
+  'evening_on_hold', 'Blockiert: Abend angehalten');
+select is(api.evening_decline(:'e9', 'sicherheit') ->> 'state', 'declined', 'Ablehnen bleibt möglich');
+select tests.reset_role();
+delete from app.blocks where blocker = tests.m5_id('fritz');
+
 -- ---------------------------------------------------------------------------
 -- 5. Ablehnung: das Gegenüber erfährt keinen Grund
 -- ---------------------------------------------------------------------------

@@ -114,6 +114,25 @@ begin
 end;
 $$;
 
+-- Terminabstimmung nur, solange niemand gesperrt ist und niemand den anderen blockiert hat.
+-- Ablehnen und Absagen bleiben immer möglich.
+create or replace function app.evening_check_active(p_evening app.evenings, p_user uuid)
+returns void
+language plpgsql
+stable
+security definer
+set search_path = ''
+as $$
+begin
+  if safety.is_suspended(p_user) then
+    raise exception 'Ihr Konto ist gerade gesperrt' using errcode = '42501', hint = 'account_suspended';
+  end if;
+  if safety.is_suspended(app.evening_other(p_evening, p_user)) or app.is_blocked(p_evening.user_a, p_evening.user_b) then
+    raise exception 'Dieser Abend ist gerade angehalten' using errcode = '55000', hint = 'evening_on_hold';
+  end if;
+end;
+$$;
+
 -- Mögliche Beginnzeiten: Platz mit freiem Tisch im Lokal, genug Vorlauf, und entweder vorgeschlagen
 -- oder innerhalb eines gemeinsamen freien Fensters (inklusive geplanter Dauer).
 create or replace function app.evening_time_options(p_evening app.evenings)
@@ -533,6 +552,7 @@ begin
   if e.state <> 'proposed' then
     raise exception 'In diesem Schritt nicht möglich' using errcode = '55000', hint = 'invalid_state';
   end if;
+  perform app.evening_check_active(e, uid);
   v_times := app.evening_check_times(e, p_times);
   update app.evenings set requested_by = uid, requested_times = app.times_to_jsonb(v_times) where id = e.id;
   perform app.evening_transition(e.id, 'request_time', uid, jsonb_build_object('times', app.times_to_jsonb(v_times)));
@@ -567,6 +587,7 @@ begin
   else
     raise exception 'In diesem Schritt nicht möglich' using errcode = '55000', hint = 'invalid_state';
   end if;
+  perform app.evening_check_active(e, uid);
   select count(*) into v_rounds from app.evening_events x where x.evening_id = e.id and x.event in ('request_time', 'counter');
   if v_rounds >= ops.setting_int('evening.max_time_rounds') then
     raise exception 'Bitte jetzt eine der Uhrzeiten bestätigen oder absagen' using errcode = '55000', hint = 'max_rounds';
@@ -609,6 +630,7 @@ begin
   else
     raise exception 'In diesem Schritt nicht möglich' using errcode = '55000', hint = 'invalid_state';
   end if;
+  perform app.evening_check_active(e, uid);
   if p_time is null or not (p_time = any (v_offered)) then
     raise exception 'Diese Uhrzeit wurde nicht angeboten' using errcode = '22023', hint = 'time_not_offered';
   end if;

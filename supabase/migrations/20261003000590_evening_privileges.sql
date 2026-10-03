@@ -49,6 +49,7 @@ declare
     'app.debrief_offer_for',
     'app.evening_after_transition',
     'app.evening_cancel_deadlines',
+    'app.evening_check_active',
     'app.evening_check_reason',
     'app.evening_check_times',
     'app.evening_duration',

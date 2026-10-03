@@ -117,6 +117,7 @@ select is((select count(*)::int from app.availability_periods), 2, 'Zwei Zeiträ
 select is((select min(starts_on) filter (where id <> :'p1') from app.availability_periods),
   (select ends_on + 1 from app.availability_periods where id = :'p1'), 'Lückenlos');
 select ops.sim_clock_reset();
+update safety.sanctions set lifted_at = now() where user_id = tests.m5_id('fritz');
 
 -- ---------------------------------------------------------------------------
 -- Lokale im Admin
