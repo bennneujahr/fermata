@@ -7,7 +7,7 @@ import { confirmContractLink, loadContractLink, type ContractLinkInfo } from "@/
 import { Button, EmptyState, Notice, PageHeader, Skeleton } from "@/components/ui";
 import { contractLink as copy } from "@/copy/mitgliedschaft";
 import { formatReceipt } from "@/lib/datetime";
-import { formatDateTime } from "@/lib/format";
+import { formatDate } from "@/lib/format";
 import { tokenFromLocation } from "@/lib/safety-rules";
 import "./mitgliedschaft.css";
 
@@ -116,7 +116,7 @@ export function ContractLinkConfirm({ kind }: { kind: Kind }) {
           {r.effectiveAt ? (
             <>
               <dt>{t.effective}</dt>
-              <dd>{formatDateTime(r.effectiveAt)}</dd>
+              <dd>{formatDate(r.effectiveAt)}</dd>
             </>
           ) : null}
         </dl>
