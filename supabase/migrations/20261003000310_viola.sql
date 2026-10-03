@@ -897,3 +897,12 @@ exception when others then
   raise notice 'pg_cron nicht eingerichtet: %', sqlerrm;
 end
 $$;
+
+-- ---------------------------------------------------------------------------
+-- 8. Rechte: PostgreSQL gibt neuen Funktionen standardmäßig EXECUTE für PUBLIC; die schema-bezogenen
+--    „default privileges“ der Grundlage entfernen das nicht. Deshalb hier ausdrücklich: Nur wer oben
+--    ausdrücklich berechtigt ist, darf aufrufen (Mitglieder: interview_request, interview_confirm_summary,
+--    art9_categories; Agent: api.agent_*; Jobs: service_role). Die Integration ergänzt dasselbe für alle Schemas.
+-- ---------------------------------------------------------------------------
+revoke execute on all functions in schema app, api, ops from public;
+grant execute on function ops.expire_interview_sessions(), ops.purge_transcripts() to service_role;

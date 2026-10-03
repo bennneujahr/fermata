@@ -1,6 +1,6 @@
 -- Viola (M3): Gespräch anfragen, Agent-Funktionen, Art.-9-Prüfung, Transkript-Löschung, Rechte.
 begin;
-select plan(69);
+select plan(75);
 
 -- ---------------------------------------------------------------------------
 -- Testpersonen: Vera (geprüft, eingewilligt), Nils (ohne Einwilligung), Ute (ungeprüft), Sven (gesperrt),
@@ -84,6 +84,20 @@ select throws_ok($$ select api.agent_start_session((select id from app.interview
 select throws_ok($$ select api.agent_append_turns(gen_random_uuid(), '[]'::jsonb) $$, '42501', null, 'Mitglieder schreiben keine Transkripte');
 select throws_ok($$ select api.agent_flag_safety(gen_random_uuid(), 'krise', 'akut') $$, '42501', null, 'Mitglieder setzen keine Sicherheits-Hinweise');
 select tests.reset_role();
+
+-- Rechte: ausdrücklich vergeben, PUBLIC hat nichts
+select ok(not has_function_privilege('authenticated', 'api.agent_append_turns(uuid, jsonb)', 'execute'), 'authenticated kann keine Agent-Funktion ausführen');
+select ok(not has_function_privilege('anon', 'api.interview_request(text, text, uuid, uuid)', 'execute'), 'anon kann kein Gespräch anfragen');
+select ok(has_function_privilege('authenticated', 'api.interview_confirm_summary(uuid, text, text)', 'execute'), 'Mitglieder bestätigen Zusammenfassungen');
+select ok(has_function_privilege('fermata_agent', 'api.agent_save_analysis(uuid, jsonb)', 'execute'), 'Agent speichert Auswertungen');
+select ok(not has_function_privilege('authenticated', 'app.interview_max_minutes(text, text, text)', 'execute'), 'Hilfsfunktionen sind nicht öffentlich');
+select is((select count(*)::int from pg_proc p join pg_namespace n on n.oid = p.pronamespace
+           where n.nspname in ('app', 'api', 'ops')
+             and (p.proname like 'interview%' or p.proname like 'agent%' or p.proname like 'art9%'
+                  or p.proname in ('expire_interview_sessions', 'purge_transcripts'))
+             and exists (select 1 from aclexplode(coalesce(p.proacl, acldefault('f', p.proowner))) a
+                         where a.grantee = 0 and a.privilege_type = 'EXECUTE')), 0,
+  'Keine Viola-Funktion ist für PUBLIC ausführbar');
 
 create temp table t_ids (name text primary key, id uuid);
 grant all on t_ids to fermata_agent, authenticated;
