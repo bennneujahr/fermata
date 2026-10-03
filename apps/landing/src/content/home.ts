@@ -179,7 +179,7 @@ export const prices = {
 };
 
 export const region = {
-  id: "region",
+  id: "regionen",
   eyebrow: "Region",
   title: "Zuerst Westmecklenburg.",
   text:

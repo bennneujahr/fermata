@@ -405,7 +405,7 @@ strong {
 .invite-card {
   position: relative;
   justify-self: center;
-  inline-size: min(100%, 26rem);
+  inline-size: min(100% - 1.25rem, 26rem);
 }
 .invite-card::before {
   /* zweite Karte darunter, leicht versetzt */
@@ -597,8 +597,13 @@ strong {
   grid-template-columns: 2.75rem minmax(0, 1fr);
   grid-template-rows: auto 1fr;
   column-gap: var(--space-3);
-  padding-block: var(--space-6) var(--space-7);
+  padding-block: var(--space-5) var(--space-6);
   border-top: 1px solid var(--color-line);
+}
+@media (min-width: 40rem) {
+  .steps li {
+    padding-block: var(--space-6) var(--space-7);
+  }
 }
 .step-num {
   grid-row: span 2;
@@ -1426,12 +1431,21 @@ strong {
 }
 .footer-grid {
   display: grid;
-  gap: var(--space-7);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-7) var(--space-5);
+}
+.footer-grid > :first-child,
+.footer-grid > :last-child {
+  grid-column: 1 / -1;
 }
 @media (min-width: 56rem) {
   .footer-grid {
     grid-template-columns: minmax(0, 1.6fr) repeat(3, minmax(0, 1fr));
     gap: var(--space-7);
+  }
+  .footer-grid > :first-child,
+  .footer-grid > :last-child {
+    grid-column: auto;
   }
 }
 .site-footer .brand,
@@ -1763,4 +1777,22 @@ mark.ph {
 }
 .page-actions-start {
   justify-content: flex-start;
+}
+
+/* Kleine Bildschirme: Beschriftungen der Karte größer, damit sie lesbar bleiben */
+@media (max-width: 40rem) {
+  .map .label,
+  .map .label-later {
+    font-size: 23px;
+  }
+  .map .label-small {
+    font-size: 19px;
+  }
+  .map .sea-label {
+    font-size: 20px;
+  }
+  .map .area-label {
+    font-size: 15px;
+    letter-spacing: 0.12em;
+  }
 }

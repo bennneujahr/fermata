@@ -1,10 +1,11 @@
 // Testhilfen für die Wartelisten-Functions. Tests laufen gegen die Test-Datenbank aus scripts/db.sh
-// (Standard: postgres://postgres:postgres@localhost:54332/postgres, siehe docs/bereiche/landing.md).
+// (DATABASE_URL oder DB_PORT, Standard wie scripts/db.sh: Port 54322; siehe docs/bereiche/landing.md).
 import postgres from "postgres";
 import { setDb, type Sql } from "../_shared/db.ts";
 import { type MailMessage, MemoryMailer, setMailer } from "../_shared/mail/mod.ts";
 
-export const DB_URL = Deno.env.get("DATABASE_URL") ?? "postgres://postgres:postgres@localhost:54332/postgres";
+export const DB_URL = Deno.env.get("DATABASE_URL") ??
+  `postgres://postgres:${Deno.env.get("DB_PASSWORD") ?? "postgres"}@localhost:${Deno.env.get("DB_PORT") ?? "54322"}/postgres`;
 export const SITE = "https://fermata.test";
 export const FUNCTIONS = "https://functions.fermata.test/functions/v1";
 export const CONSENT_VERSION = "warteliste-2026-10-03-entwurf";
