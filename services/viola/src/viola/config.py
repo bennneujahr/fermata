@@ -48,6 +48,7 @@ class Config:
     # Stimme und Spracherkennung
     tts_provider_override: str = ""
     tts_voice_override: str = ""
+    tts_enterprise_eu: bool = False
     google_tts_endpoint: str = "eu-texttospeech.googleapis.com"
     cartesia_api_key: str = field(default="", repr=False)
     cartesia_base_url: str = "https://api.cartesia.ai"
@@ -99,6 +100,7 @@ class Config:
             eager_tool_streaming=_bool(e, "VIOLA_EAGER_TOOL_STREAMING", False),
             tts_provider_override=_get(e, "VIOLA_TTS_PROVIDER"),
             tts_voice_override=_get(e, "VIOLA_TTS_VOICE"),
+            tts_enterprise_eu=_bool(e, "VIOLA_TTS_ENTERPRISE_EU", False),
             google_tts_endpoint=_get(e, "GOOGLE_TTS_ENDPOINT", "eu-texttospeech.googleapis.com"),
             cartesia_api_key=_get(e, "CARTESIA_API_KEY"),
             cartesia_base_url=_get(e, "CARTESIA_BASE_URL", "https://api.cartesia.ai"),

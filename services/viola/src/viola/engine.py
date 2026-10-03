@@ -66,6 +66,7 @@ class EngineOptions:
     model_override: str = ""
     analysis_model_override: str = ""
     analysis_max_tokens: int = 16000
+    record_latency: bool = True
 
 
 class _Writer:
@@ -395,7 +396,8 @@ class Conversation:
         def emit(sentence: str) -> str:
             nonlocal latency_noted
             if not latency_noted:
-                self.latency.add((self._clock() - started) * 1000)
+                if self.options.record_latency:
+                    self.latency.add((self._clock() - started) * 1000)
                 latency_noted = True
             spoken.append(sentence)
             return sentence
