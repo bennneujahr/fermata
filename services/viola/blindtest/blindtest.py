@@ -133,12 +133,13 @@ def build_page(sentences: list[str], labels: list[str]) -> str:
         voices = []
         for label in labels:
             radios = "".join(
-                f'<label class="score"><input type="radio" name="s{i}_{label}" value="{v}" required> {v}</label>' for v in range(1, 6)
+                f'<label class="score"><input type="radio" name="s{i}_{label}" value="{v}" required> {v}</label>'
+                for v in range(1, 6)
             )
             voices.append(
                 f'<div class="voice" data-label="{label}"><h3>Stimme {label}</h3>'
                 f'<audio controls preload="none" src="audio/{label}_{i:02d}.wav"></audio>'
-                f'<fieldset><legend>Wie angenehm und natürlich klingt Stimme {label} hier?</legend>{radios}</fieldset></div>'
+                f"<fieldset><legend>Wie angenehm und natürlich klingt Stimme {label} hier?</legend>{radios}</fieldset></div>"
             )
         options = "".join(f'<option value="{lab}">Stimme {lab}</option>' for lab in labels)
         blocks.append(
@@ -200,7 +201,10 @@ const META = {data};
 // Reihenfolge der Stimmen je Person mischen (gegen Reihenfolge-Effekte).
 for (const box of document.querySelectorAll('.voices')) {{
   const items = Array.from(box.children);
-  for (let i = items.length - 1; i > 0; i--) {{ const j = Math.floor(Math.random() * (i + 1)); [items[i], items[j]] = [items[j], items[i]]; }}
+  for (let i = items.length - 1; i > 0; i--) {{
+    const j = Math.floor(Math.random() * (i + 1));
+    [items[i], items[j]] = [items[j], items[i]];
+  }}
   items.forEach((el) => box.appendChild(el));
 }}
 document.getElementById('test').addEventListener('submit', (ev) => {{
@@ -231,7 +235,9 @@ document.getElementById('test').addEventListener('submit', (ev) => {{
 """
 
 
-def aggregate(results: list[dict[str, Any]], key: dict[str, str], latency: dict[str, list[float]] | None = None) -> dict[str, Any]:
+def aggregate(
+    results: list[dict[str, Any]], key: dict[str, str], latency: dict[str, list[float]] | None = None
+) -> dict[str, Any]:
     """Auswertung je Anbieter: Mittelwert, Anzahl, Favoriten je Satz und insgesamt, Antwortzeit (Median, 90 %)."""
     scores: dict[str, list[int]] = defaultdict(list)
     prefs: Counter[str] = Counter()
@@ -270,7 +276,8 @@ def report_markdown(summary: dict[str, Any]) -> str:
     lines = [
         f"# Stimmen-Blindtest: Auswertung ({summary['participants']} Personen)",
         "",
-        "| Rang | Stimme | Buchstabe | Mittelwert (1–5) | Bewertungen | Favorit je Satz | Favorit insgesamt | Antwortzeit Median | 90-%-Wert |",
+        "| Rang | Stimme | Buchstabe | Mittelwert (1–5) | Bewertungen | Favorit je Satz | Favorit insgesamt "
+        "| Antwortzeit Median | 90-%-Wert |",
         "|---|---|---|---|---|---|---|---|---|",
     ]
     for rank, voice in enumerate(summary["ranking"], start=1):
