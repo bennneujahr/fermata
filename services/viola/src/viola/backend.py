@@ -106,9 +106,7 @@ class HttpBackend:
     async def mark_analysis(self, session_id: str, status: str) -> None:
         await self._call("analysis_status", session_id, status=status)
 
-    async def flag_safety(
-        self, session_id: str, kind: str, severity: str, detector: str, turn_index: int | None
-    ) -> str | None:
+    async def flag_safety(self, session_id: str, kind: str, severity: str, detector: str, turn_index: int | None) -> str | None:
         r = await self._call("safety_flag", session_id, kind=kind, severity=severity, detector=detector, turn_index=turn_index)
         return str(r.get("flag_id")) if r.get("flag_id") else None
 
@@ -141,9 +139,11 @@ class MemorySession:
 class MemoryBackend:
     """Datenbank-Attrappe mit denselben Kernregeln wie die SQL-Funktionen."""
 
-    def __init__(self) -> None:
+    def __init__(self, *, auto_create: bool = False) -> None:
         self.sessions: dict[str, MemorySession] = {}
         self.calls: list[tuple[str, str]] = []
+        # Nur für lokale Läufe: unbekannte Sitzungen entstehen beim ersten Zugriff (Erstgespräch, Text, Sie).
+        self.auto_create = auto_create
 
     def create_session(
         self,
@@ -184,7 +184,9 @@ class MemoryBackend:
 
     def _get(self, sid: str) -> MemorySession:
         if sid not in self.sessions:
-            raise BackendError(404, "session_not_found")
+            if not self.auto_create:
+                raise BackendError(404, "session_not_found")
+            self.create_session(session_id=sid, mode=Mode.TEXT)
         return self.sessions[sid]
 
     async def context(self, session_id: str) -> dict[str, Any]:
@@ -256,9 +258,7 @@ class MemoryBackend:
         self.calls.append(("analysis_status", session_id))
         self._get(session_id).analysis_status = status
 
-    async def flag_safety(
-        self, session_id: str, kind: str, severity: str, detector: str, turn_index: int | None
-    ) -> str | None:
+    async def flag_safety(self, session_id: str, kind: str, severity: str, detector: str, turn_index: int | None) -> str | None:
         self.calls.append(("safety_flag", session_id))
         s = self._get(session_id)
         order = ["niedrig", "mittel", "hoch", "akut"]

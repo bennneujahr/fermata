@@ -19,10 +19,25 @@ def raw_analysis(**over: Any) -> dict[str, Any]:
         "summary": "Sie sind ruhig. Ihr Glaube gibt Ihnen Halt. Sie wandern gern.",
         "personality": {"traits": ["ruhig", "gläubig"], "interests": ["Wandern", "Kochen"], "notes": "Wirkt gelassen."},
         "values_profile": {"values": ["Ehrlichkeit"], "relationship": ["Nähe"], "notes": ""},
-        "life_circumstances": {"work": "Pflege", "living": "Schwerin", "family": None, "free_evenings": ["fr"], "free_time_notes": None},
-        "age_min": 50, "age_max": 40, "travel_modes": ["auto", "flugzeug"], "travel_max_minutes": 500, "travel_max_km": 30,
-        "smoking": "nein", "has_children": True, "wants_children": "nein",
-        "wants": [{"category": "werte", "text": "Ehrlichkeit", "importance": 3}, {"category": "werte", "text": "Sollte evangelisch sein", "importance": 3}],
+        "life_circumstances": {
+            "work": "Pflege",
+            "living": "Schwerin",
+            "family": None,
+            "free_evenings": ["fr"],
+            "free_time_notes": None,
+        },
+        "age_min": 50,
+        "age_max": 40,
+        "travel_modes": ["auto", "flugzeug"],
+        "travel_max_minutes": 500,
+        "travel_max_km": 30,
+        "smoking": "nein",
+        "has_children": True,
+        "wants_children": "nein",
+        "wants": [
+            {"category": "werte", "text": "Ehrlichkeit", "importance": 3},
+            {"category": "werte", "text": "Sollte evangelisch sein", "importance": 3},
+        ],
         "dealbreakers": [{"kind": "raucht", "text": "Raucht"}],
         "personal_weights": {"werte": 2, "wuensche": 2, "lebensumstaende": 1, "persoenlichkeit": 1, "zeiten": 1},
     }
@@ -66,12 +81,23 @@ async def test_two_stage_art9_filter() -> None:
         texts = [line.split("] ", 1)[1] for line in req.user.splitlines() if line.startswith("[")]
         return {"flagged": [{"id": i, "category": "religion"} for i, t in enumerate(texts) if "Halt" in t]}
 
-    model = FakeChatModel(json_replies=[raw_analysis(summary="Sie sind ruhig. Etwas Höheres gibt Ihnen Halt. Sie wandern gern."),
-                                        checker, summary_checker])
+    model = FakeChatModel(
+        json_replies=[
+            raw_analysis(summary="Sie sind ruhig. Etwas Höheres gibt Ihnen Halt. Sie wandern gern."),
+            checker,
+            summary_checker,
+        ]
+    )
     guard = Art9Guard(model, "eu.anthropic.claude-sonnet-5-5")
     result = await AnalysisAgent(model, "eu.anthropic.claude-sonnet-5-5").run(
-        turns=TURNS, notes=[], profile=None, kind=Kind.ERSTGESPRAECH, address_form=AddressForm.SIE,
-        proposed_summary=None, guard=guard)
+        turns=TURNS,
+        notes=[],
+        profile=None,
+        kind=Kind.ERSTGESPRAECH,
+        address_form=AddressForm.SIE,
+        proposed_summary=None,
+        guard=guard,
+    )
     a = result.analysis
     assert a is not None
     assert a["personality"]["traits"] == ["ruhig"]
@@ -99,8 +125,14 @@ async def test_without_model_check_only_the_sparse_variant_is_kept() -> None:
 
     model.complete_json = flaky  # type: ignore[method-assign]
     result = await AnalysisAgent(model, "m").run(
-        turns=TURNS, notes=[], profile=None, kind=Kind.ERSTGESPRAECH, address_form=AddressForm.SIE,
-        proposed_summary=None, guard=Art9Guard(model, "m"))
+        turns=TURNS,
+        notes=[],
+        profile=None,
+        kind=Kind.ERSTGESPRAECH,
+        address_form=AddressForm.SIE,
+        proposed_summary=None,
+        guard=Art9Guard(model, "m"),
+    )
     a = result.analysis
     assert a is not None
     assert "personality" not in a and "life_circumstances" not in a
@@ -112,6 +144,12 @@ async def test_without_model_check_only_the_sparse_variant_is_kept() -> None:
 async def test_analysis_failure_returns_nothing() -> None:
     model = FakeChatModel(json_replies=[None])
     result = await AnalysisAgent(model, "m").run(
-        turns=TURNS, notes=[], profile=None, kind=Kind.ERSTGESPRAECH, address_form=AddressForm.DU,
-        proposed_summary="Du bist ruhig.", guard=Art9Guard(model, "m"))
+        turns=TURNS,
+        notes=[],
+        profile=None,
+        kind=Kind.ERSTGESPRAECH,
+        address_form=AddressForm.DU,
+        proposed_summary="Du bist ruhig.",
+        guard=Art9Guard(model, "m"),
+    )
     assert result.analysis is None and result.summary is None

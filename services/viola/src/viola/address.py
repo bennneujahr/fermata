@@ -46,7 +46,7 @@ def looks_formal(text: str) -> bool:
     for m in _FORMAL.finditer(text):
         start = m.start()
         before = text[:start].rstrip()
-        if before and before[-1] not in ".?:„\"":
+        if before and before[-1] not in '.?:„"':
             return True
     return False
 

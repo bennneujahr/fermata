@@ -74,13 +74,21 @@ def test_cost_estimate_for_one_hour_matches_plan_assumptions() -> None:
     Erwartung: Sprachmodell ca. 0,48 USD je Stunde; gesamt unter dem Ziel von 2 € je 60 Minuten.
     """
     usage = Usage(input_tokens=90 * 1000, output_tokens=90 * 130, cache_read_tokens=90 * 5000)
-    llm_only = estimate_eur(DEFAULT_PRICES, stt_seconds=0, usage=usage, tts_characters=0, tts_provider="polly",
-                            media_minutes=0, livekit_path="C")
+    llm_only = estimate_eur(
+        DEFAULT_PRICES, stt_seconds=0, usage=usage, tts_characters=0, tts_provider="polly", media_minutes=0, livekit_path="C"
+    )
     # PLAN nennt ca. 0,48 USD (mit etwas Cache-Schreiben); ohne Cache-Schreiben sind es ca. 0,43 USD.
     assert 0.40 * 0.86 <= llm_only <= 0.50 * 0.86
     # Stimme: Person spricht ca. 25 Minuten (nur Sprache geht an die Erkennung), Viola 90 × 180 Zeichen
-    total = estimate_eur(DEFAULT_PRICES, stt_seconds=25 * 60, usage=usage, tts_characters=90 * 180, tts_provider="polly",
-                         media_minutes=60, livekit_path="C")
+    total = estimate_eur(
+        DEFAULT_PRICES,
+        stt_seconds=25 * 60,
+        usage=usage,
+        tts_characters=90 * 180,
+        tts_provider="polly",
+        media_minutes=60,
+        livekit_path="C",
+    )
     assert total < 2.0
     assert total == pytest.approx(llm_only + (25 * 0.0077 + 16200 / 1e6 * 30 + 60 * 0.001) * 0.86, rel=1e-3)
 
@@ -92,13 +100,25 @@ def test_cost_record_has_all_columns() -> None:
     lat = LatencyTracker()
     lat.add(900)
     lat.add(1900)
-    rec = cost_record(meter, lat, minutes=10, prices=DEFAULT_PRICES, tts_provider="polly", livekit_path="C",
-                      mode="voice", target_ms_p90=2000)
+    rec = cost_record(
+        meter, lat, minutes=10, prices=DEFAULT_PRICES, tts_provider="polly", livekit_path="C", mode="voice", target_ms_p90=2000
+    )
     assert rec["llm_input_tokens"] == 16_000 and rec["llm_output_tokens"] == 2300
     assert rec["llm_cache_read_tokens"] == 40_000 and rec["llm_cache_write_tokens"] == 5000
     assert rec["latency_ms_p50"] == 900 and rec["latency_ms_p90"] == 1900
     assert rec["amount_eur"] > 0 and rec["details"]["eur_per_hour"] == pytest.approx(rec["amount_eur"] * 6, rel=1e-3)
     assert rec["details"]["share_below_target"] == 1.0
-    assert set(rec) == {"minutes", "stt_seconds", "llm_input_tokens", "llm_output_tokens", "llm_cache_read_tokens",
-                        "llm_cache_write_tokens", "tts_characters", "media_minutes", "amount_eur", "latency_ms_p50",
-                        "latency_ms_p90", "details"}
+    assert set(rec) == {
+        "minutes",
+        "stt_seconds",
+        "llm_input_tokens",
+        "llm_output_tokens",
+        "llm_cache_read_tokens",
+        "llm_cache_write_tokens",
+        "tts_characters",
+        "media_minutes",
+        "amount_eur",
+        "latency_ms_p50",
+        "latency_ms_p90",
+        "details",
+    }

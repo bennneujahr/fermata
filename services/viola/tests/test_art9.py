@@ -96,7 +96,10 @@ def test_redact_sentences_marks_removed_parts_for_transcripts() -> None:
 def test_clean_strings_walks_nested_structures() -> None:
     data = {
         "personality": {"traits": ["ruhig", "queer"], "notes": "Mag Musik. Ist sehr gläubig."},
-        "wants": [{"category": "werte", "text": "Sollte katholisch sein", "importance": 3}, {"category": "werte", "text": "Humor", "importance": 2}],
+        "wants": [
+            {"category": "werte", "text": "Sollte katholisch sein", "importance": 3},
+            {"category": "werte", "text": "Humor", "importance": 2},
+        ],
         "age_min": 30,
     }
     cleaned, cats = art9.clean_strings(data)
@@ -121,7 +124,7 @@ def test_pattern_file_is_consistent() -> None:
 def test_art9_sql_in_sync() -> None:
     """Die Migration enthält genau die Muster aus art9_patterns.json (scripts/sync_art9.py)."""
     sql = MIGRATION.read_text(encoding="utf-8")
-    block = re.search(r"\$art9\$(.*?)\$art9\$", sql, re.S)
+    block = re.search(r"\$art9\$(.*?)\$art9\$", sql, re.DOTALL)
     assert block, "Block $art9$ fehlt in der Migration"
     in_sql = json.loads(block.group(1))
     raw = json.loads(resources.files("viola").joinpath("art9_patterns.json").read_text(encoding="utf-8"))

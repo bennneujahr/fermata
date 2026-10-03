@@ -81,18 +81,29 @@ async def test_request_parameters_follow_sonnet_5_5_rules(backend: MemoryBackend
     req = model.requests[0]
     assert req.model == "eu.anthropic.claude-sonnet-5-5"
     assert req.effort == "low" and req.thinking == "between_tools"
-    assert [t["name"] for t in req.tools] == ["note_profile_fact", "propose_summary", "flag_safety", "end_conversation", "switch_to_text"]
+    assert [t["name"] for t in req.tools] == [
+        "note_profile_fact",
+        "propose_summary",
+        "flag_safety",
+        "end_conversation",
+        "switch_to_text",
+    ]
     assert req.system[0]["cache_control"] == {"type": "ephemeral"}
     assert req.system[0]["text"].startswith("Anrede im Gespräch: Sie")
 
 
 async def test_history_is_append_only_and_valid(backend: MemoryBackend) -> None:
-    model = FakeChatModel([
-        FakeReply("Schön. Was machen Sie gern?", [("note_profile_fact", {"category": "persoenlichkeit", "fact": "Die Person wandert gern.", "importance": 2})]),
-        FakeReply("Verstehe. Und was noch?"),
-        FakeReply("", [("note_profile_fact", {"category": "werte", "fact": "Ehrlichkeit ist wichtig.", "importance": 3})]),
-        FakeReply("Danke. Wie wichtig ist Ihnen Zeit für sich?"),
-    ])
+    model = FakeChatModel(
+        [
+            FakeReply(
+                "Schön. Was machen Sie gern?",
+                [("note_profile_fact", {"category": "persoenlichkeit", "fact": "Die Person wandert gern.", "importance": 2})],
+            ),
+            FakeReply("Verstehe. Und was noch?"),
+            FakeReply("", [("note_profile_fact", {"category": "werte", "fact": "Ehrlichkeit ist wichtig.", "importance": 3})]),
+            FakeReply("Danke. Wie wichtig ist Ihnen Zeit für sich?"),
+        ]
+    )
     conv = await open_conv(backend, model)
     for text in ("Ja, gern.", "Ich wandere gern.", "Ehrlichkeit ist mir wichtig."):
         await say(conv, text)
@@ -106,10 +117,12 @@ async def test_history_is_append_only_and_valid(backend: MemoryBackend) -> None:
 
 
 async def test_tool_results_ride_along_with_next_person_message(backend: MemoryBackend) -> None:
-    model = FakeChatModel([
-        FakeReply(ASK, [("note_profile_fact", {"category": "werte", "fact": "Verlässlichkeit zählt.", "importance": 3})]),
-        FakeReply(ASK),
-    ])
+    model = FakeChatModel(
+        [
+            FakeReply(ASK, [("note_profile_fact", {"category": "werte", "fact": "Verlässlichkeit zählt.", "importance": 3})]),
+            FakeReply(ASK),
+        ]
+    )
     conv = await open_conv(backend, model)
     await say(conv, "Ja.")
     await say(conv, "Verlässlichkeit.")
@@ -136,10 +149,15 @@ async def test_notices_as_system_message_or_marked_text(backend: MemoryBackend) 
 
 
 async def test_art9_fact_is_not_noted_and_model_is_told(backend: MemoryBackend) -> None:
-    model = FakeChatModel([
-        FakeReply("Danke. Was ist Ihnen sonst wichtig?", [("note_profile_fact", {"category": "werte", "fact": "Die Person ist sehr gläubig.", "importance": 3})]),
-        FakeReply(ASK),
-    ])
+    model = FakeChatModel(
+        [
+            FakeReply(
+                "Danke. Was ist Ihnen sonst wichtig?",
+                [("note_profile_fact", {"category": "werte", "fact": "Die Person ist sehr gläubig.", "importance": 3})],
+            ),
+            FakeReply(ASK),
+        ]
+    )
     conv = await open_conv(backend, model)
     await say(conv, "Ich bin sehr gläubig und gehe jeden Sonntag in die Kirche.")
     await say(conv, "Und ich wandere.")
@@ -160,10 +178,21 @@ async def test_summary_flow_end_and_finish_saves_profile(backend: MemoryBackend)
         "summary": "Sie sind ruhig und neugierig. Sie gehen sonntags in die Kirche. Sie wünschen sich ein Gegenüber mit Humor.",
         "personality": {"traits": ["ruhig", "neugierig"], "interests": ["Wandern"], "notes": ""},
         "values_profile": {"values": ["Ehrlichkeit"], "relationship": ["Verlässlichkeit"], "notes": ""},
-        "life_circumstances": {"work": "Schuldienst", "living": "Wismar", "family": None, "free_evenings": ["fr", "sa"],
-                               "free_time_notes": None},
-        "age_min": 35, "age_max": 50, "travel_modes": ["oepnv", "rad"], "travel_max_minutes": 40, "travel_max_km": None,
-        "smoking": "nein", "has_children": False, "wants_children": "offen",
+        "life_circumstances": {
+            "work": "Schuldienst",
+            "living": "Wismar",
+            "family": None,
+            "free_evenings": ["fr", "sa"],
+            "free_time_notes": None,
+        },
+        "age_min": 35,
+        "age_max": 50,
+        "travel_modes": ["oepnv", "rad"],
+        "travel_max_minutes": 40,
+        "travel_max_km": None,
+        "smoking": "nein",
+        "has_children": False,
+        "wants_children": "offen",
         "wants": [{"category": "persoenlichkeit", "text": "Humor", "importance": 3}],
         "dealbreakers": [{"kind": "raucht", "text": "Rauchen"}],
         "personal_weights": {"werte": 3, "wuensche": 3, "lebensumstaende": 1, "persoenlichkeit": 2, "zeiten": 1},
@@ -171,8 +200,15 @@ async def test_summary_flow_end_and_finish_saves_profile(backend: MemoryBackend)
     model = FakeChatModel(
         [
             FakeReply(ASK),
-            FakeReply("Ich fasse kurz zusammen. Stimmt das so?", [("propose_summary", {
-                "summary": "Sie sind ruhig. Sie sind Christin. Sie wandern gern und mögen Humor.", "is_partial": False})]),
+            FakeReply(
+                "Ich fasse kurz zusammen. Stimmt das so?",
+                [
+                    (
+                        "propose_summary",
+                        {"summary": "Sie sind ruhig. Sie sind Christin. Sie wandern gern und mögen Humor.", "is_partial": False},
+                    )
+                ],
+            ),
             FakeReply("Danke, dann ist alles bereit.", [("end_conversation", {"reason": "fertig"})]),
         ],
         json_replies=[analysis, {"flagged": []}, {"flagged": []}, {"flags": []}],
@@ -205,10 +241,15 @@ async def test_summary_flow_end_and_finish_saves_profile(backend: MemoryBackend)
 
 
 async def test_finish_falls_back_to_proposed_summary(backend: MemoryBackend) -> None:
-    model = FakeChatModel([
-        FakeReply(ASK),
-        FakeReply("Passt das?", [("propose_summary", {"summary": "Sie sind ruhig und wandern gern an der See.", "is_partial": False})]),
-    ])
+    model = FakeChatModel(
+        [
+            FakeReply(ASK),
+            FakeReply(
+                "Passt das?",
+                [("propose_summary", {"summary": "Sie sind ruhig und wandern gern an der See.", "is_partial": False})],
+            ),
+        ]
+    )
     conv = await open_conv(backend, model)
     await say(conv, "Ja.")
     await say(conv, "Ich wandere.")
@@ -221,7 +262,9 @@ async def test_finish_falls_back_to_proposed_summary(backend: MemoryBackend) -> 
 
 
 async def test_crisis_gets_hotlines_flag_and_gentle_end(backend: MemoryBackend) -> None:
-    model = FakeChatModel([FakeReply(ASK), FakeReply("Das klingt sehr schwer. Ich bin froh, dass Sie es sagen.")], json_replies=[{"flags": []}])
+    model = FakeChatModel(
+        [FakeReply(ASK), FakeReply("Das klingt sehr schwer. Ich bin froh, dass Sie es sagen.")], json_replies=[{"flags": []}]
+    )
     conv = await open_conv(backend, model, mode=Mode.VOICE)
     await say(conv, "Ja.")
     out = await say(conv, "Ich will mich umbringen.")
@@ -238,11 +281,19 @@ async def test_crisis_gets_hotlines_flag_and_gentle_end(backend: MemoryBackend) 
 
 
 async def test_minor_ends_via_tool_and_no_profile(backend: MemoryBackend) -> None:
-    model = FakeChatModel([
-        FakeReply(ASK),
-        FakeReply("Fermata ist erst ab 18, deshalb beende ich unser Gespräch jetzt.",
-                  [("flag_safety", {"kind": "minderjaehrig", "severity": "hoch"}), ("end_conversation", {"reason": "minderjaehrig"})]),
-    ], json_replies=[{"flags": []}])
+    model = FakeChatModel(
+        [
+            FakeReply(ASK),
+            FakeReply(
+                "Fermata ist erst ab 18, deshalb beende ich unser Gespräch jetzt.",
+                [
+                    ("flag_safety", {"kind": "minderjaehrig", "severity": "hoch"}),
+                    ("end_conversation", {"reason": "minderjaehrig"}),
+                ],
+            ),
+        ],
+        json_replies=[{"flags": []}],
+    )
     conv = await open_conv(backend, model)
     await say(conv, "Ja.")
     await say(conv, "Ich bin 16 Jahre alt.")
@@ -254,8 +305,13 @@ async def test_minor_ends_via_tool_and_no_profile(backend: MemoryBackend) -> Non
 
 
 async def test_harassment_boundary_then_forced_end(backend: MemoryBackend) -> None:
-    model = FakeChatModel([FakeReply(ASK), FakeReply("So möchte ich nicht angesprochen werden. Wollen wir respektvoll weitermachen?"),
-                           FakeReply("Das ist schade.")])
+    model = FakeChatModel(
+        [
+            FakeReply(ASK),
+            FakeReply("So möchte ich nicht angesprochen werden. Wollen wir respektvoll weitermachen?"),
+            FakeReply("Das ist schade."),
+        ]
+    )
     conv = await open_conv(backend, model)
     await say(conv, "Ja.")
     await say(conv, "Halt die Fresse.")
@@ -320,10 +376,15 @@ async def test_time_up_without_goodbye_from_model_is_closed_by_engine(backend: M
 
 
 async def test_interruption_keeps_history_valid(backend: MemoryBackend) -> None:
-    model = FakeChatModel([
-        FakeReply("Erster Satz. Zweiter Satz mit Frage?", [("note_profile_fact", {"category": "werte", "fact": "Ruhe ist wichtig.", "importance": 2})]),
-        FakeReply("Ah, Sie wollten noch etwas sagen. Was denn?"),
-    ])
+    model = FakeChatModel(
+        [
+            FakeReply(
+                "Erster Satz. Zweiter Satz mit Frage?",
+                [("note_profile_fact", {"category": "werte", "fact": "Ruhe ist wichtig.", "importance": 2})],
+            ),
+            FakeReply("Ah, Sie wollten noch etwas sagen. Was denn?"),
+        ]
+    )
     conv = await open_conv(backend, model, mode=Mode.VOICE)
     gen = conv.respond("Ja.")
     first = await gen.__anext__()
@@ -357,7 +418,9 @@ async def test_silence_prompts_then_end(backend: MemoryBackend) -> None:
 
 
 async def test_switch_to_text_tool_in_voice(backend: MemoryBackend) -> None:
-    model = FakeChatModel([FakeReply("Gern, dann schreiben wir weiter.", [("switch_to_text", {"reason": "wunsch_der_person"})]), FakeReply(ASK)])
+    model = FakeChatModel(
+        [FakeReply("Gern, dann schreiben wir weiter.", [("switch_to_text", {"reason": "wunsch_der_person"})]), FakeReply(ASK)]
+    )
     conv = await open_conv(backend, model, mode=Mode.VOICE)
     await say(conv, "Ich schreibe lieber.")
     await conv.flush()
@@ -390,9 +453,14 @@ async def test_resume_after_restart_uses_stored_turns(backend: MemoryBackend) ->
 async def test_continuation_uses_previous_summary(backend: MemoryBackend) -> None:
     model = FakeChatModel([FakeReply(ASK)])
     conv = await open_conv(
-        backend, model, tier=Tier.LOGE,
-        previous={"session_id": "00000000-0000-0000-0000-000000000001", "summary_draft": "Sie sind ruhig.",
-                  "covered_blocks": ["persoenlichkeit", "werte"]},
+        backend,
+        model,
+        tier=Tier.LOGE,
+        previous={
+            "session_id": "00000000-0000-0000-0000-000000000001",
+            "summary_draft": "Sie sind ruhig.",
+            "covered_blocks": ["persoenlichkeit", "werte"],
+        },
     )
     assert conv.state.blocks[0] is Block.WUENSCHE
     await say(conv, "Ja.")

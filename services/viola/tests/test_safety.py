@@ -57,11 +57,17 @@ def test_detector_keeps_highest_severity_per_kind() -> None:
 
 
 async def test_safety_agent_reports_valid_flags_only() -> None:
-    model = FakeChatModel(json_replies=[{"flags": [
-        {"kind": "krise", "severity": "hoch", "turn_index": 1},
-        {"kind": "gewalt", "severity": "mittel", "turn_index": 0},  # Beitrag von Viola → ungültig
-        {"kind": "erfunden", "severity": "hoch", "turn_index": 1},
-    ]}])
+    model = FakeChatModel(
+        json_replies=[
+            {
+                "flags": [
+                    {"kind": "krise", "severity": "hoch", "turn_index": 1},
+                    {"kind": "gewalt", "severity": "mittel", "turn_index": 0},  # Beitrag von Viola → ungültig
+                    {"kind": "erfunden", "severity": "hoch", "turn_index": 1},
+                ]
+            }
+        ]
+    )
     agent = SafetyAgent(model, "eu.anthropic.claude-sonnet-5-5")
     turns = [Turn("viola", "Wie geht es Ihnen?"), Turn("person", "Mir geht es seit Wochen sehr schlecht.")]
     flags = await agent.review(turns)

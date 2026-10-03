@@ -89,7 +89,8 @@ class ConversationState:
         # Im Erstgespräch und in der Vertiefung endet die Begrüßung mit „Wollen wir anfangen?“ – die Antwort darauf
         # zählt nicht als Antwort im ersten Themenblock.
         self._skip_next_reply = (
-            not count_first_reply if count_first_reply is not None
+            not count_first_reply
+            if count_first_reply is not None
             else kind in (Kind.ERSTGESPRAECH, Kind.VERTIEFUNG) or bool(covered_before)
         )
 

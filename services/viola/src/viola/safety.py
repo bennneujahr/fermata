@@ -41,38 +41,92 @@ _AGE_WORDS = "zwölf|dreizehn|vierzehn|fünfzehn|sechzehn|siebzehn"
 
 RULES: tuple[_Rule, ...] = (
     # Krise: ausdrückliche Absicht → akut, Gedanken und Hoffnungslosigkeit → hoch
-    _Rule("suizid_absicht", SafetyKind.KRISE, Severity.AKUT,
-          _r(r"\b(ich (will|werde|möchte) (mich|mir) (umbringen|töten|das leben nehmen|etwas antun))"
-             r"|\b(mich|mir) (heute|jetzt|bald) (umbringen|das leben nehmen)"
-             r"|\bhabe? (schon )?(tabletten|einen strick|einen plan)\b.{0,40}\b(sterben|umbringen|ende)")),
-    _Rule("suizid_gedanken", SafetyKind.KRISE, Severity.HOCH,
-          _r(r"\b(suizid\w*|selbstmord\w*|lebensmüde|nicht mehr leben|will sterben|möchte sterben|"
-             r"wäre lieber tot|alles beenden|keinen sinn mehr|kein ausweg|(mich|mir) (etwas|was) antun)\b")),
-    _Rule("selbstverletzung", SafetyKind.KRISE, Severity.HOCH,
-          _r(r"\b(ritze mich|mich ritzen|selbstverletz\w*|verletze mich selbst|schneide mich)\b")),
+    _Rule(
+        "suizid_absicht",
+        SafetyKind.KRISE,
+        Severity.AKUT,
+        _r(
+            r"\b(ich (will|werde|möchte) (mich|mir) (umbringen|töten|das leben nehmen|etwas antun))"
+            r"|\b(mich|mir) (heute|jetzt|bald) (umbringen|das leben nehmen)"
+            r"|\bhabe? (schon )?(tabletten|einen strick|einen plan)\b.{0,40}\b(sterben|umbringen|ende)"
+        ),
+    ),
+    _Rule(
+        "suizid_gedanken",
+        SafetyKind.KRISE,
+        Severity.HOCH,
+        _r(
+            r"\b(suizid\w*|selbstmord\w*|lebensmüde|nicht mehr leben|will sterben|möchte sterben|"
+            r"wäre lieber tot|alles beenden|keinen sinn mehr|kein ausweg|(mich|mir) (etwas|was) antun)\b"
+        ),
+    ),
+    _Rule(
+        "selbstverletzung",
+        SafetyKind.KRISE,
+        Severity.HOCH,
+        _r(r"\b(ritze mich|mich ritzen|selbstverletz\w*|verletze mich selbst|schneide mich)\b"),
+    ),
     # Minderjährig
-    _Rule("alter_unter_18", SafetyKind.MINDERJAEHRIG, Severity.HOCH,
-          _r(rf"\bich bin (erst |gerade |noch )?(1[0-7]|{_AGE_WORDS})"
-             r"(?!\s+(jahre?\s+(verheiratet|zusammen|dabei|lang|her|getrennt)|monate|kilo|uhr|minuten|km))( jahre)?( alt)?\b")),
-    _Rule("minderjaehrig_wort", SafetyKind.MINDERJAEHRIG, Severity.HOCH,
-          _r(r"\b(noch minderjährig|nicht volljährig|bin minderjährig|noch keine 18|noch nicht 18|werde erst 18)\b")),
-    _Rule("schulklasse", SafetyKind.MINDERJAEHRIG, Severity.MITTEL,
-          _r(r"\b(gehe|bin) (in die|in der) ([5-9]|1[0-2]|fünfte|sechste|siebte|achte|neunte|zehnte|elfte|zwölfte)\.? klasse\b"
-             r"|\bmeine (eltern|mama|mutter|papa|vater) (erlauben|erlaubt|dürfen|darf) (das|es) nicht\b")),
+    _Rule(
+        "alter_unter_18",
+        SafetyKind.MINDERJAEHRIG,
+        Severity.HOCH,
+        _r(
+            rf"\bich bin (erst |gerade |noch )?(1[0-7]|{_AGE_WORDS})"
+            r"(?!\s+(jahre?\s+(verheiratet|zusammen|dabei|lang|her|getrennt)|monate|kilo|uhr|minuten|km))( jahre)?( alt)?\b"
+        ),
+    ),
+    _Rule(
+        "minderjaehrig_wort",
+        SafetyKind.MINDERJAEHRIG,
+        Severity.HOCH,
+        _r(r"\b(noch minderjährig|nicht volljährig|bin minderjährig|noch keine 18|noch nicht 18|werde erst 18)\b"),
+    ),
+    _Rule(
+        "schulklasse",
+        SafetyKind.MINDERJAEHRIG,
+        Severity.MITTEL,
+        _r(
+            r"\b(gehe|bin) (in die|in der) ([5-9]|1[0-2]|fünfte|sechste|siebte|achte|neunte|zehnte|elfte|zwölfte)\.? klasse\b"
+            r"|\bmeine (eltern|mama|mutter|papa|vater) (erlauben|erlaubt|dürfen|darf) (das|es) nicht\b"
+        ),
+    ),
     # Gewalt und Bedrohung
-    _Rule("bedrohung", SafetyKind.GEWALT, Severity.HOCH,
-          _r(r"\b(ich (bring|bringe|werde) (dich|sie|ihn|euch) (um|umbringen|abstechen|erschießen|fertigmachen))"
-             r"|\b(abstechen|erschießen|abknallen)\b")),
-    _Rule("gewalt_erlebt", SafetyKind.GEWALT, Severity.HOCH,
-          _r(r"\b(vergewaltig\w*|er schlägt mich|sie schlägt mich|werde geschlagen|habe angst vor (ihm|ihr|meinem|meiner))\b")),
+    _Rule(
+        "bedrohung",
+        SafetyKind.GEWALT,
+        Severity.HOCH,
+        _r(
+            r"\b(ich (bring|bringe|werde) (dich|sie|ihn|euch) (um|umbringen|abstechen|erschießen|fertigmachen))"
+            r"|\b(abstechen|erschießen|abknallen)\b"
+        ),
+    ),
+    _Rule(
+        "gewalt_erlebt",
+        SafetyKind.GEWALT,
+        Severity.HOCH,
+        _r(r"\b(vergewaltig\w*|er schlägt mich|sie schlägt mich|werde geschlagen|habe angst vor (ihm|ihr|meinem|meiner))\b"),
+    ),
     _Rule("waffe", SafetyKind.GEWALT, Severity.MITTEL, _r(r"\b(waffe|messer dabei|pistole)\b")),
     # Belästigung von Viola
-    _Rule("beleidigung", SafetyKind.BELAESTIGUNG, Severity.MITTEL,
-          _r(r"\b(schlampe|fotze|hure|wichser|arschloch|missgeburt|hurensohn|drecksau|dumme kuh|blöde kuh|"
-             r"halt die fresse|halt's maul|halts maul|verpiss dich|fick dich)\b")),
-    _Rule("sexuell_uebergriffig", SafetyKind.BELAESTIGUNG, Severity.MITTEL,
-          _r(r"\b(zieh dich aus|bist du nackt|nacktbild\w*|sex mit dir|titten|geil auf dich|blas mir|ficken|"
-             r"was hast du an|stöhn\w*)\b")),
+    _Rule(
+        "beleidigung",
+        SafetyKind.BELAESTIGUNG,
+        Severity.MITTEL,
+        _r(
+            r"\b(schlampe|fotze|hure|wichser|arschloch|missgeburt|hurensohn|drecksau|dumme kuh|blöde kuh|"
+            r"halt die fresse|halt's maul|halts maul|verpiss dich|fick dich)\b"
+        ),
+    ),
+    _Rule(
+        "sexuell_uebergriffig",
+        SafetyKind.BELAESTIGUNG,
+        Severity.MITTEL,
+        _r(
+            r"\b(zieh dich aus|bist du nackt|nacktbild\w*|sex mit dir|titten|geil auf dich|blas mir|ficken|"
+            r"was hast du an|stöhn\w*)\b"
+        ),
+    ),
 )
 
 

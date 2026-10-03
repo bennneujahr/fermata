@@ -18,7 +18,7 @@ import contextlib
 import functools
 import logging
 import time
-from collections.abc import AsyncIterator, Callable
+from collections.abc import AsyncGenerator, AsyncIterator, Callable
 from dataclasses import dataclass, field
 from typing import Any
 
@@ -170,6 +170,10 @@ class Conversation:
         return self.ctx.session_id
 
     @property
+    def opened(self) -> bool:
+        return self._opened
+
+    @property
     def model_id(self) -> str:
         return self.options.model_override or self.settings.llm_model_id
 
@@ -228,8 +232,13 @@ class Conversation:
         if c.evening:
             parts.append(
                 self._render_notice(
-                    Notice("kontext_abend", {"datum": str(c.evening.get("starts_at") or "unbekannt"),
-                                             "lokal": str(c.evening.get("venue_name") or "unbekannt")})
+                    Notice(
+                        "kontext_abend",
+                        {
+                            "datum": str(c.evening.get("starts_at") or "unbekannt"),
+                            "lokal": str(c.evening.get("venue_name") or "unbekannt"),
+                        },
+                    )
                 )
             )
         if c.turns:
@@ -312,7 +321,7 @@ class Conversation:
                 # Bei Unterbrechung sofort aufräumen (nicht erst bei der Speicherbereinigung).
                 await inner.aclose()
 
-    async def _respond(self, person_text: str) -> AsyncIterator[str]:
+    async def _respond(self, person_text: str) -> AsyncGenerator[str, None]:
         if self.ended:
             return
         if not self._greeted:
@@ -372,7 +381,7 @@ class Conversation:
         self._pending_tool_results = []
         rendered = [self._render_notice(n) for n in notices]
         if rendered and self.options.notice_style == "user_text":
-            content.append({"type": "text", "text": "<hinweis von=\"fermata\">" + " ".join(rendered) + "</hinweis>"})
+            content.append({"type": "text", "text": '<hinweis von="fermata">' + " ".join(rendered) + "</hinweis>"})
         self.messages.append({"role": "user", "content": content})
         if rendered and self.options.notice_style == "system_message":
             self.messages.append({"role": "system", "content": "\n".join(rendered)})
@@ -482,8 +491,9 @@ class Conversation:
         last = self.messages[-1]
         if last["role"] == "assistant":
             pending = {r["tool_use_id"] for r in self._pending_tool_results}
-            open_ids = [b["id"] for b in last["content"] if isinstance(b, dict) and b.get("type") == "tool_use"
-                        and b["id"] not in pending]
+            open_ids = [
+                b["id"] for b in last["content"] if isinstance(b, dict) and b.get("type") == "tool_use" and b["id"] not in pending
+            ]
             self._pending_tool_results.extend(
                 {"type": "tool_result", "tool_use_id": i, "is_error": True, "content": "Unterbrochen."} for i in open_ids
             )
@@ -512,9 +522,7 @@ class Conversation:
             block["is_error"] = True
         return block
 
-    async def _run_tools(
-        self, result: TurnResult, person_index: int
-    ) -> tuple[list[dict[str, Any]], bool, EndReason | None]:
+    async def _run_tools(self, result: TurnResult, person_index: int) -> tuple[list[dict[str, Any]], bool, EndReason | None]:
         results: list[dict[str, Any]] = []
         terminal = False
         end_reason: EndReason | None = None
@@ -528,16 +536,20 @@ class Conversation:
                 if art9.contains_art9(call.args["fact"]):
                     msg = self._render_notice(Notice("tool_art9_abgelehnt"))
                 else:
-                    self.notes.append({"category": call.args["category"], "fact": call.args["fact"],
-                                       "importance": call.args["importance"]})
+                    self.notes.append(
+                        {"category": call.args["category"], "fact": call.args["fact"], "importance": call.args["importance"]}
+                    )
                     self.state.on_fact()
                     msg = self._render_notice(Notice("tool_notiert"))
                 results.append({"type": "tool_result", "tool_use_id": use.id, "content": msg})
             elif call.name == "propose_summary":
                 cleaned = art9.drop_sentences(call.args["summary"])
                 if len(cleaned.text) < 20:
-                    results.append(self._tool_result(
-                        use.id, "tool_fehler", error=True, fehler="Zusammenfassung zu kurz oder nur geschützte Angaben"))
+                    results.append(
+                        self._tool_result(
+                            use.id, "tool_fehler", error=True, fehler="Zusammenfassung zu kurz oder nur geschützte Angaben"
+                        )
+                    )
                     continue
                 self.proposed_summary = cleaned.text
                 if not self.state.ended:
@@ -647,8 +659,13 @@ class Conversation:
             guard = Art9Guard(self.model, analysis_model, effort="low")
             agent = AnalysisAgent(self.model, analysis_model, self.settings.analysis_effort, self.options.analysis_max_tokens)
             result = await agent.run(
-                turns=self.turns, notes=self.notes, profile=self.ctx.profile, kind=self.ctx.kind,
-                address_form=self.form, proposed_summary=self.proposed_summary, guard=guard,
+                turns=self.turns,
+                notes=self.notes,
+                profile=self.ctx.profile,
+                kind=self.ctx.kind,
+                address_form=self.form,
+                proposed_summary=self.proposed_summary,
+                guard=guard,
             )
             self.meter.analysis.add(result.usage)
             blocks = [b.value for b in self.state.covered_blocks()]
@@ -675,9 +692,13 @@ class Conversation:
         if self.ctx.mode is Mode.VOICE and self.meter.media_minutes == 0:
             self.meter.media_minutes = minutes
         record = cost_record(
-            self.meter, self.latency, minutes=minutes, prices=self.settings.prices,
+            self.meter,
+            self.latency,
+            minutes=minutes,
+            prices=self.settings.prices,
             tts_provider=self.settings.tts_provider if self.ctx.mode is Mode.VOICE else "fake",
-            livekit_path=self.settings.livekit_path, mode=self.ctx.mode.value,
+            livekit_path=self.settings.livekit_path,
+            mode=self.ctx.mode.value,
             target_ms_p90=self.settings.latency_target_ms_p90,
         )
         await self._safe(self.backend.record_costs(sid, record))

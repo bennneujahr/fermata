@@ -46,7 +46,14 @@ async def make_context(
     display_name: str | None = None,
 ) -> SessionContext:
     sid = backend.create_session(
-        kind=kind, mode=mode, address_form=form, tier=tier, max_minutes=max_minutes,
-        settings=settings, profile=profile, previous=previous, display_name=display_name,
+        kind=kind,
+        mode=mode,
+        address_form=form,
+        tier=tier,
+        max_minutes=max_minutes,
+        settings=settings,
+        profile=profile,
+        previous=previous,
+        display_name=display_name,
     )
     return SessionContext.from_json(await backend.context(sid))

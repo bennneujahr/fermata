@@ -11,9 +11,7 @@ from viola import prompts
 from viola.address import fill, has_markup, looks_formal, looks_informal, render
 from viola.domain import AddressForm, Kind, Tier
 
-ALL_PROMPT_FILES = sorted(
-    p.name for p in resources.files("viola.prompts").iterdir() if p.name.endswith(".md")
-)
+ALL_PROMPT_FILES = sorted(p.name for p in resources.files("viola.prompts").iterdir() if p.name.endswith(".md"))
 
 
 def test_render_picks_address_form() -> None:
@@ -43,7 +41,9 @@ def test_every_prompt_loads_without_tone_violations(name: str) -> None:
 @pytest.mark.parametrize("tier", list(Tier))
 @pytest.mark.parametrize("form", list(AddressForm))
 def test_system_prompt_renders_for_all_combinations(kind: Kind, tier: Tier, form: AddressForm) -> None:
-    text = prompts.system_prompt(kind, tier, form, {"telefonseelsorge": ["0800 1110111", "0800 1110222", "116 123"], "notruf": "112"})
+    text = prompts.system_prompt(
+        kind, tier, form, {"telefonseelsorge": ["0800 1110111", "0800 1110222", "116 123"], "notruf": "112"}
+    )
     assert not has_markup(text), "keine offenen [[…|…]] oder {…}"
     assert text.startswith(f"Anrede im Gespräch: {'Du' if form is AddressForm.DU else 'Sie'}")
     assert "0800 1110111 oder 0800 1110222 oder 116 123" in text
@@ -122,12 +122,34 @@ def test_fixed_sentences_render(key: str, form: AddressForm) -> None:
 def test_greeting_starts_with_ai_notice() -> None:
     gruss = prompts.sentence("gruss", AddressForm.SIE, gruss_name=", Anna")
     assert gruss == "Guten Tag, Anna. Ich bin Viola, eine künstliche Intelligenz von Fermata, kein Mensch."
-    assert prompts.sentence("gruss", AddressForm.DU, gruss_name="").startswith("Hallo. Ich bin Viola, eine künstliche Intelligenz")
+    assert prompts.sentence("gruss", AddressForm.DU, gruss_name="").startswith(
+        "Hallo. Ich bin Viola, eine künstliche Intelligenz"
+    )
 
 
 @pytest.mark.parametrize("key", prompts.notice_keys())
 def test_notices_render(key: str) -> None:
-    values = {k: "x" for k in ("art", "stufe", "minuten", "name", "profil", "zusammenfassung", "bloecke", "datum", "lokal",
-                               "block", "alt", "neu", "offen", "gehoert", "fehler", "telefonseelsorge", "notruf")}
+    values = {
+        k: "x"
+        for k in (
+            "art",
+            "stufe",
+            "minuten",
+            "name",
+            "profil",
+            "zusammenfassung",
+            "bloecke",
+            "datum",
+            "lokal",
+            "block",
+            "alt",
+            "neu",
+            "offen",
+            "gehoert",
+            "fehler",
+            "telefonseelsorge",
+            "notruf",
+        )
+    }
     text = prompts.notice(key, AddressForm.SIE, **values)
     assert text and not has_markup(text)

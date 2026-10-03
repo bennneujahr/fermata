@@ -14,7 +14,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 JSON_FILE = ROOT / "src" / "viola" / "art9_patterns.json"
 MIGRATION = ROOT.parents[1] / "supabase" / "migrations" / "20261003000310_viola.sql"
-BLOCK = re.compile(r"(\$art9\$)(.*?)(\$art9\$)", re.S)
+BLOCK = re.compile(r"(\$art9\$)(.*?)(\$art9\$)", re.DOTALL)
 
 
 def render_patterns() -> str:

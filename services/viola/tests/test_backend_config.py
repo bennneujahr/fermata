@@ -14,8 +14,11 @@ SECRET = "s" * 40
 
 
 def make_backend(handler) -> HttpBackend:  # type: ignore[no-untyped-def]
-    return HttpBackend("https://fermata.test/functions/v1/interview-agent", SECRET,
-                       client=httpx.AsyncClient(transport=httpx.MockTransport(handler)))
+    return HttpBackend(
+        "https://fermata.test/functions/v1/interview-agent",
+        SECRET,
+        client=httpx.AsyncClient(transport=httpx.MockTransport(handler)),
+    )
 
 
 async def test_http_backend_sends_secret_and_action() -> None:
@@ -35,7 +38,11 @@ async def test_http_backend_sends_secret_and_action() -> None:
     assert await b.flag_safety("sid", "krise", "hoch", "regel", 2) == "f1"
     await b.end("sid", "fertig", ["werte"])
     assert seen[0].headers["x-agent-secret"] == SECRET
-    assert json.loads(seen[0].content) == {"action": "append_turns", "session_id": "sid", "turns": [{"role": "person", "text": "Hallo"}]}
+    assert json.loads(seen[0].content) == {
+        "action": "append_turns",
+        "session_id": "sid",
+        "turns": [{"role": "person", "text": "Hallo"}],
+    }
     assert json.loads(seen[1].content)["turn_index"] == 2
     assert json.loads(seen[2].content) == {"action": "end", "session_id": "sid", "reason": "fertig", "covered_blocks": ["werte"]}
     await b.aclose()
@@ -97,11 +104,25 @@ def test_config_production_requires_eu_and_real_providers() -> None:
     with pytest.raises(ValueError, match="VIOLA_BACKEND=http"):
         Config.from_env({"VIOLA_ENV": "production"})
     with pytest.raises(ValueError, match="EU-Endpunkt"):
-        Config.from_env({"VIOLA_ENV": "production", "VIOLA_BACKEND": "http", "INTERVIEW_AGENT_URL": "https://x",
-                         "INTERVIEW_AGENT_SECRET": SECRET, "VIOLA_LLM_PROVIDER": "bedrock",
-                         "DEEPGRAM_URL": "https://api.deepgram.com/v1/listen"})
-    cfg = Config.from_env({"VIOLA_ENV": "production", "VIOLA_BACKEND": "http", "INTERVIEW_AGENT_URL": "https://x",
-                           "INTERVIEW_AGENT_SECRET": SECRET, "VIOLA_LLM_PROVIDER": "bedrock"})
+        Config.from_env(
+            {
+                "VIOLA_ENV": "production",
+                "VIOLA_BACKEND": "http",
+                "INTERVIEW_AGENT_URL": "https://x",
+                "INTERVIEW_AGENT_SECRET": SECRET,
+                "VIOLA_LLM_PROVIDER": "bedrock",
+                "DEEPGRAM_URL": "https://api.deepgram.com/v1/listen",
+            }
+        )
+    cfg = Config.from_env(
+        {
+            "VIOLA_ENV": "production",
+            "VIOLA_BACKEND": "http",
+            "INTERVIEW_AGENT_URL": "https://x",
+            "INTERVIEW_AGENT_SECRET": SECRET,
+            "VIOLA_LLM_PROVIDER": "bedrock",
+        }
+    )
     assert cfg.llm_provider == "bedrock"
     assert SECRET not in repr(cfg)
 

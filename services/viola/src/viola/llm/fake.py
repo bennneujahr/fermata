@@ -67,12 +67,14 @@ def local_fallback(request: ChatRequest) -> FakeReply:
     said = last_person_text(request)
     if re.search(r"\b(tschüss|auf wiedersehen|ende|beenden)\b", said, re.IGNORECASE):
         return FakeReply(
-            text="Danke für das Gespräch. Ich wünsche dir einen guten Abend." if du
+            text="Danke für das Gespräch. Ich wünsche dir einen guten Abend."
+            if du
             else "Danke für das Gespräch. Ich wünsche Ihnen einen guten Abend.",
             tool_calls=[("end_conversation", {"reason": "person_beendet"})],
         )
     return FakeReply(
-        text="Danke, das hilft mir weiter. Magst du mir noch etwas mehr dazu erzählen?" if du
+        text="Danke, das hilft mir weiter. Magst du mir noch etwas mehr dazu erzählen?"
+        if du
         else "Danke, das hilft mir weiter. Mögen Sie mir noch etwas mehr dazu erzählen?"
     )
 
