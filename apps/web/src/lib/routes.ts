@@ -3,7 +3,7 @@
 export const MEMBER_PREFIXES = ["/start", "/gespraech", "/abende", "/mitgliedschaft", "/konto", "/onboarding"] as const;
 
 export function isMemberPath(path: string): boolean {
-  return MEMBER_PREFIXES.some((p) => path === p || path.startsWith(`${p}/`));
+  return [...MEMBER_PREFIXES, "/zeiten"].some((p) => path === p || path.startsWith(`${p}/`));
 }
 
 export function isAdminPath(path: string): boolean {

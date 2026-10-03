@@ -17,7 +17,35 @@ export function originOf(url: string): string | null {
   }
 }
 
+/**
+ * Origins eines Echtzeit-Dienstes für connect-src: die Adresse selbst und das Gegenstück
+ * (wss ↔ https, ws ↔ http). LiveKit braucht beides (Signalisierung per WebSocket, Prüfung per HTTPS).
+ */
+export function serviceOrigins(url: string | undefined | null): string[] {
+  if (!url) return [];
+  const origin = originOf(url);
+  if (!origin) return [];
+  const pairs: Record<string, string> = { "wss:": "https:", "https:": "wss:", "ws:": "http:", "http:": "ws:" };
+  const proto = new URL(origin).protocol;
+  const other = pairs[proto];
+  return other ? [origin, origin.replace(/^[a-z]+:/, other)] : [origin];
+}
+
+/**
+ * Gespräch mit Viola: LiveKit (Stimme, wss und https) und der Viola-Textdienst – nur, wenn die Adressen
+ * gesetzt sind (NEXT_PUBLIC_LIVEKIT_URL, NEXT_PUBLIC_VIOLA_TEXT_URL). src/proxy.ts baut die CSP je Anfrage damit.
+ */
+export function violaConnectSources(
+  env: Record<string, string | undefined> = {
+    NEXT_PUBLIC_LIVEKIT_URL: process.env.NEXT_PUBLIC_LIVEKIT_URL,
+    NEXT_PUBLIC_VIOLA_TEXT_URL: process.env.NEXT_PUBLIC_VIOLA_TEXT_URL,
+  },
+): string[] {
+  return [...serviceOrigins(env.NEXT_PUBLIC_LIVEKIT_URL), ...serviceOrigins(env.NEXT_PUBLIC_VIOLA_TEXT_URL).filter((x) => /^https?:/.test(x))];
+}
+
 export function buildCsp(o: CspOptions): string {
+  o = { ...o, extraConnect: [...(o.extraConnect ?? []), ...violaConnectSources()] };
   const supabase = originOf(o.supabaseUrl);
   const wss = supabase ? supabase.replace(/^http/, "ws") : null;
   const connect = ["'self'", supabase, wss, ...(o.extraConnect ?? [])].filter(Boolean);

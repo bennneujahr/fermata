@@ -25,6 +25,10 @@ GATEWAY_PORT=$((54345 + OFF))
 SMTP_PORT=$((54346 + OFF))
 MAIL_HTTP_PORT=$((54347 + OFF))
 APP_PORT=$((3041 + OFF))
+# Viola-Textdienst (services/viola, Attrappe als Sprachmodell) für das Gespräch im Textmodus; STACK_VIOLA=0 lässt ihn weg.
+VIOLA_TEXT_PORT=$((54340 + OFF))
+VIOLA_AGENT_SECRET="fermata-local-agent-secret-0123456789abcdef"
+VIOLA_TEXT_SECRET="fermata-local-text-secret-0123456789abcdef"
 AUTH_CONTAINER=fermata-auth-web$SUFFIX
 REST_CONTAINER=fermata-rest-web$SUFFIX
 MAIL_CONTAINER=fermata-mail-web$SUFFIX
@@ -43,6 +47,17 @@ SUPABASE_URL=http://localhost:$GATEWAY_PORT
 SUPABASE_ANON_KEY=$anon
 SUPABASE_SERVICE_ROLE_KEY=$service
 SUPABASE_DB_URL=$DB_URL
+SUPABASE_JWT_SECRET=$JWT_SECRET
+INTERVIEW_AGENT_SECRET=$VIOLA_AGENT_SECRET
+VIOLA_TEXT_TOKEN_SECRET=$VIOLA_TEXT_SECRET
+VIOLA_TEXT_URL=http://localhost:$VIOLA_TEXT_PORT
+NEXT_PUBLIC_VIOLA_TEXT_URL=http://localhost:$VIOLA_TEXT_PORT
+VIOLA_TEXT_PORT=$VIOLA_TEXT_PORT
+LIVEKIT_URL=wss://livekit.fake.invalid
+LIVEKIT_API_KEY=fermata-local-livekit-key
+LIVEKIT_API_SECRET=fermata-local-livekit-secret-0123456789abcdef
+NEXT_PUBLIC_LIVEKIT_URL=wss://livekit.fake.invalid
+VIOLA_VOICE_MODE=fake
 FERMATA_ENV=local
 FERMATA_APP_URL=http://localhost:$APP_PORT
 FERMATA_ALLOWED_ORIGINS=http://localhost:$APP_PORT
@@ -52,6 +67,11 @@ DIDIT_WEBHOOK_SECRET=fermata-fake-didit-secret
 MAILPIT_URL=http://localhost:$MAIL_HTTP_PORT
 APP_PORT=$APP_PORT
 ENV
+  # Web-Push: lokales VAPID-Schlüsselpaar (einmal je Arbeitskopie erzeugt, liegt nur in .stack/, nie im Repository).
+  if [ ! -s "$STATE/vapid" ]; then
+    (cd "$ROOT/supabase/functions" && deno run --quiet _shared/push/generate-vapid-keys.ts) >"$STATE/vapid" 2>/dev/null || : >"$STATE/vapid"
+  fi
+  cat "$STATE/vapid" >>"$STATE/env"
 }
 
 wait_http() {
@@ -128,6 +148,18 @@ up() {
     echo $! >"$STATE/functions.pid"
   )
 
+  if [ "${STACK_VIOLA:-1}" = "1" ] && command -v uv >/dev/null 2>&1; then
+    (
+      cd "$ROOT/services/viola"
+      [ -x .venv/bin/viola ] || uv sync --frozen -q
+      VIOLA_ENV=local VIOLA_BACKEND=http VIOLA_LLM_PROVIDER=fake VIOLA_TEXT_HOST=127.0.0.1 VIOLA_TEXT_PORT="$VIOLA_TEXT_PORT" \
+        INTERVIEW_AGENT_URL="http://localhost:$FUNCTIONS_PORT/functions/v1/interview-agent" INTERVIEW_AGENT_SECRET="$VIOLA_AGENT_SECRET" \
+        VIOLA_TEXT_TOKEN_SECRET="$VIOLA_TEXT_SECRET" VIOLA_TEXT_ALLOWED_ORIGINS="http://localhost:$APP_PORT" \
+        setsid nohup .venv/bin/viola text-server >"$STATE/viola.log" 2>&1 </dev/null &
+      echo $! >"$STATE/viola.pid"
+    )
+    wait_http "http://127.0.0.1:$VIOLA_TEXT_PORT/healthz"
+  fi
   wait_http "http://127.0.0.1:$AUTH_PORT/health"
   wait_http "http://127.0.0.1:$REST_PORT/"
   wait_http "http://127.0.0.1:$GATEWAY_PORT/auth/v1/health"
@@ -139,11 +171,12 @@ down() {
   kill_pid gateway
   kill_pid functions
   kill_pid next
+  kill_pid viola
   # Sicherheitsnetz: nur eigene Prozesse (Arbeitsordner dieses Repos und Port des Bereichs web) beenden.
-  for p in $(pgrep -f "dev-server.ts|gateway.mjs|next start --port $APP_PORT" || true); do
+  for p in $(pgrep -f "dev-server.ts|gateway.mjs|next start --port $APP_PORT|viola text-server" || true); do
     cwd="$(readlink "/proc/$p/cwd" 2>/dev/null || true)"
     case "$cwd" in
-      "$ROOT/supabase/functions" | "$APP_DIR") kill "$p" 2>/dev/null || true ;;
+      "$ROOT/supabase/functions" | "$APP_DIR" | "$ROOT/services/viola") kill "$p" 2>/dev/null || true ;;
     esac
   done
   docker rm -f "$AUTH_CONTAINER" "$REST_CONTAINER" "$MAIL_CONTAINER" >/dev/null 2>&1 || true
@@ -152,7 +185,7 @@ down() {
 
 status() {
   docker ps --filter "name=fermata-.*-web" --format '{{.Names}}\t{{.Status}}'
-  for p in gateway functions; do
+  for p in gateway functions viola; do
     if [ -f "$STATE/$p.pid" ]; then echo "$p: $(cat "$STATE/$p.pid")"; fi
   done
 }
