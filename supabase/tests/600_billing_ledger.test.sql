@@ -1,6 +1,6 @@
 -- M6: Kontingent-Buch – Regeln bei Zustandswechseln, Gratisphase, Freigabe für Vorschläge, Verfall.
 begin;
-select plan(53);
+select plan(55);
 
 -- Personen (UUIDs aufsteigend, weil app.evenings user_a < user_b verlangt)
 select tests.create_user('p601@example.test', '00000000-0000-0000-0000-000000000601');
@@ -181,6 +181,24 @@ select is(pg_temp.avail(2), 0, 'Gutschrift verfällt nach evening.credit_validit
 select ok(billing.expire_ledger() >= 1, 'expire_ledger schreibt sichtbare Verfallszeilen');
 select is(pg_temp.avail(2), 0, 'Verfallszeilen ändern den Bestand nicht');
 select ops.sim_clock_reset();
+
+-- Bestellung schon in der Gratisphase: der erste Abend nutzt den Gratis-Abend, die Zuteilung bleibt
+select tests.create_user('p6a1@example.test', '00000000-0000-0000-0000-0000000006a1');
+select tests.create_user('p6a2@example.test', '00000000-0000-0000-0000-0000000006a2');
+insert into app.accounts (user_id, status) values ('00000000-0000-0000-0000-0000000006a1', 'active'), ('00000000-0000-0000-0000-0000000006a2', 'active');
+insert into billing.memberships (user_id) values ('00000000-0000-0000-0000-0000000006a1'), ('00000000-0000-0000-0000-0000000006a2');
+insert into billing.evening_ledger (user_id, kind, amount, note) values
+  ('00000000-0000-0000-0000-0000000006a1', 'free_grant', 1, 'Gratis-Abend'), ('00000000-0000-0000-0000-0000000006a2', 'free_grant', 1, 'Gratis-Abend');
+update billing.memberships set status = 'pending', tier = 'auftakt', stripe_customer_id = 'cus_t6a1', stripe_subscription_id = 'sub_t6a1',
+  contract_number = 'FM-TEST-06A1', ordered_at = app.now() where user_id = '00000000-0000-0000-0000-0000000006a1';
+select billing.apply_invoice_paid('sub_t6a1', 'cus_t6a1', 'in_t6a1', app.now(), app.now() + interval '28 days', 4900);
+insert into ev values ('e9', pg_temp.evening('00000000-0000-0000-0000-0000000006a1', '00000000-0000-0000-0000-0000000006a2', interval '3 days'));
+select pg_temp.confirm((select id from ev where name = 'e9'));
+select is((select l.kind from billing.evening_ledger r join billing.evening_ledger l on l.id = r.source_entry_id
+           where r.user_id = '00000000-0000-0000-0000-0000000006a1' and r.kind = 'reserve'), 'free_grant',
+  'Erster Abend nutzt den Gratis-Abend, auch wenn schon bestellt wurde');
+select app.evening_transition((select id from ev where name = 'e9'), 'happened');
+select is(billing.available_evenings('00000000-0000-0000-0000-0000000006a1'), 1, 'Die bezahlte Zuteilung bleibt nach dem Gratis-Abend vollständig erhalten');
 
 -- ---------------------------------------------------------------------------
 -- Allgemein

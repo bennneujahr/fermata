@@ -152,7 +152,8 @@ as $$
   ) x;
 $$;
 
--- Topf für die nächste Bindung: nicht verfallen, Rest > 0, der zuerst verfallende zuerst.
+-- Topf für die nächste Bindung: nicht verfallen, Rest > 0. Zuerst der Gratis-Abend (der erste Abend ist immer
+-- der kostenlose, auch wenn schon bestellt wurde), danach der zuerst verfallende Topf.
 create or replace function billing.pick_bucket(p_user uuid)
 returns bigint
 language sql
@@ -164,7 +165,7 @@ as $$
   where b.user_id = p_user and b.source_entry_id is null and b.amount > 0
     and (b.expires_at is null or b.expires_at > app.now())
     and billing.bucket_remaining(b.id) > 0
-  order by b.expires_at asc nulls last, b.id asc
+  order by (b.kind = 'free_grant') desc, b.expires_at asc nulls last, b.id asc
   limit 1;
 $$;
 
