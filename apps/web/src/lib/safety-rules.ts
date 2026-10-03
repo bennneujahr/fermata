@@ -1,5 +1,5 @@
 // Kleine Regeln der Sicherheits-Oberfläche (ohne Server-Abhängigkeit, damit sie im Unit-Test laufen).
-import type { HelpContacts, MyEvening, ReportCategory, TrustShare } from "@/lib/safety-types";
+import type { HelpContacts, MyEvening, ReportCategory, TrustShare, VenueReservation } from "@/lib/safety-types";
 import { ZERO_TOLERANCE } from "@/lib/safety-types";
 
 export function digitsForTel(number: string): string {
@@ -53,4 +53,28 @@ export function activeShares(shares: TrustShare[], eveningId: string): TrustShar
 /** Abende, zu denen man etwas melden kann (alle eigenen Abende mit Gegenüber). */
 export function reportableEvenings(evenings: MyEvening[]): MyEvening[] {
   return evenings.filter((e) => e.counterpart_first_name || e.starts_at);
+}
+
+/**
+ * Reservierung aus der JSON-Antwort von venue-confirm lesen. Vertrag mit der Härtung: die Felder von
+ * ops.venue_reservation_summary (venue_name, starts_at, table_code, reservation_name, persons, status,
+ * venue_confirmed_at), direkt oder unter „reservation“ bzw. „summary“.
+ */
+export function asReservation(body: unknown): VenueReservation | null {
+  if (!body || typeof body !== "object") return null;
+  const b = body as Record<string, unknown>;
+  const inner = (b.reservation ?? b.summary ?? b) as unknown;
+  if (!inner || typeof inner !== "object") return null;
+  const r = inner as Record<string, unknown>;
+  if (!("table_code" in r || "venue_name" in r || "starts_at" in r)) return null;
+  const str = (v: unknown) => (typeof v === "string" ? v : null);
+  return {
+    venue_name: str(r.venue_name),
+    starts_at: str(r.starts_at),
+    table_code: str(r.table_code),
+    reservation_name: str(r.reservation_name),
+    persons: typeof r.persons === "number" ? r.persons : null,
+    status: str(r.status),
+    venue_confirmed_at: str(r.venue_confirmed_at),
+  };
 }

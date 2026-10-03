@@ -151,7 +151,7 @@ export const order = (f: AddressForm) => ({
   back: "Zurück zur Mitgliedschaft",
   draft: "ENTWURF",
   draftText: "Die Bedingungen sind ein Entwurf und werden rechtlich geprüft.",
-  summaryTitle: "Was Sie bestellen",
+  summaryTitle: af(f, "Was Sie bestellen", "Was du bestellst"),
   labels: {
     tier: "Stufe",
     price: "Preis",
@@ -176,7 +176,11 @@ export const order = (f: AddressForm) => ({
     "Die Zahlung läuft über Stripe. Deine Kartendaten sieht Fermata nie.",
   ),
   paymentLoading: "Zahlungsfeld wird geladen …",
-  paymentUnavailable: "Das Zahlungsfeld kann gerade nicht geladen werden. Bitte laden Sie die Seite neu.",
+  paymentUnavailable: af(
+    f,
+    "Das Zahlungsfeld kann gerade nicht geladen werden. Bitte laden Sie die Seite neu.",
+    "Das Zahlungsfeld kann gerade nicht geladen werden. Bitte lade die Seite neu.",
+  ),
   paymentNotConfigured: "Zahlungen sind in dieser Umgebung nicht eingerichtet. Die Bestellung lässt sich hier nur ohne Zahlung testen.",
   startRequestFallback: af(
     f,
@@ -230,7 +234,7 @@ export const order = (f: AddressForm) => ({
     ),
     not_authenticated: af(f, "Bitte melden Sie sich erneut an.", "Bitte melde dich erneut an."),
     unauthorized: af(f, "Bitte melden Sie sich erneut an.", "Bitte melde dich erneut an."),
-    network: "Keine Verbindung. Bitte prüfen Sie Ihre Internetverbindung.",
+    network: af(f, "Keine Verbindung. Bitte prüfen Sie Ihre Internetverbindung.", "Keine Verbindung. Bitte prüf deine Internetverbindung."),
   } as Record<string, string>,
 });
 
@@ -349,7 +353,7 @@ export const cancel = (f: AddressForm) => ({
     name_required: af(f, "Bitte geben Sie Ihren Namen an.", "Bitte gib deinen Namen an."),
     not_authenticated: af(f, "Bitte melden Sie sich erneut an.", "Bitte melde dich erneut an."),
     unauthorized: af(f, "Bitte melden Sie sich erneut an.", "Bitte melde dich erneut an."),
-    network: "Keine Verbindung. Bitte prüfen Sie Ihre Internetverbindung.",
+    network: af(f, "Keine Verbindung. Bitte prüfen Sie Ihre Internetverbindung.", "Keine Verbindung. Bitte prüf deine Internetverbindung."),
   } as Record<string, string>,
   back: "Zurück zur Mitgliedschaft",
 });
@@ -396,11 +400,19 @@ export const withdraw = (f: AddressForm) => ({
   moneyTitle: "Was mit dem Geld passiert",
   money: { paid: "Bezahlt", used: "Genutzte Abende", value: "Wertersatz", refund: "Erstattung" },
   valueDetail: (n: number, per: string) => `${evenings(n)} × ${per}`,
-  moneyNote: "Der Gratis-Abend und Gutschriften zählen nicht. Die Erstattung geht auf das Zahlungsmittel zurück, mit dem Sie bezahlt haben.",
+  moneyNote: af(
+    f,
+    "Der Gratis-Abend und Gutschriften zählen nicht. Die Erstattung geht auf das Zahlungsmittel zurück, mit dem Sie bezahlt haben.",
+    "Der Gratis-Abend und Gutschriften zählen nicht. Die Erstattung geht auf das Zahlungsmittel zurück, mit dem du bezahlt hast.",
+  ),
   whatTitle: "Was danach passiert",
   what: [
     "Die Mitgliedschaft endet sofort, es wird nichts mehr abgebucht.",
-    "Offene und bevorstehende Abende sagen wir ab. Ihr Gegenüber erfährt keinen Grund und bekommt den Abend zurück.",
+    af(
+      f,
+      "Offene und bevorstehende Abende sagen wir ab. Ihr Gegenüber erfährt keinen Grund und bekommt den Abend zurück.",
+      "Offene und bevorstehende Abende sagen wir ab. Dein Gegenüber erfährt keinen Grund und bekommt den Abend zurück.",
+    ),
     "Übrige Abende verfallen.",
   ],
   submitting: "Widerruf wird gespeichert …",
@@ -450,7 +462,7 @@ export const withdraw = (f: AddressForm) => ({
     ),
     not_authenticated: af(f, "Bitte melden Sie sich erneut an.", "Bitte melde dich erneut an."),
     unauthorized: af(f, "Bitte melden Sie sich erneut an.", "Bitte melde dich erneut an."),
-    network: "Keine Verbindung. Bitte prüfen Sie Ihre Internetverbindung.",
+    network: af(f, "Keine Verbindung. Bitte prüfen Sie Ihre Internetverbindung.", "Keine Verbindung. Bitte prüf deine Internetverbindung."),
   } as Record<string, string>,
   back: "Zurück zur Mitgliedschaft",
 });

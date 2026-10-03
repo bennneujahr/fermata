@@ -15,6 +15,7 @@ import type {
   VenueReservation,
 } from "@/lib/safety-types";
 import { OTHER_CATEGORIES, REPORT_CONTEXTS, ZERO_TOLERANCE } from "@/lib/safety-types";
+import { asReservation } from "@/lib/safety-rules";
 import { createClient } from "@/lib/supabase/server";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -123,22 +124,6 @@ export interface VenueLoad {
   reservation: VenueReservation | null;
   /** Link gültig? */
   valid: boolean;
-}
-
-function asReservation(body: unknown): VenueReservation | null {
-  if (!body || typeof body !== "object") return null;
-  const b = body as Record<string, unknown>;
-  const r = (b.reservation ?? b.summary ?? b) as Record<string, unknown>;
-  if (!r || typeof r !== "object" || !("table_code" in r || "venue_name" in r || "starts_at" in r)) return null;
-  return {
-    venue_name: (r.venue_name as string) ?? null,
-    starts_at: (r.starts_at as string) ?? null,
-    table_code: (r.table_code as string) ?? null,
-    reservation_name: (r.reservation_name as string) ?? null,
-    persons: typeof r.persons === "number" ? r.persons : null,
-    status: (r.status as string) ?? null,
-    venue_confirmed_at: (r.venue_confirmed_at as string) ?? null,
-  };
 }
 
 /** Reservierung für das Lokal laden (venue-confirm, GET mit Accept: application/json). */

@@ -119,7 +119,7 @@ export const safety = (f: AddressForm) => ({
   sanctionsNone: af(f, "Gegen Ihr Konto liegt nichts vor.", "Gegen dein Konto liegt nichts vor."),
   sanctionsSome: (n: number) => (n === 1 ? "1 Hinweis oder Sperre" : `${n} Hinweise oder Sperren`),
   sanctionsCta: "Ansehen und Widerspruch einlegen",
-  standardsTitle: "Darauf können Sie sich verlassen",
+  standardsTitle: af(f, "Darauf können Sie sich verlassen", "Darauf kannst du dich verlassen"),
   standards: [
     "Alle Mitglieder sind volljährig und haben ihren Ausweis gezeigt.",
     "Abende finden nur in Partner-Lokalen statt, an öffentlichen Orten. Das Personal weiß Bescheid.",
@@ -128,7 +128,7 @@ export const safety = (f: AddressForm) => ({
     "Nach 30 Minuten fragen wir kurz nach, ob alles in Ordnung ist.",
     "Ein Mensch prüft jede Meldung, in der Regel innerhalb von 24 Stunden.",
     "Bei Übergriffen, Bedrohung oder Verdacht auf Minderjährigkeit sperren wir sofort vorläufig.",
-    "Gegen jede Entscheidung können Sie Widerspruch einlegen.",
+    af(f, "Gegen jede Entscheidung können Sie Widerspruch einlegen.", "Gegen jede Entscheidung kannst du Widerspruch einlegen."),
   ],
 });
 
@@ -166,7 +166,7 @@ export const report = (f: AddressForm) => ({
   emergencyCta: (n: string) => `${n} anrufen`,
   open: "Etwas melden",
   dialogTitle: "Etwas melden",
-  eveningFixed: (label: string) => `Zum Abend ${label}`,
+  eveningFixed: (label: string) => (label ? `Zum Abend ${label}` : "Zu diesem Abend"),
   eveningLabel: "Um welchen Abend geht es?",
   eveningNone: "Keinen bestimmten Abend",
   eveningOption: (name: string | null, date: string) => (name ? `Mit ${name}, ${date}` : date),
@@ -193,8 +193,8 @@ export const report = (f: AddressForm) => ({
   counter: (n: number, max: number) => `${n} von ${max} Zeichen`,
   wantsContact: af(f, "Bitte melden Sie sich bei mir dazu.", "Bitte meldet euch bei mir dazu."),
   wantsContactHint: af(f, "Per E-Mail. Sie können auch ohne Rückfrage melden.", "Per E-Mail. Du kannst auch ohne Rückfrage melden."),
-  categoryRequired: "Bitte wählen Sie aus, was passiert ist.",
-  contextRequired: "Bitte wählen Sie aus, worum es geht.",
+  categoryRequired: af(f, "Bitte wählen Sie aus, was passiert ist.", "Bitte wähl aus, was passiert ist."),
+  contextRequired: af(f, "Bitte wählen Sie aus, worum es geht.", "Bitte wähl aus, worum es geht."),
   submit: "Meldung abschicken",
   submitting: "Wird gesendet …",
   cancel: "Abbrechen",
@@ -225,11 +225,11 @@ export const report = (f: AddressForm) => ({
       "Diese Meldung können wir so nicht annehmen: Melden lassen sich nur Personen, die Sie über Fermata kennen. Wählen Sie bitte „Etwas anderes“ oder schreiben Sie uns.",
       "Diese Meldung können wir so nicht annehmen: Melden lassen sich nur Personen, die du über Fermata kennst. Wähl bitte „Etwas anderes“ oder schreib uns.",
     ),
-    evening_not_found: "Diesen Abend finden wir nicht. Bitte wählen Sie einen anderen oder keinen Abend.",
+    evening_not_found: af(f, "Diesen Abend finden wir nicht. Bitte wählen Sie einen anderen oder keinen Abend.", "Diesen Abend finden wir nicht. Bitte wähl einen anderen oder keinen Abend."),
     self_report: "Sich selbst kann man nicht melden.",
     description_too_long: "Die Beschreibung ist zu lang (höchstens 4000 Zeichen).",
-    invalid_context: "Bitte wählen Sie aus, worum es geht.",
-    invalid_category: "Bitte wählen Sie aus, was passiert ist.",
+    invalid_context: af(f, "Bitte wählen Sie aus, worum es geht.", "Bitte wähl aus, worum es geht."),
+    invalid_category: af(f, "Bitte wählen Sie aus, was passiert ist.", "Bitte wähl aus, was passiert ist."),
     not_authenticated: af(f, "Bitte melden Sie sich erneut an.", "Bitte melde dich erneut an."),
   } as Record<string, string>,
 });
@@ -304,7 +304,7 @@ export const sanctions = (f: AddressForm) => ({
   appealDecided: (d: string) => `entschieden am ${d}`,
   appealNote: "Entscheidung",
   errors: {
-    invalid_text: "Bitte schreiben Sie zwischen 10 und 4000 Zeichen.",
+    invalid_text: af(f, "Bitte schreiben Sie zwischen 10 und 4000 Zeichen.", "Bitte schreib zwischen 10 und 4000 Zeichen."),
     already_appealed: af(f, "Gegen diese Entscheidung haben Sie bereits Widerspruch eingelegt.", "Gegen diese Entscheidung hast du bereits Widerspruch eingelegt."),
     sanction_lifted: "Diese Sanktion ist bereits aufgehoben.",
     sanction_not_found: "Diese Sanktion finden wir nicht.",
@@ -320,7 +320,7 @@ export const trustShare = (f: AddressForm) => ({
     "Schicken Sie einer Vertrauensperson einen Link. Sie sieht, wo und wann Ihr Abend ist – und kann Sie im Notfall erreichen.",
     "Schick einer Vertrauensperson einen Link. Sie sieht, wo und wann dein Abend ist – und kann dich im Notfall erreichen.",
   ),
-  seesTitle: "Das sieht Ihre Vertrauensperson",
+  seesTitle: af(f, "Das sieht Ihre Vertrauensperson", "Das sieht deine Vertrauensperson"),
   sees: [
     "das Lokal mit Adresse und Anfahrt",
     "Datum und Uhrzeit",
@@ -342,11 +342,15 @@ export const trustShare = (f: AddressForm) => ({
   withName: (name: string) => `mit ${name}`,
   create: "Link erstellen",
   creating: "Link wird erstellt …",
-  createdTitle: "Ihr Link",
-  linkLabel: "Link für Ihre Vertrauensperson",
+  createdTitle: af(f, "Ihr Link", "Dein Link"),
+  linkLabel: af(f, "Link für Ihre Vertrauensperson", "Link für deine Vertrauensperson"),
   copy: "Link kopieren",
   copied: "Kopiert.",
-  copyFailed: "Kopieren hat nicht geklappt. Bitte markieren Sie den Link und kopieren Sie ihn selbst.",
+  copyFailed: af(
+    f,
+    "Kopieren hat nicht geklappt. Bitte markieren Sie den Link und kopieren Sie ihn selbst.",
+    "Kopieren hat nicht geklappt. Bitte markier den Link und kopier ihn selbst.",
+  ),
   shareNative: "Teilen …",
   shareText: "Hier siehst du, wo und wann mein Abend ist.",
   onlyNow: af(
@@ -420,7 +424,7 @@ export const checkin = (f: AddressForm) => ({
       `Ihr Abend${venue ? ` im ${venue}` : ""} hat vor einer Weile begonnen. Eine kurze Antwort genügt – nur Fermata sieht sie, Ihr Gegenüber nicht.`,
       `Dein Abend${venue ? ` im ${venue}` : ""} hat vor einer Weile begonnen. Eine kurze Antwort genügt – nur Fermata sieht sie, dein Gegenüber nicht.`,
     ),
-  legend: "Ihre Antwort",
+  legend: af(f, "Ihre Antwort", "Deine Antwort"),
   choices: {
     gut: { label: "Alles gut", description: af(f, "Dann wünschen wir Ihnen einen schönen Abend.", "Dann wünschen wir dir einen schönen Abend.") },
     unsicher: {
@@ -476,7 +480,7 @@ export const checkin = (f: AddressForm) => ({
   errors: {
     checkin_not_possible: "Für diesen Abend ist gerade kein Check-in möglich.",
     evening_not_found: "Diesen Abend finden wir nicht.",
-    invalid_status: "Bitte wählen Sie eine Antwort.",
+    invalid_status: af(f, "Bitte wählen Sie eine Antwort.", "Bitte wähl eine Antwort."),
   } as Record<string, string>,
 });
 
