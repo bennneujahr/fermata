@@ -6,6 +6,31 @@ steckt und **was passiert, wenn du nichts entscheidest** (der eingebaute Standar
 
 Die Fragen A2–A9 und B1–B15 stammen aus [PLAN.md](../PLAN.md), Abschnitt 6.
 
+## Zuerst entscheiden (in dieser Reihenfolge)
+
+**Damit die Landingpage live gehen kann**
+
+1. **Domain und Markenrecherche** (A3, PLAN 5.3): Domain festlegen, vorher Marke „Fermata“ prüfen lassen (DPMA, EUIPO, WIPO).
+2. **Impressum, Preise, Startmonat, Einwilligung** (A5, A7, A8, A9): Kontaktdaten, Umsatzsteuer-Modus, Preisanzeige.
+3. **Rechtstexte prüfen lassen** (`docs/recht/`, alles ENTWURF): Anwalt und externer Datenschutzbeauftragter (B15).
+4. **Konten anlegen**: Supabase (Frankfurt), Vercel, Brevo mit SPF/DKIM/DMARC – Schritte in [RUNBOOK.md](RUNBOOK.md).
+
+**Damit die Testphase mit echten Abenden starten kann**
+
+5. **Ausweisprüfung**: Didit-Sandbox, Format des Webhooks prüfen; Alternative ohne Biometrie (B2).
+6. **Sprachmodell und Auswertung**: AWS-Marketplace-Abo für Sonnet 5.5, Weg über das EU-Geo-Profil oder nur
+   Frankfurt; deutsche Qualität der Embeddings mit 20–30 echten Zusammenfassungen testen.
+7. **Viola**: LiveKit-Weg (B3) und Stimme nach Blindtest mit 12–16 Personen (B4).
+8. **Mitgliedschaft**: Loge in der Testphase (B11), „kein Abend“ (B12), Wertersatz (B13), Leistungsbeginn (C12),
+   Erstattung bei Kontolöschung (C15), Umsatzsteuer.
+9. **Lokale**: Partner-Lokale und Vereinbarungen (B10), Nachbesprechung (B6), Erkennungsfoto (B7), Gutschriften (B8),
+   Nichterscheinen (B9).
+10. **Auswahl**: Wartebonus, Gewichte, LLM-Anteil, Sperrfrist nach Ablehnung, Standard-Entfernung (C4–C6 und
+    [matcher.md §18](bereiche/matcher.md)).
+11. **Löschfristen** (C11) und Höchstdauer für das Audit-Protokoll.
+12. **Betrieb**: eigene Datenbankrolle für die Edge Functions einrichten (C14), Vertretung für Sicherheitsfälle
+    benennen ([RUNBOOK.md §9](RUNBOOK.md)).
+
 ## A. Vor der Live-Schaltung der Landingpage
 
 | # | Frage | Wo im Code | Standard bis zur Entscheidung |
@@ -62,3 +87,19 @@ liegen. Bitte mit den Originalen abgleichen.
 | C13 | Seiten der Web-App für Links aus Mails | `safety.trust_view_base_url` = `https://app.fermata.example/teilen` (Link `…#t=<Schlüssel>`), Lokal-Bestätigung `<FERMATA_APP_URL>/lokal/bestaetigen#t=<Schlüssel>` (`_shared/notify/dispatch.ts`) | Domain folgt aus Frage A3; die Seiten `/teilen` und `/lokal/bestaetigen` baut die Web-App und spricht `trust-view` bzw. `venue-confirm` mit `Accept: application/json` an |
 | C14 | Rolle der Edge Functions | `FERMATA_DB_ROLE` = `fermata_edge`, `FERMATA_DB_URL` mit Login-Rolle `fermata_edge_login` (RUNBOOK Abschnitt 5) | Empfohlen statt `service_role`, weil `service_role` im Supabase-Abbild Vault lesen darf. Ohne die Variablen verbinden sich die Functions weiter als `postgres` |
 | C15 | Kontolöschung bei laufender Mitgliedschaft | `account-delete`, `billing.record_deletion_cancellation` | Abo endet sofort, **ohne anteilige Erstattung** des laufenden Zeitraums; Nachweis ohne Name und E-Mail. Anwalt: Erstattung nötig (§ 627/§ 628 BGB)? Die Web-App sollte vor dem Löschen darauf hinweisen |
+
+## D. Offene Punkte je Bereich
+
+Jeder Bereich führt seine Detailfragen selbst; hier die Verweise:
+
+| Bereich | Abschnitt |
+|---|---|
+| Landingpage und Warteliste | [landing.md – Platzhalter und offene Entscheidungen](bereiche/landing.md) |
+| Web-App, Anmeldung, Ausweis | [web.md – Für Benn: offene Punkte](bereiche/web.md) |
+| Viola | [viola.md §14](bereiche/viola.md) |
+| Auswahl-Job | [matcher.md §18](bereiche/matcher.md) |
+| Abende, Lokale, Benachrichtigungen | [abende.md §8](bereiche/abende.md) |
+| Mitgliedschaft und Zahlung | [mitgliedschaft.md §10](bereiche/mitgliedschaft.md) |
+| Sicherheit | [sicherheit.md §11](bereiche/sicherheit.md) |
+| Rechtstexte, DSFA, Löschkonzept | „Offene Punkte“ am Ende jedes Dokuments in [docs/recht/](recht/README.md) |
+| Start | [STARTCHECKLISTE.md](STARTCHECKLISTE.md) |
