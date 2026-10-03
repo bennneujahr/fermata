@@ -8,7 +8,13 @@ import { stack } from "./env";
 /** Bestellung wie billing-checkout (record_order) und bezahlte erste Rechnung wie stripe-webhook (apply_invoice_paid). */
 export async function activeMembership(userId: string, tier = "andante"): Promise<{ contractNumber: string }> {
   const tag = userId.slice(0, 8);
-  await sql`select billing.record_order(${userId}::uuid, ${tier}, billing.order_summary(${tier}), ${`cus_e2e_${tag}`}, ${`sub_e2e_${tag}`}, 'web')`;
+  // Seit der Härtung (Migration 0901) mit p_start_request (Verlangen des Leistungsbeginns); vorher ohne.
+  const [v] = await sql`select to_regprocedure('billing.record_order(uuid,text,jsonb,text,text,text,boolean)') is not null as with_start`;
+  if (v!.with_start) {
+    await sql`select billing.record_order(${userId}::uuid, ${tier}, billing.order_summary(${tier}), ${`cus_e2e_${tag}`}, ${`sub_e2e_${tag}`}, 'web', true)`;
+  } else {
+    await sql`select billing.record_order(${userId}::uuid, ${tier}, billing.order_summary(${tier}), ${`cus_e2e_${tag}`}, ${`sub_e2e_${tag}`}, 'web')`;
+  }
   const [t] = await sql`select (billing.tier_config(${tier}) ->> 'price_cents')::int as cents`;
   await sql`
     select billing.apply_invoice_paid(${`sub_e2e_${tag}`}, ${`cus_e2e_${tag}`}, ${`in_e2e_${tag}`},

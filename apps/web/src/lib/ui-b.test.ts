@@ -93,8 +93,7 @@ describe("Sicherheit", () => {
   });
   it("Link für die Vertrauensperson mit Schlüssel im Fragment", () => {
     expect(trustShareLink("https://app.fermata.example/", "tok123")).toBe("https://app.fermata.example/teilen#t=tok123");
-    expect(trustShareLink("https://a.example", "tok", "https://a.example/functions/v1/trust-view?t=tok")).toBe("https://a.example/teilen#t=tok");
-    expect(trustShareLink("https://a.example", "tok", "https://app.example/teilen#t=tok")).toBe("https://app.example/teilen#t=tok");
+    expect(trustShareLink("https://a.example", "a+b/c=")).toBe("https://a.example/teilen#t=a%2Bb%2Fc%3D");
   });
   it("teilbare Abende: bestätigt, mit Zeit, höchstens 24 Stunden vorbei", () => {
     const now = Date.parse("2026-10-03T12:00:00Z");

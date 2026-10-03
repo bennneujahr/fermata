@@ -61,10 +61,6 @@
   }
 }
 
-.order-facts {
-  grid-template-columns: minmax(9rem, max-content) 1fr;
-}
-
 .order-facts dd {
   color: var(--color-ink-soft);
 }

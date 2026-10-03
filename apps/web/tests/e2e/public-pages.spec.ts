@@ -51,7 +51,7 @@ test("Lokal bestätigt die Reservierung über den Link (#t=…): erst der Knopf 
   await expect(page.getByRole("heading", { level: 1, name: "Reservierung bestätigen" })).toBeVisible();
   if (json) {
     await expect(page.getByText(e.tableCode)).toBeVisible();
-    await expect(page.getByText("Fermata", { exact: true })).toBeVisible();
+    await expect(page.locator("main").getByText("Fermata", { exact: true })).toBeVisible();
     await expect(page.getByText("2 Personen")).toBeVisible();
   } else {
     await expect(page.getByText("Datum, Uhrzeit und Tisch-Code stehen in unserer E-Mail.")).toBeVisible();

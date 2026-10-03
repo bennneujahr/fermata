@@ -50,7 +50,7 @@ export function TrustSharePanel({
         setError(c.errors[res.error] ?? errors.generic(form));
         return;
       }
-      const link = trustShareLink(window.location.origin, res.data.token, res.data.url);
+      const link = trustShareLink(window.location.origin, res.data.token);
       setCreated({ id: res.data.share_id, link, expiresAt: res.data.expires_at });
       requestAnimationFrame(() => inputRef.current?.focus());
     });

@@ -57,8 +57,11 @@ test("Stufen und Bestellung: Übersicht mit Pflichtangaben, Häkchen vor dem Kno
   const button = page.getByRole("button", { name: "Mitgliedschaft zahlungspflichtig abschließen", exact: true });
   await expect(button).toBeVisible();
   await expect(button).toHaveText("Mitgliedschaft zahlungspflichtig abschließen");
-  // Häkchen steht direkt über dem Knopf
-  const checkbox = page.getByRole("checkbox", { name: /vor Ende der Widerrufsfrist mit der Leistung beginnt|Widerrufsfrist/ });
+  // Häkchen steht direkt über dem Knopf; Text wörtlich aus api.billing_order_summary (start_request_text), sonst ENTWURF-Ersatz
+  const [st] = await sql`select billing.order_summary('andante') ->> 'start_request_text' as text`;
+  const checkbox = st!.text
+    ? page.getByRole("checkbox", { name: st!.text as string, exact: true })
+    : page.getByRole("checkbox", { name: /vor Ende der Widerrufsfrist mit der Leistung beginnt/ });
   await expect(checkbox).not.toBeChecked();
   const boxY = (await checkbox.boundingBox())!.y;
   const buttonY = (await button.boundingBox())!.y;
@@ -86,6 +89,8 @@ test("Stufen und Bestellung: Übersicht mit Pflichtangaben, Häkchen vor dem Kno
   const [order] = await sql`select details from billing.contract_actions where user_id = ${me.id}::uuid and kind = 'order'`;
   expect(order!.details.button_label).toBe("Mitgliedschaft zahlungspflichtig abschließen");
   expect(order!.details.summary.tier).toBe("andante");
+  // Mit der Härtung speichert die Bestellung das Verlangen des Leistungsbeginns (billing-checkout start_request: true).
+  if (st!.text) expect(order!.details.start_request).toMatchObject({ requested: true, text: st!.text });
   await waitForOutbox(me.email, "billing.order_received");
   await expectAccessible(page, "Bestellung eingegangen");
 

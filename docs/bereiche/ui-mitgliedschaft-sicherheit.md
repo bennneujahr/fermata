@@ -150,13 +150,19 @@ Abgedeckt (jede Seite mit axe WCAG 2.1 AA und Prüfung auf CSP-Verstöße):
 
 ## Verträge mit der Härtung
 
+**Gegen die Härtung geprüft:** Der Integrationszweig (`claude/dating-app-build-0uszhn`, Stand 03.10.2026 mit der
+zusammengeführten Härtung) wurde nur lesend nach `scratchpad/integ` ausgepackt (`git archive`), sein Stapel auf Slot 2
+gestartet (Datenbank und Functions der Härtung, Web-App aus diesem Zweig). Ergebnis: alle 16 eigenen E2E-Abläufe und
+die ganze Suite (31) grün, Bildschirmfotos aus diesem Lauf. Die Spalte rechts sagt, was **ohne** die Härtung (in
+dieser Arbeitskopie) geprüft ist.
+
 | Vertrag | So gebaut | In dieser Arbeitskopie geprüft? |
 |---|---|---|
 | 1. `api.billing_order_summary` liefert `start_request_text` und `withdrawal_policy_url`; `billing-checkout` verlangt `start_request: true` (sonst 422 `start_request_required`) | Häkchen zeigt `start_request_text`; fehlt er, ein eigener ENTWURF-Text (`copy/mitgliedschaft.ts` `startRequestFallback`). Link zur Belehrung aus `withdrawal_policy_url` (nur eigene Adressen), sonst `/rechtliches/widerruf`. Die Bestellung schickt immer `start_request: true`; `start_request_required` hat einen eigenen Text. | **Nein** – beide Felder fehlen hier noch; getestet mit dem Ersatztext. Der Hash der Übersicht kommt immer aus derselben Funktion, ändert sich also mit den neuen Feldern konsistent. |
 | 2. `trust-view` und `venue-confirm` antworten mit JSON bei `Accept: application/json` (Schlüssel als `t` oder im JSON-Körper; POST bestätigt) | `/teilen` und `/lokal/bestaetigen` lesen den Schlüssel aus `#t=` (für alte Links auch `?t=`) und rufen die Functions über Server Actions (kein CORS, Schlüssel nicht in Adresszeilen der Web-App). `venue-confirm`: GET mit `?t=` und `Accept: application/json`; POST mit `{t}` im JSON-Körper. Liefert die Function HTML (heutige Fassung), zeigt die Seite „Einzelheiten stehen in der E-Mail“ und bestätigt als Formular (`t=` im Körper und in der Adresse). | `trust-view`: **ja** (JSON gibt es schon). `venue-confirm`: nur der **Ersatzweg** (HTML); die JSON-Auswertung ist per Unit-Test geprüft (`asReservation`, Felder wie `ops.venue_reservation_summary`, auch unter `reservation`/`summary`). Der E2E-Test schaltet automatisch auf die JSON-Prüfung (Tisch-Code sichtbar), sobald die Function JSON liefert. |
 | 3. `/rechtliches/[kind]` rendert `api.legal_document(kind)` mit ENTWURF-Banner | Banner bei Status `entwurf` **und** wenn der Text fehlt. Markdown ohne HTML, jetzt mit Zitat, Tabelle, Trennlinie, `####` und Links nur zu `https:`, `http:`, `mailto:`, `tel:` und eigenen Adressen (für die Texte aus `docs/recht/`). | `agb`, `ki_hinweis` ja. `impressum`, `datenschutz`, `widerruf` stehen hier noch nicht in `ops.legal_documents` → Seite zeigt ENTWURF und „Der Text wird gerade rechtlich geprüft …“. |
 | Mail-Links | `/konto/mitgliedschaft` → `/mitgliedschaft`, `/konto/sicherheit` → `/sicherheit/sanktionen`, `/abende/<id>/check-in` → `…/checkin` | ja |
-| Link „Abend teilen“ | Die Web-App baut den Link selbst als `<App>/teilen#t=<Schlüssel>`; liefert `create_trust_share` schon eine Adresse mit `#t=`, gilt diese. `safety.trust_view_base_url` zeigt heute noch auf die Function (`?t=`). | ja (Link aus der Web-App) |
+| Link „Abend teilen“ | Die Web-App baut den Link immer selbst als `<Adresse der App>/teilen#t=<Schlüssel>`. Die `url` aus `create_trust_share` (`safety.trust_view_base_url`, mit der Härtung `site.app_url` + `/teilen#t=`) wird nicht übernommen: lokal zeigt sie auf den Platzhalter `app.fermata.example`. | ja |
 
 ## Was noch echt geprüft werden muss
 
@@ -206,8 +212,8 @@ Abgedeckt (jede Seite mit axe WCAG 2.1 AA und Prüfung auf CSP-Verstöße):
 
 | # | Punkt | Stand |
 |---|---|---|
-| 1 | Härtung: `start_request_text`, `withdrawal_policy_url`, JSON von `venue-confirm`, Rechtstexte `impressum`/`datenschutz`/`widerruf` in der Datenbank | Oberfläche fertig mit Ersatz (siehe oben); nach dem Zusammenführen E2E erneut laufen lassen |
-| 2 | Link in der Reservierungs-Mail (`notify-dispatch`) und `safety.trust_view_base_url` auf die Web-App umstellen (`/lokal/bestaetigen#t=`, `/teilen#t=`) | Backend (Härtung) |
+| 1 | Härtung (`start_request_text` wörtlich als Häkchen, `start_request: true`, `withdrawal_policy_url`, JSON von `trust-view` und `venue-confirm`, Rechtstexte in der Datenbank) | gegen den Integrationszweig geprüft (siehe oben); nach dem Zusammenführen die E2E einmal auf dem gemeinsamen Stand laufen lassen |
+| 2 | `site.app_url` ist ein Platzhalter (`app.fermata.example`) | vor dem Start setzen (Links in Mails); die Seite „Abend teilen“ hängt nicht davon ab |
 | 3 | Bestätigungslink für Kündigen/Widerrufen ohne Anmeldung zeigt auf die Seite der Function (schlichtes HTML) | Option: eigene Seite in der Web-App (`/kuendigen/bestaetigen#t=`), dann `contract.ts` anpassen |
 | 4 | Apple Pay / Google Pay | `payment=()` in der Permissions-Policy, siehe oben |
 | 5 | `billing.contract_actions` wird direkt gelesen (RLS, eigene Zeilen), weil `api.billing_overview()` keinen Verlauf hat | nimmt `history` aus der Übersicht, sobald es das gibt |

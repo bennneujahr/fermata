@@ -23,11 +23,12 @@ export function isZeroTolerance(c: ReportCategory | string | null | undefined): 
 }
 
 /**
- * Adresse, die die Vertrauensperson bekommt. Der Schlüssel steht im Fragment (#t=…): Browser schicken ihn nie an
- * einen Server, er landet also in keinem Protokoll. Liefert die Datenbank schon eine Adresse mit #t=, gilt diese.
+ * Adresse, die die Vertrauensperson bekommt: immer die Seite /teilen dieser Web-App (gleiche Adresse, unter der das
+ * Mitglied gerade angemeldet ist). Der Schlüssel steht im Fragment (#t=…): Browser schicken ihn nie an einen Server,
+ * er landet also in keinem Protokoll. Die `url` aus api.create_trust_share (safety.trust_view_base_url) wird bewusst
+ * nicht übernommen – sie kann auf eine andere Umgebung zeigen (lokal z. B. auf den Platzhalter app.fermata.example).
  */
-export function trustShareLink(origin: string, token: string, url?: string | null): string {
-  if (url && /#t=/.test(url)) return url;
+export function trustShareLink(origin: string, token: string): string {
   return `${origin.replace(/\/$/, "")}/teilen#t=${encodeURIComponent(token)}`;
 }
 
