@@ -2,7 +2,8 @@
 // Mitgliedschaft: Bestellung (billing-checkout), Kündigungsknopf (billing-cancel), Widerrufsbutton (billing-withdraw).
 // Angemeldet mit dem Token der Person (preview/confirm), ohne Anmeldung über request (Link per Mail, confirm_link).
 // Die Regeln entscheiden die Edge Functions und die Datenbank; hier wird nur weitergereicht.
-import { revalidatePath } from "next/cache";
+// Bewusst ohne revalidatePath: Die Seiten laden ihre Daten bei jedem Aufruf neu, und die Eingangsbestätigung
+// soll stehen bleiben (ein Neuaufbau würde sie durch „bereits gekündigt“ ersetzen).
 import type { ActionResult, CancelResult, OrderResult, WithdrawResult } from "@/lib/billing-types";
 import { callFunction } from "@/lib/functions";
 import { callPublicFunction } from "@/lib/public-functions";
@@ -35,7 +36,6 @@ export async function orderMembership(input: {
     },
   });
   if (!res.ok || !res.data) return fail(res.error, res.status);
-  revalidatePath("/mitgliedschaft", "layout");
   return { ok: true, data: res.data };
 }
 
@@ -56,7 +56,6 @@ export async function cancelMembership(input: {
     body: { action: "confirm", kind, reason, name: input.name?.trim() || undefined, contactEmail: input.contactEmail?.trim() || undefined },
   });
   if (!res.ok || !res.data) return fail(res.error, res.status);
-  revalidatePath("/mitgliedschaft", "layout");
   return { ok: true, data: res.data };
 }
 
@@ -107,7 +106,6 @@ export async function withdrawMembership(input: {
     },
   });
   if (!res.ok || !res.data) return fail(res.error, res.status);
-  revalidatePath("/mitgliedschaft", "layout");
   return { ok: true, data: res.data };
 }
 

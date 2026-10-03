@@ -56,9 +56,9 @@ MAILPIT_URL=http://localhost:$MAIL_HTTP_PORT
 APP_PORT=$APP_PORT
 SUPABASE_JWT_SECRET=$JWT_SECRET
 FERMATA_FUNCTIONS_URL=http://localhost:$GATEWAY_PORT/functions/v1
-STRIPE_SECRET_KEY=sk_test_fermata_local
-STRIPE_PUBLISHABLE_KEY=pk_test_fermata_local
-NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_test_fermata_local
+STRIPE_SECRET_KEY=sk_test_fermatalocal
+STRIPE_PUBLISHABLE_KEY=pk_test_fermatalocal
+NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_test_fermatalocal
 STRIPE_API_BASE=http://localhost:$STRIPE_PORT
 VENUE_LINK_SECRET=fermata-local-venue-link-secret
 ENV

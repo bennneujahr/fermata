@@ -95,7 +95,10 @@ export function CancelForm({ form, preview }: { form: AddressForm; preview: Canc
                   name="kind"
                   value={k}
                   checked={kind === k}
-                  onChange={() => setKind(k)}
+                  onChange={() => {
+                    setKind(k);
+                    setFieldError((f) => ({ ...f, reason: undefined }));
+                  }}
                 />
                 <span className="choice__text">
                   <span className="choice__label">{kinds[k].label}</span>

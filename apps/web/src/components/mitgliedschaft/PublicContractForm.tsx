@@ -121,7 +121,10 @@ export function PublicContractForm({ kind }: { kind: "cancel" | "withdraw" }) {
                       name="kind"
                       value={k}
                       checked={cancelKind === k}
-                      onChange={() => setCancelKind(k)}
+                      onChange={() => {
+                        setCancelKind(k);
+                        setFieldError((f) => ({ ...f, reason: undefined }));
+                      }}
                     />
                     <span className="choice__text">
                       <span className="choice__label">{kinds[k].label}</span>
