@@ -17,6 +17,7 @@ import asyncio
 import contextlib
 import functools
 import logging
+import re
 import time
 from collections.abc import AsyncGenerator, AsyncIterator, Callable
 from dataclasses import dataclass, field
@@ -144,7 +145,9 @@ class Conversation:
         )
         self.meter = CostMeter()
         self.latency = LatencyTracker()
-        self.turns: list[Turn] = []
+        # Wie das gespeicherte Transkript: bei Wiederaufnahme die bisherigen Beiträge, dann die Begrüßung usw.
+        # (turn_index in Sicherheits-Hinweisen zeigt so auf denselben Eintrag wie in app.interview_transcripts).
+        self.turns: list[Turn] = list(ctx.turns)
         self.notes: list[dict[str, Any]] = []
         self.proposed_summary: str | None = None
         self.events: list[EngineEvent] = []
@@ -289,7 +292,8 @@ class Conversation:
         self._greeted = True
         await self.backend.mark_ai_notice(self.session_id, self.settings.ai_notice_version)
         greeting = self.messages[1]["content"][0]["text"]
-        self._persist(Turn("viola", greeting, mode=self.mode), verbatim=True)
+        self.turns.append(Turn("viola", greeting, mode=self.mode))
+        self._persist(self.turns[-1], verbatim=True)
         if self.state.phase is Phase.BEGRUESSUNG:
             self._pending_notices.extend(self.state.greeting_done())
 
@@ -335,8 +339,9 @@ class Conversation:
 
         if self.state.time_status().force_end:
             closing = self._sentence("zeitlimit_ende")
-            self._persist(Turn("person", text, mode=self.mode))
-            self._persist(Turn("viola", closing, mode=self.mode))
+            self.turns += [Turn("person", text, mode=self.mode), Turn("viola", closing, mode=self.mode)]
+            self._persist(self.turns[-2])
+            self._persist(self.turns[-1])
             yield closing
             await self._end(EndReason.ZEITLIMIT)
             return
@@ -420,14 +425,16 @@ class Conversation:
                     if result is None:
                         raise LlmUnavailable("Keine Antwort vom Modell")
                     self.llm_failures = 0
-                    self.messages.append({"role": "assistant", "content": result.content})
+                    if result.stop_reason == "refusal" and not spoken:
+                        yield emit(self._sentence("ablehnung"))
+                    # Eine leere Antwort wäre im Verlauf ungültig; dann steht dort, was gesagt wurde.
+                    content = result.content or [{"type": "text", "text": " ".join(spoken) or "…"}]
+                    self.messages.append({"role": "assistant", "content": content})
                     self.meter.conversation.add(result.usage)
                     self.latency.add_ttft(result.ttft_ms)
                     if result.stop_reason == "refusal":
                         self.meter.refusals += 1
                         log.info("Modell hat abgelehnt (Kategorie %s)", result.refusal_category)
-                        if not spoken:
-                            yield emit(self._sentence("ablehnung"))
                         break
                     if not result.tool_uses:
                         break
@@ -458,9 +465,9 @@ class Conversation:
 
             # Feste Sicherheitszusagen, unabhängig vom Modell
             if crisis_severity is not None and crisis_severity.rank >= Severity.HOCH.rank:
-                numbers = [str(n) for n in (self.settings.crisis_lines.get("telefonseelsorge") or [])]
-                said_all = " ".join(spoken)
-                if not any(n in said_all for n in numbers):
+                numbers = [re.sub(r"\D", "", str(n)) for n in (self.settings.crisis_lines.get("telefonseelsorge") or [])]
+                said_digits = re.sub(r"\D", "", " ".join(spoken))
+                if not any(n and n in said_digits for n in numbers):
                     yield emit(self._sentence("krise_hilfe"))
                 if crisis_severity is Severity.AKUT and end_requested is None:
                     end_requested = EndReason.KRISE
@@ -471,6 +478,8 @@ class Conversation:
             if time_up_now and end_requested is None:
                 yield emit(self._sentence("zeitlimit_ende"))
                 end_requested = EndReason.ZEITLIMIT
+            if not spoken and end_requested is None:
+                yield emit(self._sentence("weiter"))
             completed = True
         finally:
             if not completed:
@@ -587,11 +596,12 @@ class Conversation:
             self.silence_count += 1
             if self.silence_count <= self.settings.max_silence_prompts:
                 text = self._sentence("stille_1" if self.silence_count == 1 else "stille_2")
-                self._persist(Turn("viola", text, mode=self.mode))
                 self.turns.append(Turn("viola", text, mode=self.mode))
+                self._persist(self.turns[-1])
                 return text
             text = self._sentence("stille_ende")
-            self._persist(Turn("viola", text, mode=self.mode))
+            self.turns.append(Turn("viola", text, mode=self.mode))
+            self._persist(self.turns[-1])
             await self._end(EndReason.PERSON_BEENDET)
             return text
 
@@ -601,7 +611,8 @@ class Conversation:
             if self.ended or not self._greeted or not self.state.time_status().force_end:
                 return None
             text = self._sentence("zeitlimit_ende")
-            self._persist(Turn("viola", text, mode=self.mode))
+            self.turns.append(Turn("viola", text, mode=self.mode))
+            self._persist(self.turns[-1])
             await self._end(EndReason.ZEITLIMIT)
             return text
 

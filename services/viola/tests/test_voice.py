@@ -188,7 +188,7 @@ async def test_agent_in_livekit_session_answers_from_engine() -> None:
         result = await session.run(user_input="Hallo Viola, ich bin bereit.")
         result.expect.contains_message(role="assistant")
     texts = [t.text for t in parts.conv.turns]
-    assert texts == ["Hallo Viola, ich bin bereit.", "Schön, dass Sie da sind. Was machen Sie gern?"]
+    assert texts == [parts.greeting, "Hallo Viola, ich bin bereit.", "Schön, dass Sie da sind. Was machen Sie gern?"]
     await parts.conv.flush()
     calls = [c[0] for c in backend.calls]
     assert calls.index("ai_notice") < calls.index("append_turns"), "KI-Hinweis vor dem ersten gespeicherten Beitrag"

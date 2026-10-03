@@ -488,3 +488,38 @@ async def test_debrief_greeting_does_not_mention_counterpart(backend: MemoryBack
     greeting = await Conversation(ctx, FakeChatModel(), backend).open()
     assert "Über dein Gegenüber spreche ich dabei nicht." in greeting
     assert greeting.endswith("Wie war der Abend für dich?")
+
+
+async def test_refusal_without_content_keeps_history_valid(backend: MemoryBackend) -> None:
+    model = FakeChatModel([FakeReply(refusal="general_harms"), FakeReply(ASK)])
+    conv = await open_conv(backend, model)
+    await say(conv, "Ja.")
+    await say(conv, "Weiter.")
+    assert_valid_history(model.requests[-1].messages)
+    assistant = [m for m in model.requests[-1].messages if m["role"] == "assistant"][-1]
+    assert assistant["content"] == [
+        {"type": "text", "text": "Darauf kann ich nicht eingehen. Wollen wir beim Gespräch über Sie bleiben?"}
+    ]
+
+
+async def test_crisis_numbers_spoken_in_groups_are_not_repeated(backend: MemoryBackend) -> None:
+    model = FakeChatModel(
+        [FakeReply(ASK), FakeReply("Bitte rufen Sie die Telefonseelsorge an, 0800 111 0 111. Ich bin froh, dass Sie es sagen.")],
+        json_replies=[{"flags": []}],
+    )
+    conv = await open_conv(backend, model)
+    await say(conv, "Ja.")
+    out = await say(conv, "Ich habe Suizidgedanken.")
+    assert out.count("0800") == 1
+
+
+async def test_never_silent_and_turn_indices_match_transcript(backend: MemoryBackend) -> None:
+    model = FakeChatModel([FakeReply("", [("note_profile_fact", {"category": "werte", "fact": "Ruhe.", "importance": 2})])] * 3)
+    conv = await open_conv(backend, model)
+    out = await say(conv, "Ich bin 16 Jahre alt.")
+    assert out == "Erzählen Sie gern weiter, ich höre zu."
+    await conv.flush()
+    s = backend.sessions[conv.session_id]
+    flag = s.flags[0]
+    assert s.turns[flag["turn_index"]]["text"] == "Ich bin 16 Jahre alt."
+    assert [t.text for t in conv.turns] == [t["text"] for t in s.turns]

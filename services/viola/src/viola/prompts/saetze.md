@@ -70,3 +70,6 @@ Danke für das Gespräch. Die Zusammenfassung [[finden Sie|findest du]] gleich i
 
 ## person_beendet
 Danke für das Gespräch. Bis bald.
+
+## weiter
+[[Erzählen Sie|Erzähl]] gern weiter, ich höre zu.
