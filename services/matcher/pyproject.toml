@@ -48,3 +48,7 @@ src = ["src", "tests"]
 [tool.ruff.lint]
 select = ["E", "F", "W", "I", "B", "UP", "SIM", "RUF"]
 ignore = ["RUF001", "RUF002", "RUF003", "E501"]  # Deutsche Texte (Gedankenstriche, Anführungszeichen); lange SQL-Texte.
+
+[tool.ruff.lint.isort]
+known-first-party = ["fermata_matcher"]
+known-local-folder = ["conftest"]
