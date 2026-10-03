@@ -294,11 +294,12 @@ Ereignisse wie bei der Stimme (`summary_proposed`, `crisis_resources`, `ended`).
 503 `text_not_configured`. Nach einem Neustart des Dienstes antwortet `messages` mit 409 `not_started`: dann `start` erneut aufrufen
 (die Sitzung wird mit dem gespeicherten Verlauf fortgesetzt). Ohne Nachricht für 20 Minuten endet die Sitzung mit `technik`
 (fortsetzbar). Nach `ended` mit `summary_pending: true` läuft die Auswertung im Hintergrund (Sekunden bis etwa eine
-Minute); die Web-App fragt `interview-summary` ab, bis `summary_status = "draft"`.
+Minute); die Web-App fragt `interview-summary` ab, bis `summary_status = "draft"` – oder bis `analysis_status` `failed` bzw.
+`skipped` ist und kein Entwurf kam (dann freundlich anbieten, das Gespräch später fortzusetzen).
 
 ### 8.4 Zusammenfassung: `/functions/v1/interview-summary`
 
-- `GET ?session_id=…` → `{session_id, kind, status, summary_status, summary_draft, summary_confirmed_at, covered_blocks, end_reason, address_form, summary_version}` (nur eigene Sitzungen, sonst 404).
+- `GET ?session_id=…` → `{session_id, kind, status, summary_status, summary_draft, summary_confirmed_at, covered_blocks, end_reason, address_form, analysis_status, summary_version}` (nur eigene Sitzungen, sonst 404).
 - `POST {"session_id": "…", "action": "confirm" | "correct" | "reject", "text": "… (nur bei correct, 20–4000 Zeichen)"}`
   → `{session_id, summary_status, summary_version}`. Bestätigt/korrigiert: `profile_core.summary_text`, `summary_version + 1`,
   `summary_confirmed_at`.

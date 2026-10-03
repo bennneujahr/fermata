@@ -18,7 +18,7 @@ export default handler(["GET", "POST"], async (req) => {
     const row = await asMember(db(), claims, async (tx) => {
       const rows = await tx`
         select s.id as session_id, s.kind, s.status, s.summary_status, s.summary_draft, s.summary_confirmed_at,
-               s.covered_blocks, s.end_reason, s.address_form,
+               s.covered_blocks, s.end_reason, s.address_form, s.analysis_status,
                (select pc.summary_version from app.profile_core pc where pc.user_id = s.user_id) as summary_version
           from app.interview_sessions s where s.id = ${sid}`;
       return rows[0];

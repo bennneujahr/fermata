@@ -67,6 +67,7 @@ Deno.test({
     const own = await call("GET", await memberToken(anna.id), undefined, `?session_id=${sid}`);
     assertEquals(own.status, 200);
     assertEquals(own.body.summary_status, "draft");
+    assertEquals(own.body.analysis_status, "none");
     assertEquals(own.body.summary_draft, "Sie sind ruhig, neugierig und wandern gern. Humor ist Ihnen wichtig.");
     const other = await call("GET", await memberToken(bert.id), undefined, `?session_id=${sid}`);
     assertEquals(other.status, 404);
