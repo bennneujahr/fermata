@@ -403,23 +403,8 @@ grant execute on function api.admin_decide_appeal(uuid, text, text) to authentic
 -- ---------------------------------------------------------------------------
 -- Hinweise (Sicherheits-Agent, Sperrliste, Meldungen, Check-in)
 -- ---------------------------------------------------------------------------
-create or replace function api.admin_safety_flags(p_only_open boolean default true)
-returns setof jsonb
-language plpgsql
-stable
-security definer
-set search_path = ''
-as $$
-begin
-  perform safety.require_admin();
-  return query
-    select to_jsonb(f) || jsonb_build_object('person', safety.person_label(f.user_id))
-    from safety.safety_flags f
-    where not coalesce(p_only_open, true) or f.reviewed_at is null
-    order by safety.severity_rank(f.severity) desc, f.created_at;
-end;
-$$;
-grant execute on function api.admin_safety_flags(boolean) to authenticated;
+-- Liste der Hinweise: api.admin_safety_flags(p_open_only, p_limit) aus 20261003000250_web_admin.sql
+-- (eine gemeinsame Funktion für Web-App und Sicherheitsbereich).
 
 create or replace function api.admin_review_flag(p_flag_id uuid, p_outcome text)
 returns boolean

@@ -61,7 +61,7 @@ Bereits begonnene Abende (Startzeit vorbei) bleiben unberührt; dort greifen Che
 | `api.admin_lift_sanction(id, begründung)` | aufheben; Konto zurück auf den vorherigen Status, Ausschluss löscht den Sperrlisten-Eintrag |
 | `api.admin_sanctions(user?, nur_aktive?)` | Sanktionen mit Widerspruch |
 | `api.admin_appeals(status?)`, `api.admin_decide_appeal(id, 'accepted'|'rejected', begründung)` | Widersprüche; Entscheidung per Mail |
-| `api.admin_safety_flags(nur_offene?)`, `api.admin_review_flag(id, ergebnis)` | Hinweise (Sicherheits-Agent, Sperrliste, Meldungen, Check-in, wiederholtes Nichterscheinen) |
+| `api.admin_safety_flags(p_open_only, p_limit)` (gemeinsam mit der Web-App, Tabelle mit E-Mail), `api.admin_review_flag(id, ergebnis)` | Hinweise (Sicherheits-Agent, Sperrliste, Meldungen, Check-in, wiederholtes Nichterscheinen) |
 | `api.admin_police_report_template(report_id)` | Vorlage für eine Polizeimeldung (Abschnitt 5) |
 
 Befristete Sperren enden automatisch (`safety.release_expired_sanctions()`, stündlich); das Konto wird wieder freigegeben und die Person informiert. Konten, die aus anderen Gründen gesperrt sind (z. B. M2), bleiben unberührt.

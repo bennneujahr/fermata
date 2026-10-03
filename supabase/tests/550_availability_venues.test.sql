@@ -129,8 +129,9 @@ select tests.act_as(tests.m5_id('dora'));
 select is(tests.hint_of($$ select api.admin_create_venue('{"name": "X"}'::jsonb) $$), 'admin_required', 'Admin ohne Zwei-Faktor: nein');
 select tests.reset_role();
 select tests.act_as(tests.m5_id('dora'), 'aal2');
-select is(tests.hint_of($$ select api.admin_create_venue('{"name": "Weinstube", "street": "Markt 2", "postal_code": "19055", "city": "Schwerin"}'::jsonb) $$),
-  'invalid_coordinates', 'Ohne Koordinaten und ohne PLZ-Tabelle: Fehler');
+-- Seit M2 enthält app.postal_codes alle PLZ; ohne Koordinaten zählt deshalb eine unbekannte PLZ.
+select is(tests.hint_of($$ select api.admin_create_venue('{"name": "Weinstube", "street": "Markt 2", "postal_code": "00001", "city": "Schwerin"}'::jsonb) $$),
+  'invalid_coordinates', 'Ohne Koordinaten und mit unbekannter PLZ: Fehler');
 select is(tests.hint_of($$ select api.admin_create_venue('{"name": "Weinstube", "street": "Markt 2", "postal_code": "19055", "city": "Schwerin",
   "lat": 53.63, "lon": 11.41, "reservation_mode": "email"}'::jsonb) $$), 'email_required', 'Reservierung per E-Mail braucht eine Adresse');
 select is(tests.hint_of($$ select api.admin_create_venue('{"name": "Weinstube", "street": "Markt 2", "postal_code": "19055", "city": "Schwerin",

@@ -51,7 +51,7 @@ comment on column safety.blocklist.note is 'z. B. „doc_hash aus Ausweisprüfun
 
 -- Bei der Ausweisprüfung gespeicherte Sperrlisten-Hashes (PLAN 2.2: „Sperrlisten-Hash“).
 -- Schreibt die Didit-Function (M2) nach erfolgreicher Prüfung; ein späterer Ausschluss sperrt damit auch den Ausweis.
-create table safety.verification_hashes (
+create table if not exists safety.verification_hashes (
   user_id uuid primary key references auth.users (id) on delete cascade,
   doc_hash text,
   name_hash text,

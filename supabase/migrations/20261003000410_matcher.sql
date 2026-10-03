@@ -118,19 +118,7 @@ $$;
 comment on function app.age_band(integer, date) is 'Altersband (18–24, 25–34, …, 65+) aus dem Geburtsjahr.';
 grant execute on function app.age_band(integer, date) to fermata_matcher, service_role, authenticated;
 
-create or replace function app.require_admin()
-returns void
-language plpgsql
-stable
-security definer
-set search_path = ''
-as $$
-begin
-  if not app.is_admin() then
-    raise exception 'Nur für Admins mit Zwei-Faktor-Anmeldung' using errcode = 'insufficient_privilege';
-  end if;
-end;
-$$;
+-- app.require_admin() stammt aus 20261003000250_web_admin.sql (gibt zusätzlich auth.uid() zurück).
 revoke execute on function app.require_admin() from public, anon;
 grant execute on function app.require_admin() to authenticated, service_role;
 

@@ -170,7 +170,7 @@ select is((select data ->> 'decision' from safety.mail_queue where recipient_use
 insert into safety.safety_flags (user_id, source, kind, severity, details) values (pg_temp.u(715), 'agent', 'krise', 'hoch', '{}');
 select tests.act_as(pg_temp.u(719), 'aal2');
 select ok((select count(*) from api.admin_safety_flags(true)) >= 1, 'Offene Hinweise sichtbar');
-select ok(api.admin_review_flag((select (f ->> 'id')::uuid from api.admin_safety_flags(true) f limit 1), 'geprüft, nichts zu tun'),
+select ok(api.admin_review_flag((select f.id from api.admin_safety_flags(true) f limit 1), 'geprüft, nichts zu tun'),
   'Hinweis als geprüft markiert');
 select ok((select count(*) from api.admin_sanctions(pg_temp.u(712), false)) >= 2, 'Sanktionsverlauf einer Person');
 select tests.reset_role();

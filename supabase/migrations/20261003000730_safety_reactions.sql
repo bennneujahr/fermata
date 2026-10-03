@@ -68,6 +68,6 @@ grant execute on function
   api.admin_reports(text), api.admin_report(uuid), api.admin_set_report_status(uuid, text),
   api.admin_decide_report(uuid, text, text, boolean), api.admin_impose_sanction(uuid, text, text, timestamptz, uuid, text),
   api.admin_lift_sanction(uuid, text), api.admin_sanctions(uuid, boolean), api.admin_appeals(text),
-  api.admin_decide_appeal(uuid, text, text), api.admin_safety_flags(boolean), api.admin_review_flag(uuid, text),
+  api.admin_decide_appeal(uuid, text, text), api.admin_safety_flags(boolean, integer), api.admin_review_flag(uuid, text),
   api.admin_police_report_template(uuid)
 to authenticated;

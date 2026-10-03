@@ -22,3 +22,7 @@ begin
   end loop;
 end
 $$;
+
+-- Mitglieder dürfen nicht die Abende anderer Personen abfragen (Hinweis aus der Web-App, M2).
+-- Die eigene Übersicht läuft über api.billing_overview(); Auswahl-Job und Abende nutzen eigene Rechte.
+revoke execute on function billing.available_evenings(uuid) from authenticated;
