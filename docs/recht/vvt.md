@@ -2,6 +2,8 @@
 
 > **ENTWURF – nicht rechtsverbindlich, Prüfung durch Anwalt/Datenschutzbeauftragten ausstehend.**
 > Stand: 03.10.2026 · Fassung 0.1 · aus dem Code abgeleitet (Datenkarte [`docs/DATA.md`](../DATA.md)).
+> Nachgeführt nach der Härtung: Löschfristen aus den Einstellungen `retention.*` (Job `fermata-retention`,
+> [loeschkonzept.md](loeschkonzept.md)); Werte sind Platzhalter (C11), bis Benn/Anwalt sie bestätigen.
 
 ## Allgemeine Angaben
 
@@ -29,7 +31,8 @@ Abkürzungen der Rechtsgrundlagen: a/b/c/d/f = Art. 6 Abs. 1 lit. a–f DSGVO; 9
 - **Grundlage:** a (Einwilligung Warteliste) [[A9]].
 - **Empfänger:** Supabase, Brevo (Mails), Vercel (Auslieferung der Seite).
 - **Drittland:** US-Mütter von Supabase und Vercel (SCC/DPF prüfen).
-- **Löschung:** unbestätigt 7 Tage (Job `fermata-waitlist-cleanup`); bestätigt bei Abmeldung oder Kontolöschung.
+- **Löschung:** unbestätigt 7 Tage (Job `fermata-waitlist-cleanup`); bestätigt bei Abmeldung, bei der ersten Anmeldung
+  in der App nach einer Einladung (Härtung) oder bei Kontolöschung.
 - **Code:** `20261003000100_waitlist.sql`, Functions `waitlist-*`.
 
 ### V02 Plakat-Zählung
@@ -52,14 +55,15 @@ Abkürzungen der Rechtsgrundlagen: a/b/c/d/f = Art. 6 Abs. 1 lit. a–f DSGVO; 9
 - **Grundlage:** b, f.
 - **Empfänger:** Supabase (Auth), Brevo (Anmelde- und Einladungsmails).
 - **Löschung:** nie angenommene Einladung nach 7 Tagen (Job `fermata-expire-invitations`); sonst Kontolöschung.
-  `auth.audit_log_entries`: [[Frist festlegen]].
+  `auth.audit_log_entries` (mit IP): 30 Tage (`retention.auth_audit_days`, falls die Rolle löschen darf; sonst
+  Aufbewahrung im Supabase-Dashboard).
 - **Code:** `app.accounts`, `app.account_invitations`, `admin-invite`, `ops.create_invited_account` (M2).
 
 ### V05 Einwilligungsverwaltung
 
 - **Zweck:** Nachweis nach Art. 7 Abs. 1. **Betroffene:** Mitglieder.
 - **Daten:** Art, Aktion, Fassung, Zeit, Quelle. **Grundlage:** c.
-- **Empfänger:** Supabase. **Löschung:** mit dem Konto [[Aufbewahrung danach prüfen]].
+- **Empfänger:** Supabase. **Löschung:** mit dem Konto [[Aufbewahrung danach prüfen: Nachweis entfällt mit dem Konto]].
 - **Code:** `app.consents`, `api.give_consent`, `api.revoke_consent`.
 
 ### V06 Konto-Fakten und Ort
@@ -96,10 +100,12 @@ Abkürzungen der Rechtsgrundlagen: a/b/c/d/f = Art. 6 Abs. 1 lit. a–f DSGVO; 9
 - **Zweck:** Kennenlernen, KI-Hinweis, Sicherheit.
 - **Daten:** Stimme (nur durchgeleitet), Gesprächstext, Gesprächsablauf; ggf. ungefragt genannte Art.-9-Inhalte
   (nur live).
-- **Grundlage:** a (`gespraech`), 9a [[für ungefragte Art.-9-Inhalte im Text der Einwilligung ergänzen]].
+- **Grundlage:** a (`gespraech`), 9a – ungefragt erzählte Art.-9-Inhalte nennt die Einwilligung seit der Fassung
+  `2026-10-03-m8-entwurf` ausdrücklich [[Anwalt prüfen]].
 - **Empfänger:** LiveKit (Weg A/B) bzw. eigener Server (C), AWS (Viola-Dienst, Bedrock, Polly), Deepgram, Supabase.
 - **Drittland:** EU-Geo-Profil Bedrock (London, Zürich – Angemessenheit); US-Mütter (AWS, Deepgram, LiveKit).
 - **Löschung:** Audio nie gespeichert; Transkript 30 Tage (Job `fermata-purge-transcripts`), Widerruf sofort.
+  Einsicht durch Benn nur im Sicherheitsfall (`api.admin_safety_transcript`, Audit).
 - **Code:** `services/viola`, `interview-*`, `20261003000310_viola.sql` (Hauptzweig).
 
 ### V10 Auswertung des Gesprächs, Profil
@@ -109,20 +115,22 @@ Abkürzungen der Rechtsgrundlagen: a/b/c/d/f = Art. 6 Abs. 1 lit. a–f DSGVO; 9
   Gewichte, Embedding.
 - **Grundlage:** b (Profil), a (Erstellung aus dem Gespräch).
 - **Empfänger:** AWS Bedrock (Auswertung), Supabase.
-- **Löschung:** Kontolöschung. **Code:** `api.agent_save_analysis`, `api.interview_confirm_summary`.
+- **Löschung:** Kontolöschung; Entwurf der Zusammenfassung 30 Tage nach Bestätigung bzw. Ende
+  (`retention.summary_draft_days`). **Code:** `api.agent_save_analysis`, `api.interview_confirm_summary`.
 
 ### V11 Sicherheitsprüfung im Gespräch
 
 - **Zweck:** Krise, Minderjährigkeit, Gewalt, Belästigung erkennen und helfen.
 - **Daten:** Art, Stufe, Sitzung, Beitragsnummer (kein Freitext). **Grundlage:** d, f.
-- **Empfänger:** Supabase; Benn. **Löschung:** [[Frist für `safety.safety_flags` festlegen]].
+- **Empfänger:** Supabase; Benn. **Löschung:** erledigte Hinweise nach 24 Monaten (`retention.safety_flags_months`),
+  Namens-/Ausweis-Hashes darin nach 30 Tagen (`retention.flag_hashes_days`).
 - **Code:** `api.agent_flag_safety`, `services/viola/src/viola/safety.py`.
 
 ### V12 Zeitenabfrage
 
 - **Zweck:** freie Abende je Zeitraum. **Daten:** Zeitfenster. **Grundlage:** b.
-- **Empfänger:** Supabase, Brevo/Push (Abfrage-Nachricht). **Löschung:** Kontolöschung [[ältere Zeiträume: 30 Tage
-  nach Ende vorgeschlagen]]. **Code:** `20261003000530_availability.sql`.
+- **Empfänger:** Supabase, Brevo/Push (Abfrage-Nachricht). **Löschung:** 30 Tage nach Ende des Zeitraums
+  (`retention.availability_days`), sonst Kontolöschung. **Code:** `20261003000530_availability.sql`.
 
 ### V13 Auswahl (Profiling)
 
@@ -132,8 +140,8 @@ Abkürzungen der Rechtsgrundlagen: a/b/c/d/f = Art. 6 Abs. 1 lit. a–f DSGVO; 9
 - **Grundlage:** b; 9a für die Ja/Nein-Prüfung.
 - **Empfänger:** AWS (ECS Frankfurt, Bedrock, Titan Embeddings), Supabase.
 - **Drittland:** wie V09 (Bedrock-Weg festlegen).
-- **Löschung:** Teil-Scores und Lauf-Teilnahmen 12 Monate (Job `fermata-purge-match-scores`); Lauf-Berichte
-  dauerhaft; Vorschläge bis Kontolöschung.
+- **Löschung:** Teil-Scores und Lauf-Teilnahmen 12 Monate (Job `fermata-purge-match-scores`), Gesamtscore und
+  Prüfnotizen der Vorschläge ebenso (`fermata-retention`); Lauf-Berichte dauerhaft; Vorschläge bis Kontolöschung.
 - **Code:** `services/matcher`, `20261003000410_matcher.sql`.
 
 ### V14 Menschliche Freigabe der Vorschläge
@@ -167,7 +175,8 @@ Abkürzungen der Rechtsgrundlagen: a/b/c/d/f = Art. 6 Abs. 1 lit. a–f DSGVO; 9
 - **Empfänger:** Brevo; Push-Dienste von Apple, Google, Mozilla (Inhalt Ende-zu-Ende verschlüsselt).
 - **Drittland:** Push-Dienste USA.
 - **Löschung:** Warteschlange 90 Tage nach Erledigung (Job `fermata-evening-purge`); Push-Abo bis Widerruf/Abmeldung;
-  Versandprotokoll [[12 Monate vorgeschlagen]].
+  Versandprotokoll 12 Monate (`retention.notifications_log_months`). Bei Kontolöschung bleiben Absage-Nachrichten an
+  Gegenüber und Lokal (vom Abend gelöst, Inhalt festgehalten) bis zum Versand.
 - **Code:** `ops.notification_queue`, `notify-dispatch`, `_shared/push`.
 
 ### V18 Sicherheit am Abend: Finde-Fenster, Check-in, Abend teilen, Hilfe-Knopf
@@ -197,7 +206,9 @@ Abkürzungen der Rechtsgrundlagen: a/b/c/d/f = Art. 6 Abs. 1 lit. a–f DSGVO; 9
 - **Grundlage:** b, c (HGB/AO).
 - **Empfänger:** Stripe (teils eigene Verantwortung), Supabase, Brevo.
 - **Drittland:** Stripe Inc. (USA).
-- **Löschung:** Kontolöschung; Vertragsunterlagen [[6/8 Jahre]]; Stripe-Ereignisse [[90 Tage vorgeschlagen]].
+- **Löschung:** Kontolöschung (laufendes Abo wird dabei sofort beendet); Vertragsunterlagen 6 Jahre ab Jahresende
+  (`retention.contract_actions_years`) [[6/8 Jahre bestätigen]]; Stripe-Ereignisse (ohne Name, E-Mail, Adresse,
+  Karte) 13 Monate (`retention.stripe_events_months`).
 - **Code:** `20261003000600`–`…000640`, `billing-*`, `stripe-webhook`.
 
 ### V21 Kündigung und Widerruf
@@ -205,7 +216,8 @@ Abkürzungen der Rechtsgrundlagen: a/b/c/d/f = Art. 6 Abs. 1 lit. a–f DSGVO; 9
 - **Zweck:** § 312k und § 356a BGB, Eingangsbestätigung.
 - **Daten:** Name, Kontakt-E-Mail, Vertragsnummer, Art, Grund, Zeitpunkte, Berechnung, Link-Hash (ohne Anmeldung).
 - **Grundlage:** b, c. **Empfänger:** Supabase, Brevo, Stripe (Kündigung/Erstattung).
-- **Löschung:** [[6 Jahre vorgeschlagen]]; bleibt nach Kontolöschung ohne Konto-ID.
+- **Löschung:** 6 Jahre ab Ende des Kalenderjahres (`retention.contract_actions_years`) [[bestätigen]]; bleibt nach
+  Kontolöschung ohne Konto-ID; Anfragen ohne Anmeldung (`billing.contract_requests`) 30 Tage.
 - **Code:** `billing.record_cancellation`, `billing.record_withdrawal`, `billing.contract_requests`.
 
 ### V22 Meldungen, Sanktionen, Widersprüche, Sperrliste
@@ -216,8 +228,9 @@ Abkürzungen der Rechtsgrundlagen: a/b/c/d/f = Art. 6 Abs. 1 lit. a–f DSGVO; 9
   Hashes; Hinweise; Sicherheits-Mail-Ausgang.
 - **Grundlage:** f, b; ggf. Art. 9 Abs. 2 lit. f und Art. 10 [[Anwalt]].
 - **Empfänger:** Supabase, Brevo (Mails ohne Namen an Benn), Benn.
-- **Löschung:** [[Meldungen 3 Jahre nach Abschluss vorgeschlagen]]; Sanktionen mit dem Konto; Sperrliste dauerhaft
-  (Begründung DSFA R13).
+- **Löschung:** abgeschlossene Meldungen ohne geltende Sanktion 24 Monate nach Abschluss
+  (`retention.reports_months`) [[bestätigen]]; Sicherheits-Mail-Ausgang 30 Tage; Sanktionen mit dem Konto; Sperrliste
+  dauerhaft (Begründung DSFA R13).
 - **Code:** `20261003000700`–`…000730`.
 
 ### V23 Weitergabe an die Polizei
@@ -240,7 +253,8 @@ Abkürzungen der Rechtsgrundlagen: a/b/c/d/f = Art. 6 Abs. 1 lit. a–f DSGVO; 9
 
 - **Zweck:** Rechenschaft, Nachvollziehbarkeit. **Betroffene:** Admin, Mitglieder (als Ziel).
 - **Daten:** Handlung, Zeit, handelnde Person, Ziel-ID, Details. **Grundlage:** c, f.
-- **Löschung:** dauerhaft, nur anhängen [[Frist festlegen]]. **Code:** `ops.audit_log`, `ops.app_settings_history`.
+- **Löschung:** dauerhaft, nur anhängen – bewusst ohne automatische Löschung (Nachweis, keine Inhalte; Begründung im
+  Löschkonzept) [[Höchstdauer festlegen]]. **Code:** `ops.audit_log`, `ops.app_settings_history`.
 
 ### V26 Kostenprotokoll der Gespräche
 

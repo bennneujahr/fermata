@@ -72,7 +72,11 @@ einem Grund enden: `fertig`, `person_beendet`, `zeitlimit`, `technik`, `krise`, 
 „Guten Tag. Ich bin Viola, eine künstliche Intelligenz von Fermata, kein Mensch.“ Danach Datenhinweis und Zweck. In der Stimme ist
 die Begrüßung nicht unterbrechbar. Erst wenn sie gesprochen bzw. angezeigt wurde, vermerkt die Datenbank `ai_notice_at`; vorher
 lehnt `api.agent_append_turns` jeden Beitrag ab (`ai_notice_missing`). Zusätzlich zeigt die Web-App vor dem Verbinden den Text
-`ai_notice` aus `interview-token`.
+`ai_notice` aus `interview-token`. Der schriftliche Hinweis (`ops.legal_documents`, Art `ki_hinweis`) ist seit der Härtung
+wahrheitsgemäß: Was jemand Viola von sich aus erzählt – auch Gesundheit, Religion oder Orientierung –, verarbeiten
+Spracherkennung und Sprachmodell live; gespeichert wird es nicht (Fassung `2026-10-03-entwurf`, Text in
+`docs/recht/ki-hinweis.md` Abschnitt 4; die frühere Fassung „gehen nie an ein Sprachmodell“ ist `abgeloest`). Ebenso die
+Einwilligung `gespraech` (Fassung `2026-10-03-m8-entwurf`, `docs/recht/einwilligungen.md`).
 
 **Themenblöcke je Gesprächsart** (`domain.py`):
 
@@ -343,7 +347,10 @@ Löschung nach 30 Tagen). Schreiben nur über die Functions.
 `interview.tier_depth` (Platzhalter), `interview.kinds_by_tier` (Platzhalter), `interview.max_sessions_per_day` (6),
 `interview.request_ttl_minutes` (15), `interview.text_max_session_minutes` (60), `interview.continuation_days` (7),
 `interview.safety_transcript_retention_days` (30, Platzhalter B5), `interview.ai_notice_version` (`2026-10-03`),
-`interview.redact_art9_in_transcripts` (true), `analysis.llm_effort` (`medium`), `safety.crisis_lines` (öffentlich).
+`interview.redact_art9_in_transcripts` (true), `analysis.llm_effort` (`medium`). Die frühere Einstellung `safety.crisis_lines`
+ist seit der Härtung (`20261003000903_links_settings.sql`) gelöscht: `api.agent_session_context` liefert `crisis_lines`
+(gleiches Format `[{name, number}]`) aus `safety.crisis_lines()`, also aus denselben Einstellungen wie der Hilfe-Knopf
+(`safety.telefonseelsorge_numbers`, `safety.ambulance_number`). Viola selbst ändert sich dadurch nicht.
 
 **Neue Spalten** an `app.interview_sessions`: `continues_session_id`, `covered_blocks`, `expires_at`, `last_activity_at`,
 `ai_notice_version`, `mode_switched_at`, `analysis_status`, `analyzed_at`; höchstens eine offene Sitzung je Person.
@@ -352,6 +359,14 @@ Löschung nach 30 Tagen). Schreiben nur über die Functions.
 `api.agent_*` (nur `fermata_agent`, `service_role`). Cron: `ops.expire_interview_sessions` alle 10 Minuten (verfallene Anfragen,
 hängende Sitzungen), Transkript-Löschung `ops.purge_transcripts` stündlich (bestehend). `EXECUTE` für `PUBLIC` ist in `app`,
 `api`, `ops` entzogen; jede aufrufbare Funktion hat eine ausdrückliche Berechtigung.
+
+**Härtung:**
+- **Transkript im Sicherheitsfall:** nur `api.admin_safety_transcript(p_session_id, p_reason)` (Admin mit Zwei-Faktor, offener
+  Hinweis oder offene Meldung zur Person, Begründung, Audit ohne Inhalt; Einzelheiten in `sicherheit.md` Abschnitt 4).
+- **Entwurf der Zusammenfassung** (`summary_draft`) wird 30 Tage nach Bestätigung, Korrektur, Verwerfen bzw. Ende des Gesprächs
+  geleert (`retention.summary_draft_days`, Job `fermata-retention`).
+- Die Functions `interview-token`, `interview-agent`, `interview-summary` laufen mit `FERMATA_DB_ROLE=fermata_edge`; der
+  Wechsel in `authenticated` bzw. `fermata_agent` je Anfrage bleibt (die Login-Rolle muss Mitglied sein, `RUNBOOK.md` Abschnitt 5).
 
 ---
 
@@ -447,7 +462,8 @@ Stellschrauben: `min_delay`, kurzer erster Satz, Prompt-Caching, Stimme mit Stre
 | – | Minderjährig erkannt | jetzt: Hinweis „hoch“ an Benn, kein Profil; keine automatische Sperre (M7 entscheidet) |
 | – | Wechsel Stimme → Text | gebaut (`interview-token` mit `session_id`, Datenpaket `switch_to_text`); die neue Textsitzung beginnt die Themenblöcke ab dem letzten gespeicherten Stand, das Modell kennt den bisherigen Verlauf |
 | – | `ready_for_matching` | wird von Viola nicht gesetzt; Regel gehört in M4 (z. B. bestätigte Zusammenfassung + Fahrbereitschaft) |
-| – | Krisennummern | `safety.crisis_lines` vor dem Start erneut prüfen (M9) |
+| – | Krisennummern | eine Quelle seit der Härtung (`safety.telefonseelsorge_numbers`, `safety.ambulance_number`) – vor dem Start erneut prüfen (M9) |
+| – | Neue Fassung `gespraech` | `app.has_consent` prüft keine Fassung: Wer der alten Fassung zugestimmt hat, kann weiter sprechen; `api.my_consents` meldet `needs_renewal`. Vor dem Start gibt es keine echten Zustimmungen – sollte der Anwalt eine harte Sperre bis zur erneuten Zustimmung wollen, in `api.interview_request` die Fassung prüfen |
 
 ---
 

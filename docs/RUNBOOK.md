@@ -1,6 +1,7 @@
 # Betriebshandbuch (RUNBOOK)
 
-Stand: 03.10.2026 · Meilenstein M9 (Entwurf) · für Benn.
+Stand: 03.10.2026 · Meilenstein M9 (Entwurf), nachgeführt nach der Härtung (Migrationen `20261003000900` bis
+`…000907`, Branch `build/hardening`) · für Benn.
 Grundlage: Code in `build/docs` (M0, M1, M4–M7) und im Hauptzweig `claude/dating-app-build-0uszhn`, in dem am
 03.10.2026 auch M3 (Viola, Commit `e84647b`) und M2 (Web-App, Merge-Commit `2489e06`) zusammengeführt wurden.
 Alle Datenwege:
@@ -22,9 +23,12 @@ Alle Datenwege:
 | `staging` | eigenes Supabase-Projekt + Vercel-Vorschau + AWS-Dienste mit `staging` | bleibt `production` (Umschalten nur als Superuser möglich – bei Supabase nicht; Wirkung: Testuhr und Mail-Ersatz gesperrt wie in Produktion) | Brevo (mit Testadressen) | Probelauf, Abnahme |
 | `production` | Supabase Frankfurt, Vercel `fra1`, AWS `eu-central-1` | `production` | Brevo | echter Betrieb |
 
-`FERMATA_ENV` (Edge Functions), `VIOLA_ENV` (Viola) und die Vercel-Variablen stellen die Umgebung für die Dienste
-ein; in `production` verweigern Edge Functions den Mail-Ersatz und Viola Attrappen. **Der Auswahl-Job hat keine
-solche Sperre** – dort die Variablen aus Abschnitt 3.6 unbedingt setzen.
+`FERMATA_ENV` (Edge Functions, Auswahl-Job), `VIOLA_ENV` (Viola) und die Vercel-Variablen stellen die Umgebung für
+die Dienste ein; in `production` verweigern Edge Functions den Mail-Ersatz, Viola und der Auswahl-Job Attrappen. Der
+Auswahl-Job bricht seit der Härtung **vor jeder Arbeit** mit Ausgang 3 ab, wenn `FERMATA_ENV=production` gesetzt ist
+oder die Datenbank `production` meldet (oder ihre Umgebung nicht nennen kann) und `FERMATA_LLM_BACKEND` bzw.
+`FERMATA_EMBEDDING_BACKEND` auf `fake` steht – die Variablen aus Abschnitt 3.6 trotzdem setzen, sonst läuft er gar
+nicht.
 
 ---
 
@@ -61,7 +65,9 @@ in der Spalte „Gegenstück“ markiert.
 | `FERMATA_ENV` | ja | alle (`_shared/env.ts`) | `production` bzw. `staging` |
 | `FERMATA_SITE_URL` | ja | Links in Mails (Landingpage) | `https://<domain>` |
 | `FERMATA_APP_URL` | ja | Links in Mails (Web-App) | `https://app.<domain>` |
-| `FERMATA_ALLOWED_ORIGINS` | ja | CORS (`_shared/http.ts`) | Landingpage und Web-App, kommagetrennt |
+| `FERMATA_ALLOWED_ORIGINS` | ja | CORS (`_shared/http.ts`) | Landingpage und Web-App, kommagetrennt. **Die Web-App muss dabei sein:** Die Seiten `/teilen` und `/lokal/bestaetigen` holen ihre Daten per `fetch` von `trust-view` bzw. `venue-confirm` |
+| `FERMATA_DB_URL` | ja (Härtung) | `_shared/db.ts` | Verbindung der Login-Rolle `fermata_edge_login` (Abschnitt 5). Geht vor `SUPABASE_DB_URL` (das als `postgres` verbindet). Eigener Name, weil Supabase keine eigenen Secrets mit `SUPABASE_` erlaubt |
+| `FERMATA_DB_ROLE` | ja (Härtung) | `_shared/db.ts` | `fermata_edge`. Wird beim Verbinden als `-c role=…` gesetzt; zusätzlich setzt die Login-Rolle sie selbst (Abschnitt 5). `none` oder leer = keine Umschaltung (nur lokal) |
 | `FERMATA_FUNCTIONS_URL` | nein | Links auf Functions in Mails | Standard `SUPABASE_URL/functions/v1`; bei eigener Domain diese |
 | `FERMATA_FUNCTIONS_REGION` | nein | `waitlist-signup` (Bestätigungslink mit fester Region) | Standard `eu-central-1` |
 | `FERMATA_INTERNAL_SECRET` | ja | `billing-extend`, `safety-dispatch` | Gegenstück: Vault `fermata_internal_secret` |
@@ -87,6 +93,10 @@ in der Spalte „Gegenstück“ markiert.
 | `LIVEKIT_URL`, `LIVEKIT_API_KEY`, `LIVEKIT_API_SECRET`, `LIVEKIT_AGENT_NAME` | ja (M3) | `interview-token` | Gegenstück: Viola; Agent-Name Standard `viola` |
 | `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, `SUPABASE_DB_URL` | – | alle | **setzt Supabase selbst** |
 | `DATABASE_URL`, `DB_PORT`, `DB_PASSWORD`, `FUNCTIONS_PORT`, `FERMATA_TEST_DB_URL`, `TEST_DB_URL`, `STRIPE_API_BASE`, `STRIPE_MOCK_URL` | – | nur lokal/Tests | in Produktion **nicht** setzen |
+
+Die ganze Deno-Testreihe läuft auch mit der engen Rolle (`FERMATA_DB_ROLE=fermata_edge deno test --allow-all` in
+`supabase/functions`); die Testdaten legt sie weiter als `postgres` an, die Functions selbst laufen als
+`fermata_edge` (Test `_shared/db.test.ts`).
 
 ### 3.2 Supabase Auth und API (Dashboard)
 
@@ -119,8 +129,11 @@ in der Spalte „Gegenstück“ markiert.
 | `notify.dispatch_url` | `"https://<ref>.supabase.co/functions/v1/notify-dispatch"` | Versand-Anstoß jede Minute |
 | `site.domain`, `site.app_url`, `site.contact_email`, `notify.mail_from_address` | echte Werte (A3, A7) | Links, Impressum, Absender |
 | `safety.admin_alert_email` | überwachte Adresse (mit Vertretung, Abschnitt 9) | Sofort-Hinweise (Hilfe beim Check-in, akute Meldungen) |
-| `safety.trust_view_base_url` | `"https://<ref>.supabase.co/functions/v1/trust-view"` oder eigene Domain | Standardwert `https://app.fermata.example/functions/v1/trust-view` funktioniert nur mit einer Weiterleitung auf der App-Domain |
-| `safety.heimwegtelefon_*`, `safety.telefonseelsorge_*`, `safety.hilfetelefon_gewalt_*`, `safety.crisis_lines` | vor dem Start erneut prüfen | Hilfe-Knopf und Viola (zwei Einstellungen mit denselben Nummern: `safety.telefonseelsorge_numbers` und `safety.crisis_lines` – beide pflegen) |
+| `safety.trust_view_base_url` | meist nichts tun: Standard ist `site.app_url` + `/teilen` (beim Einspielen der Migration aus `site.app_url` berechnet – wird `site.app_url` danach geändert, diesen Wert mitziehen) | Link „Abend teilen“ = `<Wert>#t=<Token>`. Das Token steht hinter `#` und erreicht so weder Vercel-Protokolle noch Referrer; die App-Seite `/teilen` holt die Daten per JSON von `trust-view` |
+| `safety.heimwegtelefon_*`, `safety.telefonseelsorge_*`, `safety.hilfetelefon_gewalt_*`, `safety.ambulance_number` | vor dem Start erneut prüfen | Hilfe-Knopf **und** Viola: Seit der Härtung gibt es nur noch eine Quelle (`safety.telefonseelsorge_numbers` + `safety.ambulance_number`, gelesen über `safety.crisis_lines()`); die frühere Einstellung `safety.crisis_lines` ist gelöscht |
+| `billing.start_request_text`, `billing.start_request_version` | nur nach Rücksprache mit dem Anwalt ändern (C12) | Wortlaut des ausdrücklichen Verlangens auf Leistungsbeginn vor Ablauf der Widerrufsfrist; bei jeder Änderung **neue Version** eintragen (die Bestellung speichert Text und Version) |
+| `retention.*` (11 Werte, Kategorie `loeschfristen`) | nach Entscheidung (C11) | Fristen des täglichen Löschjobs `fermata-retention` – Übersicht in [recht/loeschkonzept.md](recht/loeschkonzept.md) |
+| `account.consents_not_offered` | `["art9_health"]` lassen | Einwilligungsarten, die Phase 1 nicht anbietet (`api.give_consent` lehnt sie ab) |
 | Platzhalter (A5, B6–B13, C1–C9) | nach Entscheidung | [PLATZHALTER.md](PLATZHALTER.md) |
 
 ### 3.5 Vercel
@@ -229,11 +242,14 @@ am ALB.
 
    `billing-cancel` und `billing-withdraw` haben einen Weg ohne Anmeldung (Formular und Mail-Link), deshalb ohne
    JWT-Prüfung. Die Functions aus M2 und M3 gibt es erst nach deren Zusammenführung.
-9. **HTML aus Functions prüfen:** `trust-view`, `venue-confirm` und die Bestätigungsseiten von `billing-cancel` und
-   `billing-withdraw` liefern HTML. Laut Supabase-Dokumentation werden HTML-Antworten auf der Standard-Domain
-   `*.supabase.co` aus Sicherheitsgründen nicht als HTML ausgeliefert [[prüfen]]; dann eine **eigene Domain für
-   Supabase** (Custom Domain) einrichten oder die Seiten über die Web-App ausliefern. Test: Link „Abend teilen“ im
-   Browser öffnen.
+9. **HTML aus Functions prüfen:** `trust-view` und `venue-confirm` liefern seit der Härtung mit
+   `Accept: application/json` JSON; die Links in Mails zeigen auf die Web-App (`/teilen#t=…`,
+   `/lokal/bestaetigen#t=…`), die diese Daten anzeigt. Die HTML-Antwort bleibt als Rückfall, ebenso die
+   Bestätigungsseiten von `billing-cancel` und `billing-withdraw`. Laut Supabase-Dokumentation werden HTML-Antworten
+   auf der Standard-Domain `*.supabase.co` aus Sicherheitsgründen nicht als HTML ausgeliefert [[prüfen]]; für
+   `billing-cancel`/`billing-withdraw` dann eine **eigene Domain für Supabase** (Custom Domain) einrichten oder die
+   Seiten über die Web-App ausliefern. Test: Link „Abend teilen“ und einen Bestätigungslink für Lokale im Browser
+   öffnen.
 10. **Supabase Auth** einrichten (Abschnitt 3.2).
 11. **Stripe:** Webhook-Endpunkt `https://<ref>.supabase.co/functions/v1/stripe-webhook` mit den Ereignissen
     `invoice.paid`, `invoice.payment_failed`, `customer.subscription.created`, `customer.subscription.updated`,
@@ -253,7 +269,8 @@ am ALB.
     Auswahl-Job, **EventBridge Scheduler** täglich 06:15 Europe/Berlin → ECS-Task `run --next` (Ausgang 2 = „nichts zu
     tun“, kein Fehler). Bei LiveKit Weg C: EC2 mit `livekit-server` ≥ 1.8, öffentliche IP, TLS, UDP 50000–60000,
     TCP 7881, TURN über TLS 443.
-18. **Login-Rolle des Auswahl-Jobs** anlegen (Abschnitt 5).
+18. **Login-Rollen** des Auswahl-Jobs und der Edge Functions anlegen (Abschnitt 5); danach `FERMATA_DB_URL` und
+    `FERMATA_DB_ROLE` setzen und die Functions neu deployen.
 19. **Ende-zu-Ende-Test** in Staging (Startcheckliste, Abschnitt „Technik“).
 
 ### Spätere Deployments
@@ -285,8 +302,40 @@ setzt innerhalb einer Transaktion `set local role fermata_agent`. Falls später 
 verbinden soll, gleiches Muster: `create role fermata_agent_job login noinherit …; grant fermata_agent to
 fermata_agent_job;`.
 
-**Edge Functions** verbinden sich heute als `postgres` (`SUPABASE_DB_URL`). Empfehlung aus der DSFA (M-1): eigene
-Login-Rolle mit engen Rechten – das ist eine Code-Änderung, kein Betriebsschritt.
+**Edge Functions** (DSFA M-1, seit der Härtung im Code): Ohne weitere Einstellung verbinden sie sich als `postgres`
+(`SUPABASE_DB_URL`) – `postgres` liest Art.-9-Daten (`fermata_sensitive`), alle Tabellen (`pg_read_all_data`) und
+Vault. Deshalb eine eigene Login-Rolle (einmal, SQL-Editor als `postgres`):
+
+```sql
+-- Prüfen: fermata_edge hat BYPASSRLS (legt Migration 20261003000907 an). Ist das false, FERMATA_DB_ROLE nicht setzen
+-- und Technik fragen – ohne BYPASSRLS scheitern einige direkte Tabellenzugriffe der Functions.
+select rolname, rolbypassrls from pg_roles where rolname = 'fermata_edge';
+
+create role fermata_edge_login login noinherit password '<starkes Passwort>';
+grant fermata_edge to fermata_edge_login;
+-- Die Functions wechseln je Anfrage in authenticated (Mitglied) bzw. fermata_agent (Viola) – dafür muss die
+-- Login-Rolle Mitglied sein; noinherit: sie erbt deren Rechte nicht.
+grant authenticated, fermata_agent to fermata_edge_login;
+alter role fermata_edge_login set role = 'fermata_edge';   -- auch ohne FERMATA_DB_ROLE sofort eng
+alter role fermata_edge_login set statement_timeout = '60s';
+```
+
+Verbindung: `postgres://fermata_edge_login.<projekt-ref>:<passwort>@<pooler-host>:6543/postgres` (Pooler,
+Transaktionsmodus – die Functions nutzen keine vorbereiteten Anweisungen) bzw. Port 5432 für den Session-Modus. Als
+Secrets setzen: `FERMATA_DB_URL=<diese Verbindung>`, `FERMATA_DB_ROLE=fermata_edge`. Prüfen (Abschnitt 6): Die
+Function-Protokolle zeigen keine `permission denied`; in der Datenbank
+`select usename, application_name from pg_stat_activity where application_name = 'fermata-edge';` zeigt
+`fermata_edge_login`.
+
+Was `fermata_edge` darf: dieselben Tabellen und Funktionen wie `service_role` in `app`, `private`, `safety`,
+`billing`, `ops`, `api` – aber **nicht** `sensitive.*`, **nicht** Vault, **nicht** das Schema `auth`
+(E-Mail-Adressen liefern zwei Funktionen: `ops.auth_user_id_by_email`, `billing.member_contact`).
+**Warum nicht einfach `service_role`?** Im Supabase-Abbild darf `service_role` `vault.decrypted_secrets` lesen
+(Test `907_edge_role` hält das fest); das kann `postgres` nicht zurücknehmen. `FERMATA_DB_ROLE=service_role`
+funktioniert (die Testreihe läuft auch damit), schützt aber die Schlüssel nicht.
+
+**Neue Function mit eigenem Tabellenzugriff:** Rechte bekommt `fermata_edge` über die Standardrechte automatisch;
+neue Funktionen in `sensitive` nie an `fermata_edge` freigeben.
 
 ---
 
@@ -295,7 +344,7 @@ Login-Rolle mit engen Rechten – das ist eine Code-Änderung, kein Betriebsschr
 ```sql
 -- Umgebung
 select environment from ops.deployment;                                   -- production
--- Zeitpläne (14 nach Zusammenführung von M2 und M3)
+-- Zeitpläne (15: 14 aus M0–M7 + fermata-retention aus der Härtung)
 select jobname, schedule, active from cron.job order by jobname;
 -- letzte Fehler der Zeitpläne
 select j.jobname, d.status, d.return_message, d.start_time
@@ -309,6 +358,12 @@ select p.oid::regprocedure from pg_proc p join pg_namespace n on n.oid = p.prona
 select name from vault.secrets order by name;                               -- 4 Namen aus Abschnitt 3.3
 -- Einstellungen für pg_net gesetzt
 select key, value from ops.app_settings where key in ('internal.functions_base_url', 'notify.dispatch_url');
+-- Rechtstexte: je Art genau eine gültige Fassung (impressum, datenschutz, agb, widerruf, ki_hinweis, Einwilligungen)
+select kind, version, status from ops.legal_documents where status <> 'abgeloest' order by kind;
+-- enge Rolle der Functions (nachdem eine Function aufgerufen wurde)
+select usename, application_name, count(*) from pg_stat_activity where application_name = 'fermata-edge' group by 1, 2;
+-- Löschjob: letzter Lauf mit Zahlen (täglich 03:41 UTC)
+select created_at, details from ops.audit_log where action = 'retention.applied' order by created_at desc limit 1;
 ```
 
 ---
@@ -322,6 +377,17 @@ select key, value from ops.app_settings where key in ('internal.functions_base_u
    (`api.admin_safety_flags`): Sicherheits-Agent (Krise, minderjährig, Gewalt, Belästigung), Sperrlisten-Namens-
    treffer, „nicht sicher gefühlt“, bestrittenes Nichterscheinen, wiederholtes Nichterscheinen, Kontolöschung während
    einer Prüfung. Offene Widersprüche (`api.admin_appeals`).
+   Seit der Härtung zusätzlich (Stufe hoch, Sofort-Mail):
+   - `stripe_kuendigung_bei_kontoloeschung_fehlgeschlagen` – das Konto ist gelöscht, Stripe hat das Abo aber nicht
+     beendet. **Sofort** im Stripe-Dashboard das Abo aus `details.stripe_subscription_id` kündigen (sonst wird
+     weiter abgebucht), dann den Hinweis schließen.
+   - `abend_absage_bei_kontoloeschung_fehlgeschlagen` – ein Abend der gelöschten Person ließ sich nicht absagen. Das
+     Gegenüber und ggf. das Lokal selbst informieren.
+   - `nachricht_bei_kontoloeschung_verloren` (mittel) – eine Absage-Nachricht konnte nicht aufbewahrt werden; dto.
+   **Gesprächstext im Sicherheitsfall:** nur über Admin → Sicherheit („Transkript einsehen“, `api.admin_safety_transcript`)
+   mit Begründung (mind. 10 Zeichen) und nur, wenn zur Person ein offener Hinweis oder eine offene Meldung besteht.
+   Jeder Zugriff steht im Audit-Protokoll (`safety.admin_view_transcript`, ohne Inhalt). **Nie** im SQL-Editor
+   lesen – dort gibt es keinen Nachweis.
 2. **Postfach `safety.admin_alert_email`** – Sofort-Hinweise (Hilfe beim Check-in, akute Meldungen) kommen dort an,
    auch nachts.
 3. **Lokale:** Hinweise „Lokal hat nicht bestätigt“ → anrufen; Lokale mit Telefon-Reservierung: Reservierungs- und
@@ -331,7 +397,10 @@ select key, value from ops.app_settings where key in ('internal.functions_base_u
    offene Löschaufträge bei Didit (`api.admin_overview` → `verifications_pending_deletion`, soll 0 sein),
    Verlängerungen mit Stripe-Fehler
    (`select id, user_id, stripe_sync_error from billing.membership_periods where stripe_sync_status = 'failed';`),
-   Erstattungen „von Hand“ (`api.admin_contract_actions('withdraw')`, `result.refund = 'manual'`).
+   Erstattungen „von Hand“ (`api.admin_contract_actions('withdraw')`, `result.refund = 'manual'`), Löschjob
+   gelaufen (Abschnitt 6, `retention.applied` von heute; meldet er `auth_audit: null`, durfte er
+   `auth.audit_log_entries` nicht löschen – dann im Supabase-Dashboard die Aufbewahrung der Auth-Protokolle so kurz
+   wie möglich stellen).
 
 ### Je Auswahl-Lauf (alle 14 Tage)
 
@@ -367,6 +436,8 @@ select key, value from ops.app_settings where key in ('internal.functions_base_u
 - **Wiederherstellungstest** (Abschnitt 10).
 - Schlüssel rotieren (Abschnitt 11), soweit vorgesehen.
 - DSFA, TOM, VVT, AV-Liste durchsehen; Hilfe-Nummern prüfen.
+- Löschfristen (`retention.*`) mit dem [Löschkonzept](recht/loeschkonzept.md) vergleichen; Audit-Protokoll
+  (`ops.audit_log`) wird bewusst nicht automatisch gelöscht – Umfang ansehen (Höchstdauer offen, Löschkonzept).
 
 ---
 
@@ -394,7 +465,7 @@ select key, value from ops.app_settings where key in ('internal.functions_base_u
 |---|---|---|
 | Check-in „Hilfe“ (Sofort-Mail „Bitte sofort … anrufen. Bei Gefahr: 110.“) | Person anrufen, wenn Telefon hinterlegt (Admin → Konto); keine Antwort und Hinweis auf Gefahr → **110** mit Lokal und Uhrzeit (aus der Meldung/dem Abend); Lokal anrufen | Meldung anlegen bzw. prüfen, vorläufige Sperre erwägen, Nachsorge |
 | Akute Meldung (Übergriff, Bedrohung, minderjährig) | System hat bei Beziehung **vorläufig gesperrt** und offene Abende neutral abgesagt; bei Gefahr 110 | innerhalb 24 h prüfen; Polizeivorlage nach [polizeimeldung-vorlage.md](recht/polizeimeldung-vorlage.md); Sanktion; Widerspruch abwarten |
-| Sicherheits-Agent „Krise“ | Viola hat Hilfsnummern genannt und beendet; **kein Profil** | behutsame Kontaktaufnahme nur, wenn sinnvoll; nie Inhalte weitergeben |
+| Sicherheits-Agent „Krise“ | Viola hat Hilfsnummern genannt und beendet; **kein Profil** | behutsame Kontaktaufnahme nur, wenn sinnvoll; nie Inhalte weitergeben. Gesprächstext nur, wenn für die Entscheidung nötig, über „Transkript einsehen“ (Abschnitt 7) |
 | „Minderjährig“ (Gespräch oder Ausweis) | kein Profil; Konto sperren | prüfen, Konto schließen |
 
 ### 8.3 Ausfall eines Anbieters
@@ -486,7 +557,9 @@ an (Schritt 1). Vorschläge gibt sie **nicht** frei, wenn sie dafür nicht einge
   4. Sperrlisten-Hash prüfen: `select safety.blocklist_hash('test');` muss gleich wie in Produktion sein.
   5. Testprojekt danach löschen; Ergebnis protokollieren.
 - **Gelöschte Daten** kommen mit einer Wiederherstellung zurück. Nach einer Wiederherstellung die Löschjobs laufen
-  lassen und Kontolöschungen seit dem Backup aus dem Audit-Protokoll (`account.deleted`) nachziehen.
+  lassen (`select ops.apply_retention();` und die übrigen Löschjobs) und Kontolöschungen seit dem Backup aus dem
+  Audit-Protokoll (`account.deleted`, `account.deletion_requested`) nachziehen – dabei auch prüfen, ob die
+  zugehörigen Stripe-Abos beendet sind.
 - **Code und Einstellungen:** GitHub; Einstellungen liegen in der Datenbank (`ops.app_settings`).
 
 ---
@@ -505,6 +578,7 @@ an (Schritt 1). Vorschläge gibt sie **nicht** frei, wenn sie dafür nicht einge
 | Stripe-Schlüssel, Webhook-Geheimnis | im Stripe-Dashboard „rollen“, neue Werte setzen | – | jährlich, bei Verdacht sofort |
 | Brevo-, Didit-, Deepgram-, LiveKit-Schlüssel | im Dashboard neu erzeugen, setzen, alten löschen | – | jährlich |
 | Passwort `fermata_matcher_job` | `alter role … password '…'`, Secrets Manager | – | jährlich |
+| Passwort `fermata_edge_login` | `alter role … password '…'`, neues `FERMATA_DB_URL` setzen | Functions verbinden sich nach dem Setzen neu | jährlich, bei Verdacht sofort |
 | Supabase `service_role`/JWT-Schlüssel | im Dashboard (neue API-Schlüssel) | Web-App und Functions neu konfigurieren | bei Verdacht |
 | `fermata_sensitive_key` | **noch nicht möglich** (keine Funktion zum Umschlüsseln aller `*_enc`-Spalten) | Datenverlust bei falschem Vorgehen | nur bei Kompromittierung – vorher Umschlüssel-Funktion bauen lassen |
 | `fermata_blocklist_key` | **nicht rotieren** (Hashes lassen sich ohne Ausweisnummer nicht neu rechnen) | Sperrliste wirkungslos | nie |
@@ -518,11 +592,16 @@ an (Schritt 1). Vorschläge gibt sie **nicht** frei, wenn sie dafür nicht einge
 2. Im gehosteten Projekt „Exposed schemas“ (`public`, `app`, `billing`, `api`) und alle Auth-Einstellungen aus
    Abschnitt 3.2 von Hand setzen und mit einem Screenshot belegen.
 3. **HTML aus Edge Functions** auf `*.supabase.co` prüfen; ggf. Custom Domain.
-4. **Auswahl-Job:** Attrappen in Produktion verweigern (Standard `fake`).
+4. ~~Auswahl-Job: Attrappen in Produktion verweigern~~ – erledigt (Härtung, Ausgang 3).
 5. **Region `fra1` für die Web-App** festlegen.
 6. **Vertretung** für Sicherheitsfälle benennen; Notfallumschlag.
-7. **Admin-Funktionen nachrüsten:** Fristen verschieben (Ausfall), Transkript im Sicherheitsfall einsehen, Weitergabe
-   an die Polizei protokollieren.
-8. **Kontolöschung** kündigt das Stripe-Abo nicht – vor dem Live-Modus beheben.
+7. **Admin-Funktionen nachrüsten:** Fristen verschieben (Ausfall), Weitergabe an die Polizei protokollieren.
+   (Transkript im Sicherheitsfall: erledigt, `api.admin_safety_transcript`.)
+8. ~~Kontolöschung kündigt das Stripe-Abo nicht~~ – erledigt: sofortige Kündigung, Fehler als Hinweis (Abschnitt 7).
+   Offen: Erstattung bereits bezahlter, ungenutzter Zeiträume bei Löschung (C15).
 9. Sicherung der Vault-Schlüssel entscheiden und Wiederherstellungstest durchführen.
-10. Eine Einstellung für Krisennummern statt zwei (`safety.crisis_lines` und `safety.telefonseelsorge_numbers`).
+10. ~~Eine Einstellung für Krisennummern statt zwei~~ – erledigt (`safety.crisis_lines()`).
+11. **Login-Rolle `fermata_edge_login`** im gehosteten Projekt anlegen und `FERMATA_DB_URL`/`FERMATA_DB_ROLE` setzen
+    (Abschnitt 5). Bis dahin laufen die Functions als `postgres`.
+12. `service_role` liest im Supabase-Abbild Vault: den `SUPABASE_SERVICE_ROLE_KEY` wie ein Vault-Geheimnis behandeln
+    (nur Functions, nie in Vercel oder im Browser). Bei Supabase nachfragen, ob sich das abstellen lässt.

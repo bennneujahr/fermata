@@ -215,7 +215,10 @@ frühester Platz).
   (mindestens 5) werden unterdrückt, dazu so viele weitere kleine Gruppen, bis sich die unterdrückte Summe nicht aus
   der Gesamtzahl zurückrechnen lässt. Vorgeschlagene je Gruppe nur, wenn vorgeschlagen und nicht vorgeschlagen je ≥ k.
 - **Aufbewahrung:** `ops.purge_match_scores()` löscht täglich (pg_cron 03:23) Kandidaten mit Teil-Scores und
-  Lauf-Teilnahmen älter als `matching.score_retention_months` (12). Lauf-Berichte und Vorschläge bleiben.
+  Lauf-Teilnahmen älter als `matching.score_retention_months` (12). Lauf-Berichte und Vorschläge bleiben. Seit der
+  Härtung (`20261003000905_retention.sql`) leert `ops.apply_retention()` (Job `fermata-retention`, 03:41 UTC) nach
+  derselben Frist auch `app.pairings.total_score`, `review_notes` und `review_comment` (die Spalte `total_score` darf
+  dafür `null` sein); Paar, Abend-Bezug und Status bleiben.
 
 **Login-Rolle im Betrieb einrichten** (einmal, als Datenbank-Admin; Passwort aus dem Passwort-Tresor):
 
@@ -388,8 +391,19 @@ fermata-matcher simulate --profiles 200    # nur Test-Datenbank
 **Umgebungsvariablen:** `FERMATA_MATCHER_DB_URL` (Login-Rolle, aus AWS Secrets Manager), `FERMATA_MATCHER_DB_ROLE`
 (Standard `fermata_matcher`), `FERMATA_LLM_BACKEND` (`bedrock` | `bedrock-mantle` | `fake` | `none`),
 `FERMATA_EMBEDDING_BACKEND` (`titan` | `fake` | `none`), `FERMATA_AWS_REGION` (eu-central-1),
-`FERMATA_LLM_MODEL_ID` (überschreibt das Modell). AWS-Zugang über die IAM-Rolle des Tasks (Rechte:
-`bedrock:InvokeModel` für Sonnet 5.5 im EU-Profil und für Titan V2; beim Mantle-Endpunkt die dort nötigen Rechte).
+`FERMATA_LLM_MODEL_ID` (überschreibt das Modell), `FERMATA_ENV` (Härtung: `production` in Produktion setzen). AWS-Zugang
+über die IAM-Rolle des Tasks (Rechte: `bedrock:InvokeModel` für Sonnet 5.5 im EU-Profil und für Titan V2; beim
+Mantle-Endpunkt die dort nötigen Rechte).
+
+**Produktionssperre (Härtung, DSFA M-3):** Der Standard für `FERMATA_LLM_BACKEND` und `FERMATA_EMBEDDING_BACKEND` bleibt
+`fake` (Entwicklung). Gilt die Umgebung als Produktion – `FERMATA_ENV=production` **oder** `ops.environment()` meldet
+`production` **oder** die Datenbank kann ihre Umgebung nicht nennen (auf Nummer sicher) –, bricht der Job mit
+`fake` vor jeder Arbeit ab: die CLI mit Ausgang **3** und der Meldung „FERMATA_LLM_BACKEND=fake ist in Produktion
+verboten …“, `Runner.run()` mit `ProductionGuardError`, bevor ein Lauf auf `running` geht. Geprüft wird auch, was
+tatsächlich rechnet (eine `FakeLLM`-/`FakeEmbedder`-Instanz zählt als Attrappe, egal wie das Backend heißt). `none`
+(nur Regeln bzw. ohne Embeddings) bleibt erlaubt. Dafür darf `fermata_matcher` `ops.environment()` ausführen
+(`20261003000907_edge_role.sql`). Code: `config.py` (`production_problems`, `ensure_production_safe`), `db.py`
+(`environment_or_none`), `runner.py`, `cli.py`.
 
 **Image:** `services/matcher/Dockerfile` (python:3.12-slim, Benutzer `fermata` ohne Root, Standardbefehl
 `run --next`). Im Bau-Container hier wurde es mit dem Proxy-Zertifikat gebaut und gegen die Test-Datenbank
@@ -471,3 +485,7 @@ und ohne Geschlechtshinweise; der Job neutralisiert zusätzlich. Deal-Breaker wi
   `400_matcher.test.sql` (46 Prüfungen: Zwei-Faktor-Pflicht, Mitglieder sehen keine Scores, Freigabe legt den Abend
   an, Ablehnung nicht, Abschluss, Audit, Rechte von fermata_matcher).
 - `uv run ruff check src tests` und `uv run ruff format --check src tests`.
+- Härtung: `tests/test_production_guard.py` (Entscheidungstabelle der Sperre, Meldung nennt die Variable,
+  `FERMATA_ENV` wird gelesen, Runner verweigert Attrappen bei `FERMATA_ENV=production` und bei Datenbank `production`
+  – auch als Rolle `fermata_matcher` –, kein Lauf bleibt auf `running`, CLI endet mit 3 vor jeder Datenbankarbeit);
+  pgTAP `905_retention` (Scores der Vorschläge), `907_edge_role` (`ops.environment()` für `fermata_matcher`).

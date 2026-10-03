@@ -66,9 +66,9 @@ Liste. Unbestätigte Einträge löschen wir 7 Tage nach der letzten Mail automat
 verfällt mit. Hat Sie jemand eingeladen, bleibt bei der einladenden Person nur vermerkt, dass ihr Code genutzt wurde.
 
 **Wenn aus der Warteliste ein Konto wird:** Laden wir Sie in die Web-App ein, vermerken wir das am Eintrag und
-übernehmen Ihren Gründungsstatus ins Konto. Der Wartelisten-Eintrag bleibt bestehen, bis Sie sich abmelden oder Ihr
-Konto löschen; mit der Kontolöschung löschen wir ihn ebenfalls. [[Benn: Eintrag stattdessen bei Kontoeröffnung
-löschen? Dann diesen Satz ändern.]]
+übernehmen Ihren Gründungsstatus ins Konto. Sobald Sie sich zum ersten Mal in der Web-App anmelden und damit die
+Einladung annehmen, löschen wir den Wartelisten-Eintrag; er wird dann nicht mehr gebraucht. Nehmen Sie die Einladung
+nicht an, bleibt er bestehen, bis Sie sich abmelden.
 
 **Persönliche Seite:** Über Ihren persönlichen Link sehen Sie Platz, Gründungsstatus und Einladungslink. Fordern Sie
 einen neuen Link an, verliert der alte seine Gültigkeit.
@@ -129,7 +129,9 @@ Quelle mit Ihrer Anmeldung mit, wenn Sie sich eintragen.
    Text ändern.
 2. Verantwortlicher, Kontakt, Datenschutzbeauftragter (A7, B15).
 3. Vercel: Protokolldauer, AV-Vertrag, Drittland-Grundlage.
-4. Wartelisten-Eintrag nach Kontoeröffnung: behalten oder löschen (Abschnitt 5).
+4. ~~Wartelisten-Eintrag nach Kontoeröffnung: behalten oder löschen~~ – entschieden (Härtung, datensparsam): Löschung
+   bei der ersten Anmeldung (`app.on_auth_user_signed_in`, `20261003000905_retention.sql`, Test `905_retention`).
+   Den Text in `apps/landing/src/content/legal.ts` entsprechend angleichen (Punkt 5).
 5. Nach Freigabe `apps/landing/src/content/legal.ts` angleichen (der Text ist dort fest eingebaut; ein Test prüft nur
    den Einwilligungstext, nicht die Datenschutzerklärung).
 6. Der Einwilligungstext der Warteliste steht wortgleich in `ops.legal_documents` (Fassung

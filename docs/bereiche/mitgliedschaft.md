@@ -23,7 +23,7 @@ Alle Rechtstexte und rechtlichen Abläufe hier sind **ENTWURF** und müssen vom 
 
 ### 2.1 Töpfe
 
-`billing.evening_ledger` bleibt eine Tabelle, die nur angehängt wird. Neu ist die Spalte `source_entry_id`:
+`billing.evening_ledger` bleibt eine Tabelle, die nur angehängt wird (Härtung: Trigger `billing.ledger_append_only` statt `ops.forbid_change` – er erlaubt nur, dass `evening_id` bzw. `period_id` durch `on delete set null` leer wird; vorher scheiterte jede Kontolöschung mit Abenden oder Zeiträumen). Neu ist die Spalte `source_entry_id`:
 
 - **Topf:** jede positive Zeile ohne `source_entry_id` – Gratis-Abend (`free_grant`, verfällt nicht), Zuteilung (`period_grant`, verfällt am Ende des Zeitraums), Gutschrift (`credit`, verfällt nach `evening.credit_validity_months`), Admin-Gutschrift (`adjust`).
 - **Bewegung:** jede Zeile mit `source_entry_id` bezieht sich auf genau einen Topf (Bindung −1, Rückgabe +1, Nutzung −1, Verfall −n).
@@ -72,10 +72,10 @@ Weitere Buchungen:
 
 Ablauf (Stripe „Payment Element“ mit späterem Intent):
 
-1. Web-App ruft `billing-checkout` mit `action: "summary"` auf und zeigt die **Bestellübersicht**: Stufe, Preis mit USt-Hinweis, 4 Wochen, Abende je Zeitraum, automatische Verlängerung, Kündigungsbedingungen, Widerrufshinweis, Verlängerungsregel (alle Texte als ENTWURF in den Einstellungen).
+1. Web-App ruft `billing-checkout` mit `action: "summary"` auf und zeigt die **Bestellübersicht**: Stufe, Preis mit USt-Hinweis, 4 Wochen, Abende je Zeitraum, automatische Verlängerung, Kündigungsbedingungen, Widerrufshinweis mit Link auf die Widerrufsbelehrung (`summary.withdrawal_policy_url` = `/rechtliches/widerruf`), Verlängerungsregel (alle Texte als ENTWURF in den Einstellungen) und – **Härtung, Vertrag 1** – ein Pflicht-Häkchen mit genau dem Satz `summary.start_request_text` (ausdrückliches Verlangen, dass Fermata vor Ende der Widerrufsfrist beginnt, § 356 Abs. 4 / § 357a Abs. 2 BGB; ENTWURF, PLATZHALTER C12).
 2. Darunter das Stripe Payment Element im Modus `subscription` (ohne Client-Geheimnis, Betrag und Währung aus der Antwort).
 3. Knopf **„Mitgliedschaft zahlungspflichtig abschließen“** (fester Wortlaut, `LABELS.orderButton`, auch in `api.billing_overview().order_button_label`).
-4. Klick → `billing-checkout` mit `action: "order"` und dem `summaryHash` der gezeigten Übersicht: Stripe-Kunde anlegen oder wiederverwenden (nur E-Mail und interne ID), Abo mit `payment_behavior=default_incomplete` anlegen, Bestellung als `contract_actions` `order` mit der gezeigten Übersicht, ihrem Hash und dem Knopftext speichern, Eingangsbestätigung per Mail. Antwort: `clientSecret`.
+4. Klick → `billing-checkout` mit `action: "order"`, dem `summaryHash` der gezeigten Übersicht und `start_request: true` (nur der JSON-Wert `true` zählt; sonst **422 `start_request_required`**, bevor Stripe gefragt wird): Stripe-Kunde anlegen oder wiederverwenden (nur E-Mail und interne ID), Abo mit `payment_behavior=default_incomplete` anlegen, Bestellung als `contract_actions` `order` mit der gezeigten Übersicht, ihrem Hash, dem Knopftext und `details.start_request {requested, text, version, at}` speichern (`billing.record_order(…, p_channel, p_start_request)` lehnt ohne `true` ab), Eingangsbestätigung per Mail **mit vollständiger Widerrufsbelehrung und Muster-Widerrufsformular** (aktuelle Fassung aus `ops.legal_documents`, Art `widerruf`; dauerhafter Datenträger, Art. 246a § 1 Abs. 2 EGBGB) und dem gespeicherten Satz zum Leistungsbeginn. Antwort: `clientSecret`.
 5. Web-App ruft `stripe.confirmPayment()` auf. Bezahlt → Webhook `invoice.paid` → Zeitraum und Zuteilung, Status `active`, Mail „Mitgliedschaft ist aktiv“.
 
 Hat sich die Übersicht seit dem Anzeigen geändert (z. B. Preis), lehnt der Server mit `summary_changed` ab. Eine noch nicht bezahlte frühere Bestellung wird ersetzt.
@@ -90,7 +90,7 @@ Endpunkt: `https://<projekt>.supabase.co/functions/v1/stripe-webhook` (ohne Supa
 
 - Signatur selbst geprüft (WebCrypto): HMAC-SHA256 über `"<t>.<Rohtext>"` mit `STRIPE_WEBHOOK_SECRET`, alle `v1`-Werte, Vergleich in konstanter Zeit, Toleranz 5 Minuten. Ungeprüfte Ereignisse werden nicht gespeichert.
 - Idempotent: `billing.stripe_events` (Schlüssel = Ereignis-ID); Verarbeitung in einer Transaktion mit Sperre je Ereignis; Zeiträume zusätzlich eindeutig je Rechnung.
-- Gespeichert wird das Ereignis **ohne** Karten-, Adress-, Telefon- und Namensfelder.
+- Gespeichert wird das Ereignis **ohne** Karten-, Adress-, Telefon-, Namens- und E-Mail-Felder und ohne Rechnungslinks (`_shared/stripe/events.ts` `DROP_KEYS`; die Datenbank entfernt dieselbe Liste noch einmal, `billing.stripe_strip_personal`). Nach `retention.stripe_events_months` (13) löscht der Job `fermata-retention` das Ereignis.
 - Ausgewertet: `invoice.paid` (Zeitraum + Zuteilung; Rechnungen über 0 € – z. B. bei der Verlängerung – legen keinen Zeitraum an), `invoice.payment_failed` (`past_due`, Mail beim ersten Fehlschlag je Rechnung mit Link zur Stripe-Rechnungsseite), `customer.subscription.created/updated/deleted` (Status, Kündigung zum Periodenende, Ende). Alles andere wird nur gespeichert.
 - Fehler bei der Verarbeitung → Antwort 500, Stripe stellt erneut zu.
 
@@ -160,7 +160,7 @@ Fehler aus SQL-Funktionen tragen einen deutschen Text (`message`) und einen fest
 | Funktion | Wer | Rückgabe | Fehler (`hint`) |
 |---|---|---|---|
 | `api.billing_overview()` | angemeldet | `{status, tier, tier_name, contract_number, ordered_at, cancel_at, cancelled_at, withdrawn_at, free_phase{active, ended_at}, current_period{starts_at, ends_at, extended_until, extended_by_rule, evenings_allowed}, available_evenings, reserved_evenings, can_receive_proposal, withdrawal{possible, until}, cancellation{possible, effective_at}, tiers[], vat_note, order_button_label, cancel_entry_label, withdraw_entry_label}` | `not_authenticated` |
-| `api.billing_order_summary(p_tier)` | angemeldet | Bestellübersicht + `summary_hash` | `invalid_tier`, `tier_not_orderable` |
+| `api.billing_order_summary(p_tier)` | angemeldet | Bestellübersicht + `summary_hash`; seit der Härtung zusätzlich `start_request_text` (Satz für das Pflicht-Häkchen, genau so anzeigen), `start_request_version`, `withdrawal_policy_url` (`/rechtliches/widerruf`) | `invalid_tier`, `tier_not_orderable` |
 | `api.billing_tiers()` | alle | `[{key, name, price_cents, price_display, evenings, period_days, orderable, note, vat_note}]` | – |
 | `api.admin_contract_actions(p_kind?, p_limit?)` | Admin (aal2) | Bestellungen, Kündigungen, Widerrufe mit Ergebnis | `admin_required` |
 | `api.admin_ledger_adjust(p_user, p_amount, p_note, p_expires_at?)` | Admin (aal2) | ID der ersten Zeile | `invalid_input`, `would_be_negative` |
@@ -171,8 +171,8 @@ Direkt lesbar (RLS, nur eigene Zeilen): `billing.evening_ledger`, `billing.membe
 
 **`billing-checkout`** (POST, `Authorization: Bearer <JWT>`)
 - `{action: "summary", tier}` → `{summary, summaryHash, buttonLabel, publishableKey, payment: {mode: "subscription", amount, currency}}`
-- `{action: "order", tier, summaryHash, requestId?}` (`requestId`: UUID je Klick, schützt vor Doppelklick) → `{subscriptionId, clientSecret, contractNumber, orderedAt, withdrawalUntil, confirmationSent, publishableKey}`
-- Fehler: 401 `not_authenticated`, 400 `invalid_tier`, 409 `tier_not_orderable` / `summary_changed` / `already_member` / `suspended`, 502 `payment_provider_error`
+- `{action: "order", tier, summaryHash, requestId?, start_request: true}` (`requestId`: UUID je Klick, schützt vor Doppelklick; `start_request`: Häkchen mit `summary.start_request_text`) → `{subscriptionId, clientSecret, contractNumber, orderedAt, withdrawalUntil, confirmationSent, publishableKey}`
+- Fehler: 401 `not_authenticated`, 400 `invalid_tier`, **422 `start_request_required`** (Häkchen fehlt; auch bei `"true"` oder `1`), 409 `tier_not_orderable` / `summary_changed` / `already_member` / `suspended`, 502 `payment_provider_error`
 
 **`billing-cancel`** (POST; GET nur für den Mail-Link)
 - angemeldet `{action: "preview"}` → `{possible, reason, contract_number, tier, tier_name, status, effective_at, immediate, name, email, kinds, entryLabel, buttonLabel}`
@@ -184,6 +184,8 @@ Direkt lesbar (RLS, nur eigene Zeilen): `billing.evening_ledger`, `billing.membe
 - `{action: "preview"}` → `{possible, reason, until, contractNumber, tierName, name, email, paidCents, eveningsUsed, valuePerEveningCents, wertersatzCents, refundCents, entryLabel, buttonLabel, legalStatus}`
 - `{action: "confirm", name, contractNumber, contactEmail?}` → `{contractActionId, contractNumber, receivedAt, paidCents, eveningsUsed, wertersatzCents, refundCents, refund: "ok"|"manual"|"none", stripe, cancelledEvenings, confirmationSent}`; Fehler 400 `name_required` / `contract_required` / `contract_mismatch`, 409 `period_over` / `already_withdrawn` / `no_contract`
 - `request`, `GET ?t=`, `confirm_link` wie beim Kündigen
+
+**`account-delete`** (Härtung, Vertrag 5; POST `{confirm: true}`, angemeldet): sagt offene Abende ab, beendet ein laufendes Stripe-Abo **sofort** (`DELETE /v1/subscriptions/{id}`, keine anteilige Erstattung – PLATZHALTER C15; die Web-App sollte vorher darauf hinweisen), hält das als Vertragshandlung `cancel` (`details.kind = 'kontoloeschung'`, `details.reason = 'konto_geloescht'`, ohne Name und E-Mail) fest und löscht dann das Konto. Antwort `{deleted, mail_sent, evenings_cancelled, subscription_cancelled}` (`subscription_cancelled`: `true`, `false` = Stripe-Fehler, Benn erhält einen Hinweis „hoch“ und beendet das Abo von Hand, `null` = kein Abo). Ein Stripe-Fehler hält die Löschung nicht auf.
 
 **`billing-extend`**, **`safety-dispatch`**: intern, nur mit `x-fermata-internal-secret`.
 **`stripe-webhook`**: nur Stripe.
@@ -235,7 +237,9 @@ Links in Mails erwarten diese Seiten der Web-App: `/konto/mitgliedschaft`, `/kon
 10. **Widerruf sagt offene Abende ab** (das Gegenüber bekommt den Abend zurück).
 11. **Ausführung nach Speicherung:** Kündigung und Widerruf gelten mit dem Speichern; Stripe-Fehler werden nachgeholt (Hinweis an Benn), nicht dem Mitglied angelastet.
 12. **Rechte gehärtet:** Postgres gibt neuen Funktionen das Ausführungsrecht für `PUBLIC`; schemaweite Standardrechte heben das nicht auf. Die Migrationen entziehen es für alle Funktionen in `billing` (und `safety`) und geben nur Benötigtes frei. Siehe auch Hinweis an den Kern unten.
-13. Verträge bleiben bei Kontolöschung erhalten (`contract_actions.user_id` wird `null`), wegen Aufbewahrungspflichten (Löschkonzept M8).
+13. Verträge bleiben bei Kontolöschung erhalten (`contract_actions.user_id` wird `null`), wegen Aufbewahrungspflichten (Löschkonzept M8). Härtung: Rechtsgrundlage und Inhalt stehen als Kommentar an `billing.contract_actions.details` (Nachweis über Eingang und Wirkung der Erklärung, Art. 6 Abs. 1 lit. c und f DSGVO; § 312k, § 356a BGB – Name und Kontakt-E-Mail aus Kündigung/Widerruf bleiben deshalb nach einer Kontolöschung stehen); `ops.apply_retention` löscht Zeilen gelöschter Konten nach `retention.contract_actions_years` (6) ab Ende des Kalenderjahres, und `billing.contract_requests` nach `retention.contract_requests_days` (30).
+14. **Leistungsbeginn vor Ende der Widerrufsfrist (Härtung):** ohne ausdrückliches Verlangen keine Bestellung. Text und Fassung als Einstellung (`billing.start_request_text`, `billing.start_request_version`), bei jeder Änderung neue Fassung; Nachweis in `contract_actions.details.start_request`.
+15. **Kontolöschung mit laufendem Abo (Härtung):** sofortiges Ende statt Kündigung zum Periodenende – sonst liefe ein Vertrag ohne Konto weiter. Mitgliedschaft `ended`; Erstattung offen (C15).
 
 **Hinweis an den Kern (nicht geändert, außerhalb dieses Bereichs):** Alle bisherigen Funktionen in `app`, `api`, `ops`, `private` haben ebenfalls `PUBLIC`-Ausführungsrecht. Beispiel: `app.evening_transition` ist für jede angemeldete Person aufrufbar, wenn das Schema `app` über PostgREST erreichbar ist, und prüft den Auslöser nur bei Teilnehmer-Ereignissen (`happened`, `cancel_admin`, `lapse` wären aufrufbar). Empfehlung: im Fundament einmal `revoke execute on all functions in schema … from public` und gezielt freigeben.
 
@@ -243,7 +247,7 @@ Links in Mails erwarten diese Seiten der Web-App: `/konto/mitgliedschaft`, `/kon
 
 ## 12. Einstellungen (neu in diesem Bereich)
 
-`billing.withdrawal_days`, `billing.withdrawal_value_per_evening_cents`, `billing.credit_on_counterpart_late_cancel`, `billing.credit_on_counterpart_no_show`, `billing.extension_days`, `billing.extension_lead_hours`, `billing.extension_max_per_period`, `billing.extension_attributable_events`, `billing.contract_link_hours`, `billing.contract_requests_per_hour`, `billing.cancellation_terms`, `billing.withdrawal_note`, `internal.functions_base_url`.
+`billing.withdrawal_days`, `billing.withdrawal_value_per_evening_cents`, `billing.credit_on_counterpart_late_cancel`, `billing.credit_on_counterpart_no_show`, `billing.extension_days`, `billing.extension_lead_hours`, `billing.extension_max_per_period`, `billing.extension_attributable_events`, `billing.contract_link_hours`, `billing.contract_requests_per_hour`, `billing.cancellation_terms`, `billing.withdrawal_note`, `internal.functions_base_url`. Härtung: `billing.start_request_text`, `billing.start_request_version`, `billing.withdrawal_policy_url`, `retention.stripe_events_months`, `retention.contract_requests_days`, `retention.contract_actions_years`.
 
 Genutzt aus dem Fundament: `billing.period_days`, `billing.tiers`, `billing.loge_in_test_phase`, `billing.loge_test_phase_evenings`, `billing.free_until_first_evening`, `billing.extension_rule_enabled`, `billing.currency`, `evening.credit_validity_months`, `landing.vat_mode`.
 
@@ -253,6 +257,7 @@ Genutzt aus dem Fundament: `billing.period_days`, `billing.tiers`, `billing.loge
 - Edge Functions: `billing-checkout`, `billing-cancel`, `billing-withdraw`, `billing-extend`, `stripe-webhook`; gemeinsam `supabase/functions/_shared/stripe/*`; Mails `_shared/mail/templates/billing.ts`, `billing-format.ts`
 - pgTAP: `600_billing_ledger` (Regeln, Gratisphase, Verfall, Ablehnung), `610_billing_membership` (Bestellung, Stripe-Ereignisse, Kündigung, Widerruf, Links ohne Anmeldung, Rechte), `620_billing_extension` (Verlängerungsregel mit Testuhr)
 - Deno: `_shared/stripe/webhook.test.ts` (Signatur gültig/verändert/abgelaufen, Client, JWT), `stripe-webhook/handler.test.ts` (Idempotenz, Ereignisse, Datensparsamkeit), `billing-checkout/handler.test.ts` (gegen stripe-mock), `billing-cancel`, `billing-withdraw`, `billing-extend`, `_shared/mail/templates/billing.test.ts`
+- Härtung: Migrationen `…000901_billing_start_request.sql`, `…000904_account_deletion.sql`, `…000905_retention.sql`; pgTAP `901_billing_start_request`, `904_account_deletion`, `905_retention`; Deno `billing-checkout/handler.test.ts` (Übersicht mit Satz und Link, 422 ohne `true`, keine Stripe-Aufrufe, Nachweis, Mail mit Belehrung und Formular), `account-delete/handler.test.ts` (Stripe-Kündigung mit Attrappe, Fehlerfall mit Hinweis), `stripe-webhook/handler.test.ts` (E-Mail, Name, Rechnungslinks entfernt)
 
 ```bash
 DB_PORT=54382 DB_CONTAINER=fermata-db-billing bash scripts/db.sh test

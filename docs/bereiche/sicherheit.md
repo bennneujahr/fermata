@@ -63,6 +63,7 @@ Bereits begonnene Abende (Startzeit vorbei) bleiben unberührt; dort greifen Che
 | `api.admin_appeals(status?)`, `api.admin_decide_appeal(id, 'accepted'|'rejected', begründung)` | Widersprüche; Entscheidung per Mail |
 | `api.admin_safety_flags(p_open_only, p_limit)` (gemeinsam mit der Web-App, Tabelle mit E-Mail), `api.admin_review_flag(id, ergebnis)` | Hinweise (Sicherheits-Agent, Sperrliste, Meldungen, Check-in, wiederholtes Nichterscheinen) |
 | `api.admin_police_report_template(report_id)` | Vorlage für eine Polizeimeldung (Abschnitt 5) |
+| `api.admin_safety_transcript(p_session_id, p_reason)` (Härtung, `…000902`) | Gesprächstext einer Sitzung **nur im Sicherheitsfall**: Zwei-Faktor, zur Person der Sitzung besteht ein offener Hinweis (`safety_flags.reviewed_at is null`) oder eine offene Meldung (`open`/`in_review`), Begründung ≥ 10 Zeichen. Rückgabe `{session, turns, deleted}`; ist der Text schon gelöscht (30 Tage, Widerruf), `deleted: true` ohne `turns`. Jeder Abruf im Audit (`safety.admin_view_transcript`: Begründung, Person, Anzahl Beiträge – kein Inhalt) |
 
 Befristete Sperren enden automatisch (`safety.release_expired_sanctions()`, stündlich); das Konto wird wieder freigegeben und die Person informiert. Konten, die aus anderen Gründen gesperrt sind (z. B. M2), bleiben unberührt.
 
@@ -76,7 +77,9 @@ Befristete Sperren enden automatisch (`safety.release_expired_sanctions()`, stü
 ## 6. Abend teilen
 
 - `api.create_trust_share(evening_id)` → `{share_id, token, expires_at, url}`; nur für Beteiligte, nur bei bestätigtem Abend mit Zeit; höchstens `safety.trust_shares_per_evening` (3) aktive Links. Der Schlüssel (192 Bit) wird nur als SHA-256 gespeichert und nur einmal zurückgegeben.
-- Öffentliche Seite `GET /functions/v1/trust-view?t=<token>` (HTML; mit `Accept: application/json` als JSON): Lokal, Adresse, Anfahrt, Datum und Uhrzeit, **nur der eigene Vorname**, Heimwegtelefon, 110. Kein Wort über das Gegenüber. Strenge Header (`noindex`, `no-referrer`, CSP ohne Skripte).
+- **Link (Härtung, Vertrag 3):** `url` = `safety.trust_view_base_url` + `#t=<token>`; Standard der Basis ist `site.app_url` + `/teilen`, also `https://app.<domain>/teilen#t=<token>`. Das Token steht im URL-Fragment und erreicht so weder Vercel- noch Supabase-Protokolle.
+- Die App-Seite `/teilen` liest `t` aus dem Fragment und fragt `trust-view` an: `GET /functions/v1/trust-view?t=<token>` oder `POST` mit Body `{"t":"<token>"}` (auch `{"token":…}`), jeweils mit `Accept: application/json`. Antwort `200 {first_name, starts_at, expires_at, venue{name, street, postal_code, city, public_transport}|null, heimwegtelefon{number, tel, hours}, emergency_number}` oder `404 {error:"not_found"}` (ungültig, abgelaufen, zurückgezogen, abgesagt). CORS nach `FERMATA_ALLOWED_ORIGINS` (muss die App enthalten). Lokal, Adresse, Anfahrt, Datum und Uhrzeit, **nur der eigene Vorname**, Heimwegtelefon, 110. Kein Wort über das Gegenüber.
+- Ohne `Accept: application/json` antwortet `trust-view` weiter mit HTML (Rückfall für alte Links `…/functions/v1/trust-view?t=…`). Strenge Header (`noindex`, `no-referrer`, CSP ohne Skripte).
 - Ungültig nach `safety.trust_share_hours` (24 h) ab Beginn, nach `api.revoke_trust_share`, oder wenn der Abend abgesagt ist.
 
 ## 7. Check-in und Hilfe
@@ -85,6 +88,7 @@ Befristete Sperren enden automatisch (`safety.release_expired_sanctions()`, stü
 - `hilfe` → Rückgabe der Hilfe-Nummern, akuter Hinweis, **Sofort-Mail an `safety.admin_alert_email`** („Bitte sofort … anrufen. Bei Gefahr: 110.“).
 - `unsicher` → Hilfe-Nummern, Hinweis „hoch“ (Mail an Benn ab Stufe hoch).
 - `api.help_contacts()` (ohne Anmeldung): Heimwegtelefon (Nummer, Zeiten, wählbar), Polizei 110, Notruf 112, TelefonSeelsorge (0800 111 0 111, 0800 111 0 222, 116 123), Hilfetelefon Gewalt gegen Frauen (116 016). **Alle Nummern vor dem Start erneut prüfen (M9).**
+- **Eine Quelle für Krisennummern (Härtung, `…000903`):** Viola bekommt ihre Krisennummern über `safety.crisis_lines()` aus denselben Einstellungen wie der Hilfe-Knopf (`safety.telefonseelsorge_numbers`, `safety.ambulance_number`). Die frühere Einstellung `safety.crisis_lines` ist gelöscht; `api.agent_session_context` liefert dasselbe Format `[{name, number}]` wie vorher.
 
 ## 8. Mail-Ausgang der Sicherheit
 
@@ -123,7 +127,9 @@ Fehler: deutscher Text (`message`) und fester Code (`hint`). Über PostgREST kom
 | `api.my_trust_shares(p_evening_id?)` | angemeldet | `(id, evening_id, created_at, expires_at, revoked_at, active)` | – |
 | Admin-Funktionen (Abschnitt 4) | Admin mit aal2 | siehe Abschnitt 4 | `admin_required` und je Funktion `invalid_*`, `*_not_found`, `*_required`, `blocklist_data_missing` |
 
-Edge Functions: `trust-view` (öffentlich, GET), `safety-dispatch` (intern).
+| `api.admin_safety_transcript(p_session_id, p_reason)` | Admin mit aal2 | `{session{id, user_id, kind, mode, status, created_at, started_at, ended_at, end_reason, safety_flagged, ai_notice_at, transcript_delete_at}, turns[{role ('viola'|'person'), text, at, mode}], deleted}` | `admin_aal2_required`, `reason_required` (unter 10 Zeichen), `not_found`, `no_safety_case` |
+
+Edge Functions: `trust-view` (öffentlich, GET und POST, JSON mit `Accept: application/json`, sonst HTML), `safety-dispatch` (intern).
 
 ### Für andere Bereiche
 
@@ -143,7 +149,7 @@ Edge Functions: `trust-view` (öffentlich, GET), `safety-dispatch` (intern).
 | B9 Folgen wiederholten Nichterscheinens | ab 2× Hinweis an Benn, keine automatische Folge | `safety.no_show_flag_threshold` |
 | Null-Toleranz-Arten | Übergriff, Bedrohung, Minderjährigkeit | `safety.zero_tolerance_categories` |
 | Hilfe-Nummern (Heimwegtelefon, TelefonSeelsorge, Hilfetelefon) | eingetragen, vor dem Start prüfen (M9) | `safety.*_number`, `safety.*_hours` |
-| Adresse der Seite „Abend teilen“ | PLATZHALTER | `safety.trust_view_base_url` |
+| Adresse der Seite „Abend teilen“ | `site.app_url` + `/teilen` (PLATZHALTER C13, Domain aus A3) | `safety.trust_view_base_url` |
 | Polizeivorlage, Rechtsgrundlage der Weitergabe | ENTWURF für den Anwalt | – |
 | B5 Transkripte bei Sicherheitsfällen länger aufbewahren | nicht in diesem Bereich (M3) | – |
 
@@ -155,10 +161,12 @@ Edge Functions: `trust-view` (öffentlich, GET), `safety-dispatch` (intern).
 4. **Reaktionen auf Abend-Wechsel** (wiederholtes Nichterscheinen) hängen wie das Kontingent an `app.evening_events`.
 5. **Rechte gehärtet:** Alle Funktionen in `safety` ohne `PUBLIC`-Ausführung; siehe Hinweis an den Kern in `mitgliedschaft.md`, Abschnitt 11.
 6. Die Kontext-Liste der Meldungen nutzt die Werte aus dem Kern (`abend`, `termin`, `gespraech`, `rueckmeldung`, `konto`, `sonstiges`).
+7. **Löschfristen (Härtung, `…000905`):** abgeschlossene Meldungen ohne geltende Sanktion nach `retention.reports_months` (24), erledigte Hinweise nach `retention.safety_flags_months` (24), Namens-/Ausweis-Hashes in erledigten Hinweisen nach `retention.flag_hashes_days` (30), Zeilen in `safety.mail_queue` nach `retention.safety_mail_days` (30) – täglicher Job `fermata-retention`. Sperrliste und Sanktionen bleiben (Begründung in der DSFA, R13).
+8. **Transkript-Einsicht** nur über `api.admin_safety_transcript` (nicht für `service_role` freigegeben); Viola-Sitzungen sind nur über `user_id` mit Hinweisen und Meldungen verknüpft – deshalb genügt ein offener Fall zur Person, nicht nur zur Sitzung.
 
 ## 13. Einstellungen (neu in diesem Bereich)
 
-`safety.admin_alert_email`, `safety.admin_alert_min_severity`, `safety.report_rate_limit_per_day`, `safety.zero_tolerance_categories`, `safety.ambulance_number`, `safety.telefonseelsorge_numbers`, `safety.telefonseelsorge_hours`, `safety.hilfetelefon_gewalt_number`, `safety.hilfetelefon_gewalt_hours`, `safety.trust_view_base_url`, `safety.trust_shares_per_evening`, `safety.no_show_flag_threshold`, `safety.mail_max_attempts`.
+`safety.admin_alert_email`, `safety.admin_alert_min_severity`, `safety.report_rate_limit_per_day`, `safety.zero_tolerance_categories`, `safety.ambulance_number`, `safety.telefonseelsorge_numbers`, `safety.telefonseelsorge_hours`, `safety.hilfetelefon_gewalt_number`, `safety.hilfetelefon_gewalt_hours`, `safety.trust_view_base_url`, `safety.trust_shares_per_evening`, `safety.no_show_flag_threshold`, `safety.mail_max_attempts`. Gelöscht in der Härtung: `safety.crisis_lines` (ersetzt durch die Funktion `safety.crisis_lines()`). Löschfristen: `retention.reports_months`, `retention.safety_flags_months`, `retention.flag_hashes_days`, `retention.safety_mail_days`.
 
 Genutzt aus dem Fundament: `safety.heimwegtelefon_number`, `safety.heimwegtelefon_hours`, `safety.emergency_number`, `safety.trust_share_hours`, `safety.checkin_after_minutes`, `safety.report_response_hours`.
 
@@ -168,3 +176,4 @@ Genutzt aus dem Fundament: `safety.heimwegtelefon_number`, `safety.heimwegtelefo
 - Edge Functions: `trust-view`, `safety-dispatch`; Mails `_shared/mail/templates/safety.ts`
 - pgTAP: `700_safety_reports` (Beziehung, Drossel, Null-Toleranz, Absagen, neutrale Nachrichten, Anonymität, Widerspruch), `710_safety_admin` (nur aal2, Entscheidungen, Sanktionen, Sperrliste, Widersprüche, Hinweise, Polizeivorlage, Ablauf befristeter Sperren), `720_safety_trust_checkin` (Abend teilen mit Testuhr, Check-in, Hilfe-Knopf, Nichterscheinen, Versand)
 - Deno: `trust-view/handler.test.ts`, `safety-dispatch/handler.test.ts`, `_shared/mail/templates/safety.test.ts`
+- Härtung: Migrationen `…000902_admin_transcript.sql`, `…000903_links_settings.sql`, `…000905_retention.sql`; pgTAP `902_admin_transcript` (aal2, Anlass, Begründung, Audit ohne Inhalt, gelöschter Text), `900_legal_consents` (eine Quelle für Krisennummern), `905_retention`, `720_safety_trust_checkin` (Link `…/teilen#t=`); Deno `trust-view/handler.test.ts` (JSON per GET und POST, CORS, HTML-Rückfall)
