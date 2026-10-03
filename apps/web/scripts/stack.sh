@@ -170,6 +170,8 @@ up() {
       echo $! >"$STATE/viola.pid"
     )
     wait_http "http://127.0.0.1:$VIOLA_TEXT_PORT/healthz"
+  elif [ "${STACK_VIOLA:-1}" = "1" ]; then
+    echo "Warnung: uv fehlt – Viola-Textdienst läuft nicht (Gespräch im Textmodus und seine Tests schlagen fehl)." >&2
   fi
   wait_http "http://127.0.0.1:$AUTH_PORT/health"
   wait_http "http://127.0.0.1:$REST_PORT/"

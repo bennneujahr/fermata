@@ -167,6 +167,8 @@ jobs:
       - uses: denoland/setup-deno@v2
         with:
           deno-version: v2.x
+      # uv: Viola-Textdienst im Stapel (Gespräch im Textmodus) und Simulation des Auswahl-Jobs in den Admin-Tests
+      - uses: astral-sh/setup-uv@v6
       - name: psql installieren
         run: sudo apt-get update && sudo apt-get install -y postgresql-client
       - run: pnpm install --frozen-lockfile
