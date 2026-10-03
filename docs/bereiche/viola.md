@@ -197,7 +197,10 @@ cd supabase/functions && DB_PORT=54352 deno test --allow-env --allow-net --allow
   interview-token interview-agent interview-summary _shared/interview
 ```
 
-Mit echter Datenbank und Edge Functions: `VIOLA_BACKEND=http`, `INTERVIEW_AGENT_URL`, `INTERVIEW_AGENT_SECRET` setzen.
+Ende zu Ende lokal (Test-Datenbank + Edge Functions über `dev-server.ts` auf Port 54351 + Textdienst auf 8354, Attrappe als
+Sprachmodell): `cd services/viola && bash scripts/e2e_local.sh` – legt eine Person an, holt `interview-token`, führt ein kurzes
+Gespräch, beendet es und zeigt Sitzung, Transkript (KI-Hinweis zuerst, Art.-9-Satz ersetzt, Löschung nach 30 Tagen) und
+Kostenzeile. Mit echter Datenbank: `VIOLA_BACKEND=http`, `INTERVIEW_AGENT_URL`, `INTERVIEW_AGENT_SECRET` setzen.
 
 ---
 
@@ -288,7 +291,9 @@ Basis `text.url`, Header `Authorization: Bearer <text.token>`.
 
 Ereignisse wie bei der Stimme (`summary_proposed`, `crisis_resources`, `ended`). Fehler: 401 `invalid_token`/`not_authenticated`,
 403 `wrong_session`, 409 `not_started`/`session_ended`/`session_closed`, 422 bei zu langem Text, 429 `too_many_messages`,
-503 `text_not_configured`. Nach `ended` mit `summary_pending: true` läuft die Auswertung im Hintergrund (Sekunden bis etwa eine
+503 `text_not_configured`. Nach einem Neustart des Dienstes antwortet `messages` mit 409 `not_started`: dann `start` erneut aufrufen
+(die Sitzung wird mit dem gespeicherten Verlauf fortgesetzt). Ohne Nachricht für 20 Minuten endet die Sitzung mit `technik`
+(fortsetzbar). Nach `ended` mit `summary_pending: true` läuft die Auswertung im Hintergrund (Sekunden bis etwa eine
 Minute); die Web-App fragt `interview-summary` ab, bis `summary_status = "draft"`.
 
 ### 8.4 Zusammenfassung: `/functions/v1/interview-summary`
@@ -463,8 +468,10 @@ Stellschrauben: `min_delay`, kurzer erster Satz, Prompt-Caching, Stimme mit Stre
 
 | Prüfung | Befehl | Stand |
 |---|---|---|
-| Python (Kern, Prompts, Sie/Du, Werkzeuge, Art. 9, Sicherheit, Kosten, Claude-Anbindung, Textmodus, Stimme, Blindtest) | `cd services/viola && uv run pytest` | 327 bestanden |
+| Python (Kern, Prompts, Sie/Du, Werkzeuge, Art. 9, Sicherheit, Kosten, Claude-Anbindung, Rückweg, Textmodus, Stimme, Blindtest) | `cd services/viola && uv run pytest` | 338 bestanden |
 | Lint und Typen | `uv run ruff check src tests blindtest scripts && uv run mypy` | sauber |
-| pgTAP (inkl. Kern) | `DB_PORT=54352 DB_CONTAINER=fermata-db-viola bash scripts/db.sh test` | 3 Dateien, 118 Prüfungen |
-| Deno (Edge Functions) | siehe Abschnitt 6 | 21 bestanden |
+| pgTAP (inkl. Kern) | `DB_PORT=54352 DB_CONTAINER=fermata-db-viola bash scripts/db.sh test` | 3 Dateien, 121 Prüfungen (Viola: 78) |
+| Deno (Edge Functions) | siehe Abschnitt 6 | 22 bestanden |
+| Ende zu Ende (lokal) | `bash scripts/e2e_local.sh` | Token → Textdienst → interview-agent → SQL geprüft |
+| Container | `docker build services/viola` | baut; läuft schreibgeschützt als Benutzer 10001 |
 | Tonalität | `pnpm check:tone` | sauber |
