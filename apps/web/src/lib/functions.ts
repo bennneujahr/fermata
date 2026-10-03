@@ -35,12 +35,7 @@ export async function callFunction<T = unknown>(
   } catch {
     return { ok: false, status: 503, data: null, error: "network" };
   }
-  let body: unknown = null;
-  try {
-    body = await res.json();
-  } catch {
-    body = null;
-  }
+  const body: unknown = await res.json().catch(() => null);
   const error = !res.ok ? ((body as { error?: string } | null)?.error ?? `http_${res.status}`) : null;
   return { ok: res.ok, status: res.status, data: res.ok ? (body as T) : null, error };
 }

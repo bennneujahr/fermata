@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Badge, Button, Field, PageHeader, Select } from "@/components/ui";
+import { Badge, Button, Field, PageHeader, Select, TableWrap } from "@/components/ui";
 import { admin } from "@/copy/admin";
 import { adminRpc, type AdminAccountRow } from "@/lib/admin";
 import { formatDateShort } from "@/lib/format";
@@ -26,7 +26,7 @@ export default async function AdminAccounts({ searchParams }: { searchParams: Pr
           {c.search}
         </Button>
       </form>
-      <div className="table-wrap">
+      <TableWrap label={admin.accounts.title}>
         <table className="table">
           <thead>
             <tr>
@@ -63,7 +63,7 @@ export default async function AdminAccounts({ searchParams }: { searchParams: Pr
             )}
           </tbody>
         </table>
-      </div>
+      </TableWrap>
     </>
   );
 }

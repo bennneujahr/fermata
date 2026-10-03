@@ -7,8 +7,9 @@ import { getConsents, getLegalDocument, requireMember } from "@/lib/data";
 import { Markdown } from "@/lib/markdown";
 import { OnboardingHeader } from "../OnboardingHeader";
 import { ConsentForm } from "./ConsentForm";
+import { titles } from "@/copy/titles";
 
-export const metadata: Metadata = { title: "Einwilligungen" };
+export const metadata: Metadata = { title: titles.einwilligungen };
 
 // Einwilligungen einzeln, in der Reihenfolge aus account.required_consents (art9_profile vor dem Formular).
 export default async function ConsentStepPage() {

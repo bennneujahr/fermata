@@ -62,6 +62,7 @@ export const legal = {
   title: "Rechtliches",
   lead: "Alle Texte sind Entwürfe, bis die rechtliche Prüfung abgeschlossen ist.",
   missing: "Dieser Text folgt.",
+  back: "Zurück zu Rechtliches",
   version: (v: string) => `Fassung ${v}`,
   kinds: {
     impressum: "Impressum",

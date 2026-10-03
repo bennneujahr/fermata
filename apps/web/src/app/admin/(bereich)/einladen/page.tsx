@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Card, PageHeader } from "@/components/ui";
+import { Card, PageHeader, TableWrap } from "@/components/ui";
 import { admin } from "@/copy/admin";
 import { adminRpc, type AdminInvitationRow } from "@/lib/admin";
 import { formatDateShort } from "@/lib/format";
@@ -18,7 +18,7 @@ export default async function AdminInvite() {
       </Card>
       <section className="stack" aria-labelledby="einladungen">
         <h2 id="einladungen">{c.listTitle}</h2>
-        <div className="table-wrap">
+        <TableWrap label={admin.invite.listTitle}>
           <table className="table">
             <thead>
               <tr>
@@ -41,7 +41,7 @@ export default async function AdminInvite() {
               ))}
             </tbody>
           </table>
-        </div>
+        </TableWrap>
       </section>
     </>
   );

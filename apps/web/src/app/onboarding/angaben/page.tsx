@@ -4,8 +4,9 @@ import { factsStep } from "@/copy/onboarding";
 import { getFacts, getOnboardingSettings, requireMember } from "@/lib/data";
 import { OnboardingHeader } from "../OnboardingHeader";
 import { FactsForm } from "./FactsForm";
+import { titles } from "@/copy/titles";
 
-export const metadata: Metadata = { title: "Angaben" };
+export const metadata: Metadata = { title: titles.angaben };
 
 export default async function FactsStepPage({ searchParams }: { searchParams: Promise<{ zurueck?: string }> }) {
   const [{ overview, form }, facts, settings, sp] = await Promise.all([

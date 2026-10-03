@@ -3,7 +3,7 @@ import { useActionState } from "react";
 import { saveAddressFormAction } from "@/app/actions/account";
 import { initialState } from "@/app/actions/state";
 import { Notice, RadioGroup, SubmitButton } from "@/components/ui";
-import { actions } from "@/copy/common";
+import { actions, errors } from "@/copy/common";
 import { konto } from "@/copy/member";
 import { identityStep } from "@/copy/onboarding";
 import type { AddressForm } from "@/copy/form";
@@ -33,7 +33,7 @@ export function AddressFormSwitch({ current }: { current: AddressForm }) {
           </span>
         ) : null}
       </div>
-      {state.error ? <Notice tone="danger" live="assertive">{state.error}</Notice> : null}
+      {state.error ? <Notice tone="danger" live="assertive">{errors.generic(current)}</Notice> : null}
     </form>
   );
 }

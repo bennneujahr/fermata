@@ -1,9 +1,9 @@
 "use client";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { useState } from "react";
 import { Button, ButtonLink, Notice } from "@/components/ui";
 import { confirm } from "@/copy/auth";
-import { browserClient } from "@/lib/supabase/browser";
+import { browserClient, finishAuth } from "@/lib/supabase/browser";
 import { safeNext } from "@/lib/routes";
 
 type OtpType = "email" | "magiclink" | "invite" | "signup" | "recovery" | "email_change";
@@ -15,7 +15,6 @@ const TYPES: OtpType[] = ["email", "magiclink", "invite", "signup", "recovery", 
  * Fallback für PKCE (?code=…), falls der Link aus der Standardvorlage kommt.
  */
 export function ConfirmLink() {
-  const router = useRouter();
   const params = useSearchParams();
   const tokenHash = params.get("token_hash");
   const code = params.get("code");
@@ -39,8 +38,7 @@ export function ConfirmLink() {
       setFailed(true);
       return;
     }
-    router.replace(next);
-    router.refresh();
+    finishAuth(next);
   }
 
   if (failed) {

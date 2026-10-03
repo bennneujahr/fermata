@@ -11,3 +11,18 @@ export function browserClient() {
   }
   return client;
 }
+
+/**
+ * Nach erfolgreicher Anmeldung: Hilfs-Cookies des PKCE-Ablaufs entfernen (es bleibt nur das Auth-Cookie)
+ * und die Seite vollständig neu laden, damit kein zwischengespeicherter Stand (z. B. eine frühere
+ * Weiterleitung) des Routers greift.
+ */
+export function finishAuth(next: string): void {
+  for (const part of document.cookie.split(";")) {
+    const name = part.split("=")[0]?.trim();
+    if (name && /^sb-.+-code-verifier$/.test(name)) {
+      document.cookie = `${name}=; Max-Age=0; Path=/; SameSite=Lax`;
+    }
+  }
+  window.location.assign(next);
+}

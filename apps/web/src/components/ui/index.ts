@@ -19,3 +19,4 @@ export { Stepper } from "./Stepper";
 export type { Step, StepState } from "./Stepper";
 export { Dialog } from "./Dialog";
 export { SubmitButton } from "./SubmitButton";
+export { TableWrap } from "./TableWrap";

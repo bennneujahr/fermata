@@ -5,8 +5,10 @@ import { consents as consentsCopy } from "@/copy/member";
 import { getConsents, requireMember } from "@/lib/data";
 import { formatDate } from "@/lib/format";
 import { RevokeButton } from "./RevokeButton";
+import { titles } from "@/copy/titles";
+import { nav } from "@/copy/common";
 
-export const metadata: Metadata = { title: "Einwilligungen" };
+export const metadata: Metadata = { title: titles.einwilligungen };
 
 const NOT_REVOCABLE = new Set(["agb", "datenschutz_kenntnis"]);
 
@@ -16,7 +18,7 @@ export default async function ConsentsPage() {
   return (
     <div className="stack stack-lg">
       <p>
-        <Link href="/konto">Konto</Link>
+        <Link href="/konto">{nav.backToAccount}</Link>
       </p>
       <PageHeader title={c.title} lead={c.lead} />
       <Card>

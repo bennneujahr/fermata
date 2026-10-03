@@ -19,7 +19,7 @@ export default async function LegalPage({ params }: { params: Promise<{ art: str
   return (
     <div className="stack stack-lg">
       <p>
-        <Link href="/rechtliches">← {legal.title}</Link>
+        <Link href="/rechtliches">{legal.back}</Link>
       </p>
       <PageHeader title={doc?.title ?? legal.kinds[art]} eyebrow={doc ? legal.version(doc.version) : undefined} />
       {doc?.status === "entwurf" ? <Notice tone="draft">{status.draftLong}</Notice> : null}

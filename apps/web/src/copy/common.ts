@@ -21,6 +21,7 @@ export const nav = {
   home: "Fermata, zur Startseite",
   legal: "Rechtliches",
   admin: "Admin",
+  backToAccount: "Zurück zum Konto",
 };
 
 export const actions = {

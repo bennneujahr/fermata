@@ -6,8 +6,9 @@ import { help } from "@/copy/help";
 import { getPublicSettings } from "@/lib/data";
 import { telHref } from "@/lib/format";
 import { currentForm } from "../form";
+import { titles } from "@/copy/titles";
 
-export const metadata: Metadata = { title: "Hilfe und Sicherheit" };
+export const metadata: Metadata = { title: titles.hilfe };
 
 export default async function HelpPage() {
   const [settings, form] = await Promise.all([getPublicSettings(), currentForm()]);

@@ -3,7 +3,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { Button, Field, Notice } from "@/components/ui";
 import { mfa } from "@/copy/auth";
-import { browserClient } from "@/lib/supabase/browser";
+import { browserClient, finishAuth } from "@/lib/supabase/browser";
 import { normalizeOtp, OTP_RE } from "@/lib/validation";
 
 interface Enrolment {
@@ -60,8 +60,7 @@ export function Enrol() {
       setError(mfa.invalid);
       return;
     }
-    router.replace("/admin");
-    router.refresh();
+    finishAuth("/admin");
   }
 
   if (failed) return <Notice tone="danger">{mfa.enrolFailed}</Notice>;

@@ -3,8 +3,9 @@ import { Card, PageHeader } from "@/components/ui";
 import { deletion } from "@/copy/member";
 import { requireMember } from "@/lib/data";
 import { DeleteForm } from "./DeleteForm";
+import { titles } from "@/copy/titles";
 
-export const metadata: Metadata = { title: "Konto löschen" };
+export const metadata: Metadata = { title: titles.loeschen };
 
 // Löschung, Schritt 2: ausdrücklich bestätigen.
 export default async function DeleteConfirmPage() {

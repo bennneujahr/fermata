@@ -2,8 +2,9 @@ import type { Metadata } from "next";
 import { EmptyState, PageHeader } from "@/components/ui";
 import { placeholders } from "@/copy/member";
 import { requireMember } from "@/lib/data";
+import { titles } from "@/copy/titles";
 
-export const metadata: Metadata = { title: "Abende" };
+export const metadata: Metadata = { title: titles.abende };
 
 // Platzhalter für M5 (Vorschläge, Terminabstimmung, Abende, Rückmeldung).
 export default async function EveningsPage() {

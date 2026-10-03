@@ -9,8 +9,9 @@ import { Markdown } from "@/lib/markdown";
 import { OnboardingHeader } from "../OnboardingHeader";
 import { BiometricConsent } from "./BiometricConsent";
 import { StartVerification } from "./StartVerification";
+import { titles } from "@/copy/titles";
 
-export const metadata: Metadata = { title: "Ausweis" };
+export const metadata: Metadata = { title: titles.ausweis };
 
 export default async function VerifyStepPage() {
   const [{ overview, form }, consents, doc, settings] = await Promise.all([

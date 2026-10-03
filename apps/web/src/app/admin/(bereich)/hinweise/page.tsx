@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Badge, PageHeader } from "@/components/ui";
+import { Badge, PageHeader, TableWrap } from "@/components/ui";
 import { admin } from "@/copy/admin";
 import { adminRpc, type AdminFlagRow } from "@/lib/admin";
 import { formatDateShort } from "@/lib/format";
@@ -17,7 +17,7 @@ export default async function AdminFlags({ searchParams }: { searchParams: Promi
   return (
     <>
       <PageHeader title={c.title} lead={c.lead} actions={<Link href={all ? "/admin/hinweise" : "/admin/hinweise?alle=1"}>{all ? c.showOpen : c.showAll}</Link>} />
-      <div className="table-wrap">
+      <TableWrap label={admin.flags.title}>
         <table className="table">
           <thead>
             <tr>
@@ -52,7 +52,7 @@ export default async function AdminFlags({ searchParams }: { searchParams: Promi
             )}
           </tbody>
         </table>
-      </div>
+      </TableWrap>
     </>
   );
 }

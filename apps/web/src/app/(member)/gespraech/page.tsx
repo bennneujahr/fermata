@@ -5,8 +5,9 @@ import { Icon } from "@/components/ui/Icon";
 import { placeholders } from "@/copy/member";
 import { requireMember } from "@/lib/data";
 import { Atem } from "./Atem";
+import { titles } from "@/copy/titles";
 
-export const metadata: Metadata = { title: "Gespräch" };
+export const metadata: Metadata = { title: titles.gespraech };
 
 // Platzhalter für M3 (Viola). Welle 2 ersetzt den Inhalt; Navigation und Rahmen bleiben.
 export default async function ConversationPage() {
@@ -17,7 +18,7 @@ export default async function ConversationPage() {
       <PageHeader eyebrow={c.eyebrow} title={c.title} lead={c.lead} />
       <Card variant="night">
         <div className="stack" data-atem-stage>
-          <Atem label="Viola ist bereit." />
+          <Atem label={c.atemLabel} />
           <EmptyState title={c.emptyTitle}>
             <p>{c.emptyText}</p>
           </EmptyState>

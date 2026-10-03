@@ -36,6 +36,7 @@ export const placeholders = (f: AddressForm) => ({
     emptyText: af(f, "Wir bereiten Viola gerade vor. Sobald Sie mit ihr sprechen können, schreiben wir Ihnen.", "Wir bereiten Viola gerade vor. Sobald du mit ihr sprechen kannst, schreiben wir dir."),
     facts: ["Ihre Stimme wird nirgends gespeichert.", "Gesprächstexte löschen wir nach 30 Tagen.", "Die Zusammenfassung lesen und bestätigen Sie selbst."],
     aiNote: "Hinweis zu künstlicher Intelligenz",
+    atemLabel: "Viola ist bereit.",
   },
   abende: {
     title: "Abende",

@@ -4,8 +4,9 @@ import { Fermate } from "@/components/ui/Icon";
 import { returnPage, verifyStep } from "@/copy/onboarding";
 import { requireMember } from "@/lib/data";
 import { Poll } from "./Poll";
+import { titles } from "@/copy/titles";
 
-export const metadata: Metadata = { title: "Ausweisprüfung" };
+export const metadata: Metadata = { title: titles.ausweisPruefung };
 
 // Rückkehr von Didit (callback). Das Ergebnis kommt per Webhook; diese Seite fragt kurz nach.
 export default async function VerifyReturnPage() {

@@ -5,6 +5,14 @@ import { THEME_KEY } from "./ThemeScript";
 
 type Choice = "system" | "hell" | "dunkel";
 
+/** Setzt data-theme am Wurzelelement (außerhalb von React, wie ThemeScript). */
+function applyTheme(c: Choice): void {
+  const root = document.documentElement;
+  if (c === "hell") root.setAttribute("data-theme", "light");
+  else if (c === "dunkel") root.setAttribute("data-theme", "dark");
+  else root.removeAttribute("data-theme");
+}
+
 export function ThemeSwitcher() {
   const [choice, setChoice] = useState<Choice>("system");
   const id = useId();
@@ -25,9 +33,7 @@ export function ThemeSwitcher() {
     } catch {
       /* nicht speicherbar: gilt nur bis zum Neuladen */
     }
-    if (c === "hell") document.documentElement.dataset.theme = "light";
-    else if (c === "dunkel") document.documentElement.dataset.theme = "dark";
-    else delete document.documentElement.dataset.theme;
+    applyTheme(c);
   };
   const options: { value: Choice; label: string }[] = [
     { value: "system", label: theme.system },

@@ -8,8 +8,10 @@ import { konto } from "@/copy/member";
 import { getFacts, getSession, requireMember } from "@/lib/data";
 import { formatDate } from "@/lib/format";
 import { AddressFormSwitch } from "./AddressFormSwitch";
+import { titles } from "@/copy/titles";
+import { nav } from "@/copy/common";
 
-export const metadata: Metadata = { title: "Konto" };
+export const metadata: Metadata = { title: titles.konto };
 
 export default async function AccountPage({ searchParams }: { searchParams: Promise<{ gespeichert?: string }> }) {
   const [{ overview, form }, facts, { claims }, sp] = await Promise.all([requireMember("/konto"), getFacts(), getSession(), searchParams]);
@@ -108,7 +110,7 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
       <section className="cluster" aria-label={c.sessionTitle}>
         <LogoutButton className="btn btn--secondary" label={c.logout} />
         <Link href="/rechtliches" className="text-sm">
-          Rechtliches
+          {nav.legal}
         </Link>
       </section>
     </div>

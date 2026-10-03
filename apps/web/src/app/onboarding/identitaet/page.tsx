@@ -4,8 +4,9 @@ import { identityStep } from "@/copy/onboarding";
 import { getConsents, getIdentity, getLegalDocument, requireMember } from "@/lib/data";
 import { OnboardingHeader } from "../OnboardingHeader";
 import { IdentityForm } from "./IdentityForm";
+import { titles } from "@/copy/titles";
 
-export const metadata: Metadata = { title: "Über Sie" };
+export const metadata: Metadata = { title: titles.identitaet };
 
 export default async function IdentityStepPage({ searchParams }: { searchParams: Promise<{ zurueck?: string }> }) {
   const [{ overview, form }, identity, consents, religionDoc, sp] = await Promise.all([

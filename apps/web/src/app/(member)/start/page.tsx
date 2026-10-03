@@ -6,8 +6,9 @@ import { start } from "@/copy/member";
 import { stepLabel, stepper } from "@/copy/onboarding";
 import { requireMember } from "@/lib/data";
 import { onboardingPath } from "@/lib/routes";
+import { titles } from "@/copy/titles";
 
-export const metadata: Metadata = { title: "Start" };
+export const metadata: Metadata = { title: titles.start };
 
 export default async function StartPage() {
   const { overview, form } = await requireMember();

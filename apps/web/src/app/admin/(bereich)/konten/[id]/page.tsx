@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { Badge, Card, Notice, PageHeader } from "@/components/ui";
+import { Badge, Card, Notice, PageHeader, TableWrap } from "@/components/ui";
 import { admin } from "@/copy/admin";
 import { consents as consentCopy } from "@/copy/member";
 import { adminRpc } from "@/lib/admin";
@@ -61,13 +61,13 @@ export default async function AdminAccount({ params }: { params: Promise<{ id: s
               <dd>
                 {a.facts.first_name} {a.facts.last_name}
               </dd>
-              <dt>Geburtsdatum</dt>
+              <dt>{c.birthDate}</dt>
               <dd>{formatDate(a.facts.birth_date)}</dd>
               <dt>{admin.accounts.cols.place}</dt>
               <dd>
                 {a.facts.postal_code} {a.facts.city}
               </dd>
-              <dt>Telefon</dt>
+              <dt>{c.phone}</dt>
               <dd>{a.facts.phone ?? "–"}</dd>
             </dl>
           ) : (
@@ -80,7 +80,7 @@ export default async function AdminAccount({ params }: { params: Promise<{ id: s
             <dd>{admin.steps[a.onboarding.next_step ?? ""] ?? "–"}</dd>
             <dt>{admin.accounts.cols.created}</dt>
             <dd>{formatDateTime(a.created_at)}</dd>
-            <dt>Letzte Anmeldung</dt>
+            <dt>{c.lastSignIn}</dt>
             <dd>{formatDateTime(a.last_sign_in_at)}</dd>
             <dt>{c.membership}</dt>
             <dd>
@@ -90,7 +90,7 @@ export default async function AdminAccount({ params }: { params: Promise<{ id: s
         </Card>
       </div>
       <Card title={c.consents} headingLevel={2}>
-        <div className="table-wrap">
+        <TableWrap label={c.consents}>
           <table className="table">
             <tbody>
               {a.consents.map((k, i) => (
@@ -103,13 +103,13 @@ export default async function AdminAccount({ params }: { params: Promise<{ id: s
               ))}
             </tbody>
           </table>
-        </div>
+        </TableWrap>
       </Card>
       <Card title={c.verifications} headingLevel={2}>
         {a.verifications.length === 0 ? (
           <p className="muted">{c.none}</p>
         ) : (
-          <div className="table-wrap">
+          <TableWrap label={c.verifications}>
             <table className="table">
               <thead>
                 <tr>
@@ -136,7 +136,7 @@ export default async function AdminAccount({ params }: { params: Promise<{ id: s
                 ))}
               </tbody>
             </table>
-          </div>
+          </TableWrap>
         )}
       </Card>
       <Card title={c.flags} headingLevel={2}>

@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { PageHeader } from "@/components/ui";
+import { PageHeader, TableWrap } from "@/components/ui";
 import { admin } from "@/copy/admin";
 import { adminRpc, type AdminVerificationRow } from "@/lib/admin";
 import { formatDateShort } from "@/lib/format";
@@ -15,7 +15,7 @@ export default async function AdminVerifications() {
   return (
     <>
       <PageHeader title={c.title} lead={c.lead} />
-      <div className="table-wrap">
+      <TableWrap label={admin.verifications.title}>
         <table className="table">
           <thead>
             <tr>
@@ -56,7 +56,7 @@ export default async function AdminVerifications() {
             )}
           </tbody>
         </table>
-      </div>
+      </TableWrap>
     </>
   );
 }

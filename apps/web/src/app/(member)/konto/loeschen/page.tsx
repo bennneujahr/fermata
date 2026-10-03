@@ -4,8 +4,10 @@ import { ButtonLink, Card, PageHeader } from "@/components/ui";
 import { Icon } from "@/components/ui/Icon";
 import { deletion } from "@/copy/member";
 import { requireMember } from "@/lib/data";
+import { titles } from "@/copy/titles";
+import { nav } from "@/copy/common";
 
-export const metadata: Metadata = { title: "Konto löschen" };
+export const metadata: Metadata = { title: titles.loeschen };
 
 // Löschung, Schritt 1: was gelöscht wird und was bleibt.
 export default async function DeletePage() {
@@ -14,7 +16,7 @@ export default async function DeletePage() {
   return (
     <div className="stack stack-lg">
       <p>
-        <Link href="/konto">Konto</Link>
+        <Link href="/konto">{nav.backToAccount}</Link>
       </p>
       <PageHeader eyebrow={c.step1} title={c.title} lead={c.lead} />
       <div className="grid-auto">
@@ -40,7 +42,7 @@ export default async function DeletePage() {
         </Card>
       </div>
       <p className="soft">
-        {c.exportHint} <Link href="/konto/daten">Daten herunterladen</Link>
+        {c.exportHint} <Link href="/konto/daten">{titles.daten}</Link>
       </p>
       <div className="cluster">
         <ButtonLink href="/konto/loeschen/bestaetigen" variant="danger" iconAfter="arrowRight">

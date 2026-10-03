@@ -4,8 +4,9 @@ import { status as statusCopy } from "@/copy/common";
 import { placeholders } from "@/copy/member";
 import { getPublicSettings, requireMember } from "@/lib/data";
 import { formatEuro } from "@/lib/format";
+import { titles } from "@/copy/titles";
 
-export const metadata: Metadata = { title: "Mitgliedschaft" };
+export const metadata: Metadata = { title: titles.mitgliedschaft };
 
 // Platzhalter für M6 (Stripe, Bestell-, Kündigungs- und Widerrufsknopf). Zeigt den aktuellen Stand.
 export default async function MembershipPage() {

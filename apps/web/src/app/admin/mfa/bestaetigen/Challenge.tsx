@@ -1,14 +1,13 @@
 "use client";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { useEffect, useState, type FormEvent } from "react";
 import { Button, ButtonLink, Field, Notice } from "@/components/ui";
 import { mfa } from "@/copy/auth";
-import { browserClient } from "@/lib/supabase/browser";
+import { browserClient, finishAuth } from "@/lib/supabase/browser";
 import { safeNext } from "@/lib/routes";
 import { normalizeOtp, OTP_RE } from "@/lib/validation";
 
 export function Challenge() {
-  const router = useRouter();
   const params = useSearchParams();
   const next = safeNext(params.get("weiter"), "/admin");
   const [factorId, setFactorId] = useState<string | null | undefined>(undefined);
@@ -39,8 +38,7 @@ export function Challenge() {
       setError(mfa.invalid);
       return;
     }
-    router.replace(next.startsWith("/admin") ? next : "/admin");
-    router.refresh();
+    finishAuth(next.startsWith("/admin") ? next : "/admin");
   }
 
   if (factorId === undefined) return <p className="muted" role="status">{mfa.preparing}</p>;
