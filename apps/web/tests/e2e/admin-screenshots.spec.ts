@@ -106,5 +106,5 @@ test("Bildschirmfotos Admin", async ({ browser }) => {
   await shoot(browser, s, "13-abende-klaeren", "/admin/lokale/abende");
   await shoot(browser, s, "14-warteliste", "/admin/warteliste");
   await shoot(browser, s, "15-mitgliedschaft", `/admin/mitgliedschaft?person=${a.id}`);
-  await shoot(browser, s, "16-einstellungen", "/admin/einstellungen");
+  await shoot(browser, s, "16-einstellungen", "/admin/einstellungen?platzhalter=1");
 });
