@@ -4,7 +4,7 @@
 > Stand: 03.10.2026 · Fassung `agb-2026-10-03-entwurf` · Platzhalter in `[[doppelten eckigen Klammern]]`.
 > Alle Zahlen stammen aus den Einstellungen (`ops.app_settings`) und dem Code der Meilensteine M5–M7; der jeweilige
 > Schlüssel steht in den Fußnoten für Benn. Der kurze Text, den die Web-App heute zeigt (`ops.legal_documents`,
-> Art `agb`, Fassung `2026-10-03-entwurf`, Branch `build/web`), ist eine Kurzfassung und wird durch diesen Text ersetzt.
+> Art `agb`, Fassung `2026-10-03-entwurf`, M2), ist eine Kurzfassung und wird durch diesen Text ersetzt.
 
 ---
 
@@ -215,7 +215,7 @@ Verbraucherschlichtungsstelle teilzunehmen.“ – oder Name der Stelle. Gleiche
 
 ### Fußnoten für Benn (nicht Teil des Vertragstexts)
 
-[^versuche]: `verification.max_attempts` = 3 (M2, `20261003000210_web_settings_legal.sql`, Branch `build/web`).
+[^versuche]: `verification.max_attempts` = 3 (M2, `20261003000210_web_settings_legal.sql`).
 [^gespraech]: `voice.max_session_minutes` = 30, `interview.text_max_session_minutes` = 60,
     `interview.max_sessions_per_day` = 6, `interview.kinds_by_tier` (Platzhalter) – `20261003000310_viola.sql`.
 [^rhythmus]: `matching.rhythm_days` = 14, `availability.answer_hours` = 72, `availability.ask_lead_days` = 10.

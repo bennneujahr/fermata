@@ -1,8 +1,9 @@
 # Betriebshandbuch (RUNBOOK)
 
 Stand: 03.10.2026 · Meilenstein M9 (Entwurf) · für Benn.
-Grundlage: Code in `build/docs` (M0, M1, M4–M7), Viola im Hauptzweig (M3, Commit `e84647b`), Web-App im Branch
-`build/web` (M2, **im Bau** – Abschnitte mit „M2“ nach der Zusammenführung prüfen). Alle Datenwege:
+Grundlage: Code in `build/docs` (M0, M1, M4–M7) und im Hauptzweig `claude/dating-app-build-0uszhn`, in dem am
+03.10.2026 auch M3 (Viola, Commit `e84647b`) und M2 (Web-App, Merge-Commit `2489e06`) zusammengeführt wurden.
+Alle Datenwege:
 [`docs/DATA.md`](DATA.md). Rechtliches: [`docs/recht/`](recht/).
 
 > **Kurz für dich:** Fermata besteht aus einer Datenbank in Frankfurt (Supabase), zwei Websites (Vercel), zwei
@@ -35,7 +36,7 @@ Für **jedes** Konto: Zwei-Faktor einschalten, Zugang im Passwort-Manager, Rechn
 | # | Anbieter | Was anlegen | Einstellungen, die zählen |
 |---|---|---|---|
 | 1 | **Supabase** | Organisation, Projekt **Region Frankfurt (eu-central-1)**, Tarif mit täglichen Backups (Pro oder höher); zweites Projekt für Staging | Erweiterungen **pg_cron** und **pg_net** einschalten; Auth-Einstellungen (Abschnitt 3.2); AV-Vertrag (DPA) im Dashboard; ggf. eigene Domain für Functions (Abschnitt 4, Schritt 9) |
-| 2 | **Vercel** | Team, zwei Projekte aus dem GitHub-Repo: `landing` (Root `apps/landing`) und `web` (Root `apps/web`) | Region **fra1** für Funktionen (Landingpage: `apps/landing/vercel.json`; Web-App: in den Projekteinstellungen oder einer `vercel.json` – fehlt noch im Branch `build/web`); Vercel Analytics und Speed Insights **aus** |
+| 2 | **Vercel** | Team, zwei Projekte aus dem GitHub-Repo: `landing` (Root `apps/landing`) und `web` (Root `apps/web`) | Region **fra1** für Funktionen (gesetzt in `apps/landing/vercel.json` und – im Hauptzweig – `apps/web/vercel.json`); Vercel Analytics und Speed Insights **aus** |
 | 3 | **Brevo** | Konto, Absender-Domain | Domain mit **SPF, DKIM, DMARC** verifizieren; **Öffnungs- und Klickverfolgung aus**; API-Schlüssel (Functions) und **SMTP-Schlüssel** (Supabase Auth) anlegen; Transaktions-Protokolle: kürzeste Aufbewahrung wählen [[prüfen]] |
 | 4 | **Stripe** | Konto, zuerst **Testmodus** | Webhook (Abschnitt 4, Schritt 11); API-Version ab `2025-03-31` oder `STRIPE_API_VERSION` setzen; Kundenportal nicht nötig; Live-Modus erst nach Freigabe (Startcheckliste) |
 | 5 | **Didit** | Konto, Workflow für Ausweis + Gesichtsabgleich, zuerst Sandbox | **Datenaufbewahrung: 1 Monat** (kürzeste); **Training mit Kundendaten aus**; Webhook auf `verification-webhook` mit Geheimnis |
@@ -87,7 +88,11 @@ in der Spalte „Gegenstück“ markiert.
 | `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, `SUPABASE_DB_URL` | – | alle | **setzt Supabase selbst** |
 | `DATABASE_URL`, `DB_PORT`, `DB_PASSWORD`, `FUNCTIONS_PORT`, `FERMATA_TEST_DB_URL`, `TEST_DB_URL`, `STRIPE_API_BASE`, `STRIPE_MOCK_URL` | – | nur lokal/Tests | in Produktion **nicht** setzen |
 
-### 3.2 Supabase Auth (Dashboard → Authentication)
+### 3.2 Supabase Auth und API (Dashboard)
+
+- **API → Exposed schemas:** `public`, `graphql_public`, `app`, `billing`, `api` (wie `[api] schemas` in
+  `supabase/config.toml` von `build/docs`). `private`, `sensitive`, `safety`, `ops` **nicht** freigeben.
+- **Rate-Limit „E-Mails je Stunde“** deutlich über dem lokalen Wert 2 (`docs/bereiche/web.md`).
 
 - **SMTP:** Host `smtp-relay.brevo.com`, Benutzer und Passwort = Brevo-SMTP-Zugang (`BREVO_SMTP_USER`,
   `BREVO_SMTP_KEY` in `supabase/config.toml` als Kommentar), Absender wie `MAIL_FROM_ADDRESS`.
@@ -190,12 +195,9 @@ am ALB.
    **pg_net** im Dashboard einschalten (pgcrypto, citext, vector und Vault legen die Migrationen bzw. Supabase an).
 3. **Migrationen:** `supabase db push`. Sie laufen in Dateireihenfolge bis `20261003099000_function_privileges.sql`.
    Vorher beachten (Stand 03.10.2026):
-   - Nach der Zusammenführung von M2 und M4: **`app.require_admin()` gibt es in zwei Fassungen** (M2
-     `20261003000250_web_admin.sql`: `returns uuid`; M4 `20261003000410_matcher.sql`: `returns void`). PostgreSQL
-     lehnt das Ändern des Rückgabetyps mit `create or replace` ab – die Migration 0410 bricht dann ab. Muss bei der
-     Integration bereinigt werden.
-   - M2 legt `safety.verification_hashes` mit `if not exists` an, M7 (`…000710`) ohne – laut Kommentar in
-     `20261003000240_web_verification.sql` bei der Zusammenführung den Block in M2 entfernen.
+   - Aus dem **Hauptzweig** deployen (dort sind M2 und M3 zusammengeführt). Die Konflikte `app.require_admin()`
+     (zwei Rückgabetypen) und `safety.verification_hashes` (doppelt angelegt) sind dort gelöst (Merge-Commit
+     `2489e06`); in `build/docs` allein fehlen M2 und M3.
    - M2 nutzt einen **Event-Trigger** (`20261003000270_web_function_privileges.sql`); prüfen, ob die Rolle `postgres`
      im gehosteten Projekt Event-Trigger anlegen darf.
 4. **Prüfen** (SQL-Editor, Abschnitt 6).
@@ -203,9 +205,13 @@ am ALB.
    (Abschnitt 10).
 6. **Einstellungen** setzen (Abschnitt 3.4).
 7. **Secrets der Functions:** `supabase secrets set --env-file <datei>` mit den Werten aus 3.1 (Datei danach löschen).
-8. **Functions deployen.** `supabase/config.toml` setzt `verify_jwt = false` bisher nur für `waitlist-signup`,
-   `waitlist-confirm`, `waitlist-status`, `waitlist-unsubscribe`, `link-hit`. Alle anderen ohne Supabase-Anmeldung
-   aufgerufenen Functions brauchen beim Deploy `--no-verify-jwt` (oder einen Eintrag in `config.toml`):
+8. **Functions deployen.** Im Hauptzweig setzt `supabase/config.toml` `verify_jwt = false` für alle 16 Functions, die
+   ohne Supabase-Anmeldung aufgerufen werden (in `build/docs` nur für die 5 der Warteliste). **Achtung:** Dieselbe
+   Datei hat im Hauptzweig bei der Zusammenführung von M2 alle übrigen Abschnitte verloren (`[api]`, `[auth]`, …;
+   57 statt 444 Zeilen). Für das gehostete Projekt zählen ohnehin die Dashboard-Einstellungen (Abschnitt 3.2 und
+   „Exposed schemas“ = `public`, `app`, `billing`, `api`); die Datei sollte trotzdem wiederhergestellt werden, sonst
+   laufen lokale Umgebungen und `supabase config push` mit Standardwerten (Registrierung offen, Schemas nicht
+   erreichbar). Sicherer Weg unabhängig vom Stand der Datei:
 
    ```bash
    # öffentlich oder mit eigenem Geheimnis/Signatur – ohne JWT-Prüfung
@@ -507,9 +513,10 @@ an (Schritt 1). Vorschläge gibt sie **nicht** frei, wenn sie dafür nicht einge
 
 ## Offene Punkte für Benn
 
-1. **Integration M2/M4:** `app.require_admin()` mit zwei Rückgabetypen – Migration bricht ab (Abschnitt 4, Schritt 3).
-2. **`supabase/config.toml`** um `verify_jwt = false` für alle Functions aus Schritt 8 ergänzen (Datei gehört dem
-   Kern), damit ein Deploy ohne Flags nicht versehentlich Webhooks sperrt.
+1. **`supabase/config.toml` im Hauptzweig wiederherstellen** (bei der Zusammenführung von M2 auf die
+   `[functions.*]`-Abschnitte geschrumpft; `[api]` und `[auth]` fehlen).
+2. Im gehosteten Projekt „Exposed schemas“ (`public`, `app`, `billing`, `api`) und alle Auth-Einstellungen aus
+   Abschnitt 3.2 von Hand setzen und mit einem Screenshot belegen.
 3. **HTML aus Edge Functions** auf `*.supabase.co` prüfen; ggf. Custom Domain.
 4. **Auswahl-Job:** Attrappen in Produktion verweigern (Standard `fake`).
 5. **Region `fra1` für die Web-App** festlegen.

@@ -35,7 +35,7 @@ E-Mail: [[datenschutz@… (Frage A7)]] · Telefon: [[… (Frage A7)]]
 ## 3. Aufruf der Web-App, Cookies und Speicher im Browser
 
 **Auslieferung:** Die Web-App wird von Vercel Inc. ausgeliefert; die Server-Funktionen laufen in Frankfurt
-(Region `fra1`) [[prüfen: Region der Web-App in `vercel.json` festlegen]]. Beim Aufruf verarbeitet Vercel technisch
+(Region `fra1`). Beim Aufruf verarbeitet Vercel technisch
 notwendige Daten (IP-Adresse, Zeitpunkt, Adresse der Seite, Browser-Kennung), um die Seite auszuliefern und vor
 Missbrauch zu schützen. Rechtsgrundlage: Art. 6 Abs. 1 lit. f DSGVO. Speicherdauer der Protokolle bei Vercel:
 [[laut Vercel-Vertrag eintragen]].
@@ -82,7 +82,8 @@ Zukunft. Was dann geschieht, steht bei der jeweiligen Verarbeitung.
   nicht ab [[Frage B1: so lassen]].
 - **Zweck:** Abgleich mit Ihrem Ausweis, Altersprüfung (ab 18), Kontakttausch (nur Telefon, nur wenn Sie es wollen).
   Für die Auswahl nutzen wir **nur den Mittelpunkt Ihrer Postleitzahl**, nie Ihre Anschrift. Die PLZ-Mittelpunkte
-  liegen in unserer Datenbank (offene Daten von GeoNames); es wird kein externer Kartendienst gefragt.
+  liegen in unserer Datenbank; es wird kein externer Kartendienst gefragt. Quelle: Postleitzahlen: GeoNames
+  (geonames.org), Lizenz CC BY 4.0, aufbereitet von zauberware/postal-codes-json-xml-csv.
 - **Grundlage:** Art. 6 Abs. 1 lit. b DSGVO.
 - **Nach der Ausweisprüfung** lassen sich Name und Geburtsdatum nicht mehr ändern (sonst wäre die Prüfung wertlos).
   Bei Fehlern wenden Sie sich an uns.
@@ -423,4 +424,4 @@ Wir passen diese Erklärung an, wenn sich Fermata ändert. Die jeweils gültige 
 9. **Löschfristen** für Meldungen, Protokolle, Vertragsunterlagen festlegen (Löschkonzept) und hier eintragen.
 10. Drittland-Grundlage je Anbieter (DPF-Zertifizierung prüfen) und AV-Verträge (av-liste.md).
 11. Local Storage für das Farbschema: § 25 Abs. 2 Nr. 2 TDDDG ausreichend?
-12. Region `fra1` für die Web-App in Vercel einstellen (im Branch `build/web` gibt es noch keine `vercel.json`).
+12. Quellenangabe der PLZ-Mittelpunkte aufnehmen (Abschnitt 6) – Pflicht nach CC BY 4.0.

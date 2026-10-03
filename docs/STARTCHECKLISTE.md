@@ -66,11 +66,11 @@ Stufe A braucht nur die mit „A“ markierten Punkte.
 - [ ] **A** **Lighthouse auf der echten Domain** (mobil und Desktop, alle öffentlichen Seiten) ≥ 95 in Leistung,
       Barrierefreiheit, Best Practices; SEO außer den `noindex`-Seiten.
 - [ ] **A** axe-Prüfung auf der echten Domain (hell und dunkel) ohne Verstöße.
-- [ ] **B (Blocker)** Integration von M2: Konflikt `app.require_admin()` (`returns uuid` vs. `returns void`) und
-      doppelte Tabelle `safety.verification_hashes` bereinigt; alle Migrationen laufen auf einer leeren Datenbank
-      durch; CI grün.
-- [ ] **B (Blocker)** Alle Functions mit der richtigen JWT-Einstellung deployt (RUNBOOK Abschnitt 4, Schritt 8);
-      `supabase/config.toml` ergänzt.
+- [ ] **B (Blocker)** Deploy aus dem Hauptzweig (M2 und M3 zusammengeführt, Merge-Commit `2489e06`); alle
+      Migrationen laufen auf einer leeren Datenbank durch; CI grün.
+- [ ] **B (Blocker)** `supabase/config.toml` im Hauptzweig wiederhergestellt (`[api]`, `[auth]` gingen beim Merge
+      verloren); im gehosteten Projekt „Exposed schemas“ und Auth-Einstellungen geprüft (RUNBOOK 3.2).
+- [ ] **B (Blocker)** Alle Functions mit der richtigen JWT-Einstellung deployt (RUNBOOK Abschnitt 4, Schritt 8).
 - [ ] **B (Blocker)** HTML-Seiten aus Functions (`trust-view`, `venue-confirm`, Kündigung/Widerruf per Link) werden
       im Browser als Seite angezeigt (ggf. Custom Domain).
 - [ ] **B (Blocker)** Auswahl-Job in Produktion mit `FERMATA_LLM_BACKEND=bedrock` und
@@ -90,7 +90,8 @@ Stufe A braucht nur die mit „A“ markierten Punkte.
 - [ ] **B** **Web-Push auf einem echten iPhone** (iOS ≥ 16.4, Web-App auf dem Home-Bildschirm) **und einem
       Android-Gerät** getestet: Einschalten, Erinnerung, Check-in in der Ruhezeit, Abschalten; Anmeldung mit Code in
       der installierten iPhone-Web-App.
-- [ ] **B** Region `fra1` für die Web-App gesetzt; CSP der Web-App um Stripe, LiveKit und Viola-Textdienst ergänzt.
+- [ ] **B** Region `fra1` der Web-App nach dem Deploy geprüft (`apps/web/vercel.json`); CSP der Web-App um Stripe,
+      LiveKit und Viola-Textdienst ergänzt (`FERMATA_CSP_EXTRA_CONNECT`, `FERMATA_CSP_EXTRA_FRAME`).
 - [ ] **B** Staging-Projekt getrennt von Produktion; keine Produktionsdaten in Staging.
 - [ ] **B** EventBridge-Zeitplan des Auswahl-Jobs aktiv; ein Lauf in Staging von „scheduled“ bis „approved“.
 - [ ] **B** Wiederherstellungstest eines Backups inkl. Entschlüsselung der Art.-9-Spalten (RUNBOOK Abschnitt 10).

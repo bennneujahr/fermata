@@ -11,10 +11,14 @@ Stand: 03.10.2026 · Meilenstein M8 · Grundlage: PLAN.md 2.2, 3.1–3.3 und der
 | Bereich | Quelle | Stand |
 |---|---|---|
 | M0, M1, M4, M5, M6, M7 | Branch `build/docs` (diese Arbeitskopie), `supabase/migrations/20261003000000` bis `…099000` | zusammengeführt |
-| M3 Viola | Hauptzweig `claude/dating-app-build-0uszhn` (Commit `e84647b`): `supabase/migrations/20261003000310_viola.sql`, `services/viola`, `supabase/functions/interview-*`, `docs/bereiche/viola.md` | zusammengeführt, aber noch nicht in `build/docs` |
-| M2 Web-App | Branch `build/web` (Commit `e70b4a5`): `supabase/migrations/20261003000210` bis `…000270`, `supabase/functions/{account-*,admin-invite,verification-*}`, `apps/web` | **noch im Bau**, Dokumentation `docs/bereiche/web.md` fehlt noch |
+| M3 Viola | Hauptzweig `claude/dating-app-build-0uszhn` (Commit `e84647b`): `supabase/migrations/20261003000310_viola.sql`, `services/viola`, `supabase/functions/interview-*`, `docs/bereiche/viola.md` | zusammengeführt im Hauptzweig, noch nicht in `build/docs` |
+| M2 Web-App | Hauptzweig (Merge-Commit `2489e06`, vorher Branch `build/web`): `supabase/migrations/20261003000210` bis `…000270`, `supabase/functions/{account-*,admin-invite,verification-*}`, `apps/web`, `docs/bereiche/web.md` | zusammengeführt im Hauptzweig am 03.10.2026 (während M8), noch nicht in `build/docs` |
 
-Was M2 betrifft, ist hier als „M2 (im Bau)“ markiert und muss nach der Zusammenführung noch einmal geprüft werden.
+Die Integration im Hauptzweig hat drei Konflikte gelöst, die diese Dokumente beim Schreiben noch gefunden hatten
+(`app.require_admin()` doppelt, `safety.verification_hashes` doppelt, `verify_jwt` fehlte für viele Functions).
+Dabei ist aber **`supabase/config.toml` auf 57 Zeilen geschrumpft** (nur noch `[functions.*]`); die Abschnitte
+`[api]` (über die API erreichbare Schemas) und `[auth]` (Registrierung aus, Code-Länge, TOTP, Mail-Vorlagen) fehlen
+dort. Diese Datei beschreibt die Einstellungen so, wie sie in `build/docs` (`supabase/config.toml`, 444 Zeilen) stehen.
 
 ---
 
@@ -84,7 +88,7 @@ Außerhalb Supabase: Vercel liefert die Seite aus (Zugriffsprotokolle bei Vercel
 die Server-Funktion `/s/[kürzel]` läuft in `fra1` und gibt keine IP weiter. Mails (Bestätigung, Willkommen) über
 Brevo. Im Browser: keine Cookies, kein Local Storage (Playwright-Test in `apps/landing/tests`).
 
-### 3.2 Anmeldung und Konto (M2 im Bau, Kern in `20261003000200_accounts.sql`)
+### 3.2 Anmeldung und Konto (M2, Kern in `20261003000200_accounts.sql`)
 
 | Tabelle | Inhalt | Zweck | Grundlage | Wer liest | Aufbewahrung, Löschung |
 |---|---|---|---|---|---|
@@ -115,7 +119,7 @@ Folgen eines Widerrufs (M2, `api.revoke_consent` in `20261003000230_web_onboardi
 `push` → alle Push-Abos gelöscht; `gespraech` → alle Transkripte gelöscht. `biometrie` und `kontakttausch`: kein
 Löschen (bereits getauschte Kontakte bleiben sichtbar). `agb` und `datenschutz_kenntnis` nur über die Kontolöschung.
 
-### 3.5 Ausweisprüfung (Didit, M2 im Bau: `20261003000240_web_verification.sql`)
+### 3.5 Ausweisprüfung (Didit, M2: `20261003000240_web_verification.sql`)
 
 | Tabelle | Inhalt | Zweck | Grundlage | Wer liest | Aufbewahrung, Löschung |
 |---|---|---|---|---|---|
@@ -291,7 +295,7 @@ Alle Jobs entstehen in den Migrationen, sofern pg_cron verfügbar ist (bei Supab
 | `fermata-waitlist-cleanup` | stündlich, Minute 23 | `api.waitlist_cleanup()` | löscht unbestätigte Wartelisten-Einträge nach 7 Tagen (ab letzter Mail), Drossel-Einträge nach 24 h, Tagessalze nach 2 Tagen | `20261003000100_waitlist.sql` |
 | `fermata-purge-transcripts` | stündlich, Minute 17 | `ops.purge_transcripts()` | löscht Transkripte mit `delete_at ≤ jetzt` (30 Tage) | `20261003000300_profile_interview.sql` |
 | `fermata-expire-interviews` | alle 10 min | `ops.expire_interview_sessions()` | beendet verfallene Gesprächsanfragen und hängende Sitzungen (löscht nichts) | `20261003000310_viola.sql` (Hauptzweig) |
-| `fermata-expire-invitations` | stündlich, Minute 41 | `ops.expire_invitations()` | löscht Konten aus abgelaufenen, nie angenommenen Einladungen (samt Einladung) | `20261003000230_web_onboarding.sql` (M2, im Bau) |
+| `fermata-expire-invitations` | stündlich, Minute 41 | `ops.expire_invitations()` | löscht Konten aus abgelaufenen, nie angenommenen Einladungen (samt Einladung) | `20261003000230_web_onboarding.sql` (M2) |
 | `fermata-purge-match-scores` | täglich 03:23 | `ops.purge_match_scores()` | löscht `app.pair_candidates` und `app.match_run_members` älter als 12 Monate | `20261003000410_matcher.sql` |
 | `fermata-schedule-match-runs` | stündlich, Minute 7 | `app.schedule_due_match_runs()` | legt fällige Auswahl-Läufe an (löscht nichts) | `20261003000410_matcher.sql` |
 | `fermata-evening-deadlines` | alle 5 min (`evening.deadline_check_minutes`) | `ops.process_evening_deadlines()` | Fristen, Erinnerungen, Check-in, Rückmeldung, Ergebnis (löscht nichts) | `20261003000560_evening_jobs.sql` |
@@ -354,5 +358,7 @@ Prüfen nach dem Deploy: `select jobname, schedule, command, active from cron.jo
    (3 Jahre) behalten oder nicht?
 7. **Auftragsverarbeitung und Drittland** für jeden Dienst in [av-liste.md](recht/av-liste.md) klären.
 8. **Bedrock-Weg** (EU-Geo-Profil mit London/Zürich oder Mantle regional) festlegen und in die Datenschutzerklärung.
-9. Nach Zusammenführung von **M2**: diese Datei mit `docs/bereiche/web.md` abgleichen (Cookies der Web-App, Region
-   `fra1` für die Web-App – im Branch `build/web` gibt es noch keine `vercel.json` mit `fra1`).
+9. **`supabase/config.toml` im Hauptzweig wiederherstellen** (Abschnitte `[api]` und `[auth]` sind bei der
+   Zusammenführung von M2 verloren gegangen, Merge-Commit `2489e06`).
+10. Pflicht-Quellenangabe der PLZ-Mittelpunkte („Postleitzahlen: GeoNames (geonames.org), CC BY 4.0“) in
+    Datenschutzerklärung oder Impressum (`docs/bereiche/web.md`).

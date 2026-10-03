@@ -4,8 +4,8 @@
 > Stand: 03.10.2026 · Fassung 0.1 · Verfasst aus dem Code (Datenkarte: [`docs/DATA.md`](../DATA.md)).
 > Verantwortlich: [[Name/Firma]] · Datenschutzbeauftragter: [[Name (B15)]] – Stellungnahme nach Art. 35 Abs. 2:
 > [[ausstehend]].
-> Stand des Codes: M0, M1, M4–M7 (Branch `build/docs`), M3 Viola (Hauptzweig, Commit `e84647b`), M2 Web-App
-> (Branch `build/web`, **im Bau**).
+> Stand des Codes: M0, M1, M4–M7 (Branch `build/docs`); M3 Viola (Commit `e84647b`) und M2 Web-App (Merge-Commit
+> `2489e06`) im Hauptzweig `claude/dating-app-build-0uszhn`.
 
 ---
 
@@ -137,7 +137,7 @@ Risiko = Kombination, vor Maßnahmen („roh“) und danach („rest“).
 | Eigenes Schema `sensitive`, Tabellen gehören `fermata_sensitive`, Rechte für `service_role`, `anon`, `authenticated` entzogen | `20261003000200_accounts.sql` | umgesetzt |
 | Spaltenverschlüsselung `pgp_sym_encrypt` (AES-256), Schlüssel `fermata_sensitive_key` in Supabase Vault | `sensitive.enc/dec`, `sensitive.key()` | umgesetzt |
 | Auswahl nur über Ja/Nein-Funktionen (einzeln und im Stapel), Fairness nur k-anonym (k ≥ 5, nie gekreuzt) | `sensitive.*_compatible(_pairs)`, `sensitive.match_run_fairness`, `ops.k_anonymous_groups` (`…000410`) | umgesetzt, Tests `400_matcher.test.sql`, `test_db_checks.py` |
-| Keine Admin-Funktion zeigt Art.-9-Angaben | `20261003000250_web_admin.sql` (M2) | umgesetzt (M2 im Bau) |
+| Keine Admin-Funktion zeigt Art.-9-Angaben | `20261003000250_web_admin.sql` (M2) | umgesetzt |
 | Text „Warum Sie beide“: Wortfilter (Religion, Gesundheit, Sexualität, Geschlecht, Herkunft …, Namen, PLZ) und Prüf-Agent; bei Treffer neutraler Ersatztext; Benn prüft vor Freigabe | `services/matcher/src/fermata_matcher/art9.py`, `pairings.review_notes` | umgesetzt |
 | Eingaben an das LLM der Auswahl ohne Namen, PLZ, IDs, Art. 9; Geschlechtshinweise neutralisiert | `docs/bereiche/matcher.md` Abschnitt 7 | umgesetzt |
 | Gespräch: Art.-9-Sätze nicht notiert, nicht in Zusammenfassung/Profil, im Transkript ersetzt; Datenbank lehnt Treffer erneut ab | `app.art9_categories`, `api.agent_save_*` (`…000310`) | umgesetzt |

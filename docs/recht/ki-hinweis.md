@@ -4,7 +4,7 @@
 > Stand: 03.10.2026. Grundlage: Code von Viola (M3, im Hauptzweig `claude/dating-app-build-0uszhn`, Commit
 > `e84647b`): `services/viola/src/viola/prompts/saetze.md`, `…/prompts/system.md`,
 > `supabase/functions/interview-token/handler.ts`, `supabase/migrations/20261003000310_viola.sql`; schriftlicher
-> Hinweis der Web-App in `ops.legal_documents` (Art `ki_hinweis`, Branch `build/web`).
+> Hinweis der Web-App in `ops.legal_documents` (Art `ki_hinweis`, M2, `20261003000210_web_settings_legal.sql`).
 
 ## 1. Worum es geht
 

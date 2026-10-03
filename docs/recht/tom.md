@@ -3,7 +3,7 @@
 > **ENTWURF – nicht rechtsverbindlich, Prüfung durch Anwalt/Datenschutzbeauftragten ausstehend.**
 > Stand: 03.10.2026. Jede technische Maßnahme nennt die Stelle im Code. Status: **umgesetzt** (im Code und getestet),
 > **Konfiguration** (Benn stellt beim Anbieter ein, siehe [Runbook](../RUNBOOK.md)), **TODO** (noch zu tun).
-> M2 (Web-App) ist im Branch `build/web` noch im Bau; M3 (Viola) liegt im Hauptzweig (Commit `e84647b`).
+> M2 (Web-App, Merge-Commit `2489e06`) und M3 (Viola, Commit `e84647b`) liegen im Hauptzweig `claude/dating-app-build-0uszhn`.
 
 ## 1. Vertraulichkeit
 
@@ -14,7 +14,7 @@
 | Keine eigenen Server-Räume; Rechenzentren der Anbieter (AWS Frankfurt über Supabase und eigenes AWS-Konto, Vercel) | Zertifizierungen der Anbieter [[ISO 27001/SOC 2 je Anbieter ablegen]] | Konfiguration |
 | Zwei-Faktor für alle Anbieter-Konten (Supabase, Vercel, AWS-Root und IAM, Stripe, Brevo, Didit, Deepgram, GitHub, Domain) | Passwort-Manager, Hardware- oder App-Faktor | TODO (organisatorisch) |
 | Admin-Bereich der App nur mit Zwei-Faktor (TOTP, Supabase-Stufe `aal2`) | `app.is_admin()` (`20261003000000_foundation.sql`); Einrichtung `apps/web/src/app/admin/mfa` (M2) | umgesetzt |
-| Anmeldung der Mitglieder ohne Passwort (6-stelliger Code, 15 Minuten gültig), Selbstregistrierung aus | `supabase/config.toml` (`enable_signup = false`, `otp_length = 6`, `otp_expiry = 900`) | umgesetzt |
+| Anmeldung der Mitglieder ohne Passwort (6-stelliger Code, 15 Minuten gültig), Selbstregistrierung aus, nur eingeladene Adressen (`shouldCreateUser: false`) | `supabase/config.toml` in `build/docs` (`enable_signup = false`, `otp_length = 6`, `otp_expiry = 900`); gehostet: Dashboard | umgesetzt (Dashboard: Konfiguration) |
 | Arbeitsrechner von Benn: Festplattenverschlüsselung, Bildschirmsperre, aktuelle Updates | – | TODO (organisatorisch) |
 
 ### 1.2 Zugriff auf Daten (Berechtigungen)
@@ -22,7 +22,7 @@
 | Maßnahme | Umsetzung | Status |
 |---|---|---|
 | **Row Level Security** auf jeder Tabelle; `anon` und `authenticated` ohne Standardrechte, jede Tabelle ausdrücklich | Fundament; RLS-Test über alle Tabellen (M2) | umgesetzt |
-| Über die API erreichbar nur `public`, `app`, `billing`, `api` (dazu `graphql_public` als Supabase-Standard); `private`, `sensitive`, `safety`, `ops` verborgen | `supabase/config.toml` `[api] schemas` | umgesetzt; **prüfen:** GraphQL-Schnittstelle im gehosteten Projekt abschalten, wenn nicht genutzt |
+| Über die API erreichbar nur `public`, `app`, `billing`, `api` (dazu `graphql_public` als Supabase-Standard); `private`, `sensitive`, `safety`, `ops` verborgen | `supabase/config.toml` `[api] schemas` (in `build/docs`; im Hauptzweig ging der Abschnitt beim Merge von M2 verloren) | umgesetzt; im gehosteten Projekt **Konfiguration** im Dashboard; **prüfen:** GraphQL-Schnittstelle abschalten, wenn nicht genutzt |
 | **Ausführungsrechte** von Funktionen: PUBLIC darf keine Fermata-Funktion ausführen; `anon` nur eine Liste öffentlicher Funktionen; dauerhaft per Test geprüft; neue Funktionen bekommen das Recht per Event-Trigger entzogen | `20261003099000_function_privileges.sql`, `supabase/tests/990_privileges.test.sql`, `20261003000270_web_function_privileges.sql` (M2) | umgesetzt (Fund aus M5/M6, im Kern behoben) |
 | Alle Funktionen mit erhöhten Rechten `security definer` mit `search_path = ''` und eigener Prüfung, wer aufruft | alle Migrationen | umgesetzt |
 | Art.-9-Tabellen gehören der Rolle `fermata_sensitive`; `service_role`, `anon`, `authenticated` haben keine Rechte | `20261003000200_accounts.sql` | umgesetzt |

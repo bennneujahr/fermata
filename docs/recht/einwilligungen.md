@@ -4,7 +4,7 @@
 > Stand: 03.10.2026 · Vorgeschlagene Fassung `2026-10-03-m8-entwurf`.
 > Grundlage: `app.consents.kind` (`supabase/migrations/20261003000200_accounts.sql`), Widerrufsfolgen in
 > `api.revoke_consent` und die heute gespeicherten Texte in `ops.legal_documents`
-> (`20261003000210_web_settings_legal.sql`, Branch `build/web`, M2 im Bau; Warteliste:
+> (`20261003000210_web_settings_legal.sql`, M2; Warteliste:
 > `20261003000100_waitlist.sql`).
 
 ## Grundsätze
