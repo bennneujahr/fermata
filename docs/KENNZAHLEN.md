@@ -1,7 +1,8 @@
 # Kennzahlen für das Dashboard (M9)
 
 Stand: 03.10.2026 · Entwurf. Definitionen, Abfrage-Skizzen gegen die echten Tabellen und Datenschutzregeln.
-Die Skizzen sind **Lesevorlagen für die Technik**, kein fertiger Code. Gebaut werden sollen sie als Admin-Funktionen
+Die Skizzen sind **Lesevorlagen für die Technik**, kein fertiger Code; sie wurden am 03.10.2026 gegen eine
+Test-Datenbank mit allen Migrationen des Hauptzweigs (Commit `2489e06`) auf Syntax und Spaltennamen geprüft. Gebaut werden sollen sie als Admin-Funktionen
 `api.admin_kpi_*` (security definer, `app.is_admin()`, Audit wie bei den übrigen Admin-Funktionen).
 Tabellen und Spalten: [DATA.md](DATA.md).
 
@@ -64,8 +65,10 @@ group by 1, 2 order by 2, 1;
 -- Quellen
 select coalesce(w.source, '(ohne)') as quelle, count(*) as eintraege,
        count(*) filter (where w.confirmed_at is not null) as bestaetigt,
-       (select sum(h.count) from public.link_hits h where h.slug = w.source) as aufrufe
-from public.waitlist w group by 1;
+       max(h.aufrufe) as aufrufe
+from public.waitlist w
+left join (select slug, sum(count) as aufrufe from public.link_hits group by slug) h on h.slug = w.source
+group by w.source;
 ```
 
 ## 3. Onboarding-Trichter

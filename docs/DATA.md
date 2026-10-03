@@ -57,7 +57,9 @@ dort. Diese Datei beschreibt die Einstellungen so, wie sie in `build/docs` (`sup
 | pg_cron-Jobs | laufen als `postgres` | Lösch- und Fristenjobs (Abschnitt 6) |
 
 **Wichtig für die DSFA:** Weil die Edge Functions als `postgres` verbunden sind und `postgres` Mitglied von
-`fermata_sensitive` ist, könnten sie technisch auch Art.-9-Tabellen lesen und den Vault-Schlüssel abrufen. Der Code
+`fermata_sensitive` ist, könnten sie technisch auch Art.-9-Tabellen lesen und den Vault-Schlüssel abrufen (am
+03.10.2026 in einer Test-Datenbank mit allen Migrationen bestätigt: `postgres` liest `sensitive.profile_identity` und
+`vault.decrypted_secrets`, `service_role` erhält „permission denied“). Der Code
 tut das nur in den vorgesehenen Funktionen (Speichern, Export). Die Verschlüsselung schützt also gegen PostgREST
 (`service_role`), gegen die Auswahl-Rolle und gegen versehentliches Mitlesen, nicht gegen einen gestohlenen
 Datenbank-Zugang `postgres`. Empfehlung in [tom.md](recht/tom.md) (eigene, enge Login-Rolle für Edge Functions).
@@ -93,8 +95,8 @@ Brevo. Im Browser: keine Cookies, kein Local Storage (Playwright-Test in `apps/l
 | Tabelle | Inhalt | Zweck | Grundlage | Wer liest | Aufbewahrung, Löschung |
 |---|---|---|---|---|---|
 | `auth.users` (Supabase Auth) | E-Mail, Zeitpunkte der Anmeldung, Bestätigung | Anmeldung mit 6-stelligem Code | b | Person, Benn (über `api.admin_accounts`) | bis Kontolöschung; nie angenommene Einladung: nach `account.invitation_valid_days` (7) gelöscht (Job `fermata-expire-invitations`, M2) |
-| `auth.sessions`, `auth.refresh_tokens`, `auth.mfa_factors`, `auth.one_time_tokens` | Sitzungen (laut Supabase mit IP und Browser-Kennung – prüfen), Zwei-Faktor-Schlüssel (Admin) | Anmeldung, Sicherheit | b, f | Supabase Auth | mit der Person; Sitzungsdauer laut Auth-Einstellungen |
-| `auth.audit_log_entries` | Anmeldeereignisse mit IP-Adresse | Sicherheit | f | Benn im Supabase-Dashboard | **keine Löschfrist im Code** (Tabelle hängt nicht per Fremdschlüssel an der Person) – offen |
+| `auth.sessions`, `auth.refresh_tokens`, `auth.mfa_factors`, `auth.one_time_tokens` | Sitzungen mit IP und Browser-Kennung (Spalten `ip`, `user_agent` in GoTrue v2.180), Zwei-Faktor-Schlüssel (Admin) | Anmeldung, Sicherheit | b, f | Supabase Auth | mit der Person; Sitzungsdauer laut Auth-Einstellungen |
+| `auth.audit_log_entries` | Anmeldeereignisse mit IP-Adresse (Spalte `ip_address`, Inhalt in `payload`) | Sicherheit | f | Benn im Supabase-Dashboard | **keine Löschfrist im Code** (Tabelle hängt nicht per Fremdschlüssel an der Person) – offen |
 | `app.accounts` | Status, Anrede, freigeschaltete Gesprächstiefe, Gründungsstatus, SHA-256 der Wartelisten-E-Mail, Pause, Löschwunsch | Konto | b | Person (RLS), Benn, Auswahl (Status) | bis Kontolöschung |
 | `app.account_invitations` | E-Mail (Klartext), Wartelisten-Bezug, einladender Admin, Gültigkeit, angenommen/zurückgezogen | Einladung aus dem Admin | b, f | Benn, Functions | nie angenommen: mit dem Konto gelöscht (Job `fermata-expire-invitations`); sonst bis Kontolöschung (`ops.account_deletion_prepare` löscht auch nach E-Mail) |
 | `app.admin_users` | Admin-Kennung, Anzeigename | Admin-Rechte | b, f | Admin selbst | bis Entfernung |
