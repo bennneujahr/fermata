@@ -1,0 +1,38 @@
+---
+// Rechtstext-Seite (ENTWURF). [[…]] wird als hervorgehobener Platzhalter dargestellt.
+import type { LegalPage } from "../content/legal";
+import Base from "../layouts/Base.astro";
+interface Props {
+  page: LegalPage;
+}
+const { page } = Astro.props;
+const parts = (text: string) =>
+  text.split(/(\[\[[^\]]+\]\])/g).filter(Boolean).map((s) => (s.startsWith("[[") ? { ph: true, text: s.slice(2, -2) } : { ph: false, text: s }));
+---
+<Base title={page.title}>
+  <section class="page">
+    <div class="wrap-narrow">
+      <p class="eyebrow">Entwurf</p>
+      <h1 class="page-title">{page.heading}</h1>
+      <p class="draft-note">{page.draftNote}</p>
+      <p class="version">{page.version}</p>
+      <div class="prose">
+        {page.sections.map((s) => (
+          <>
+            <h2>{s.title}</h2>
+            {s.paragraphs?.map((p) => (
+              <p>{parts(p).map((x) => (x.ph ? <mark class="ph">{x.text}</mark> : x.text))}</p>
+            ))}
+            {s.list && (
+              <ul>
+                {s.list.map((li) => (
+                  <li>{parts(li).map((x) => (x.ph ? <mark class="ph">{x.text}</mark> : x.text))}</li>
+                ))}
+              </ul>
+            )}
+          </>
+        ))}
+      </div>
+    </div>
+  </section>
+</Base>

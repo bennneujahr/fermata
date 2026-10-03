@@ -1,0 +1,84 @@
+---
+import Fermate from "../components/Fermate.astro";
+import { willkommen as t } from "../content/pages";
+import Base from "../layouts/Base.astro";
+const texts = {
+  greeting: t.greeting,
+  regions: t.regions,
+  bonusNote: t.bonusNote,
+  bonusNoteOne: t.bonusNoteOne,
+  invite: { copied: t.invite.copied, copyFailed: t.invite.copyFailed },
+};
+---
+<Base title={t.title} noindex>
+  <section class="page" data-welcome data-texts={JSON.stringify(texts)}>
+    <div class="wrap">
+      <noscript><p class="noscript-note">{t.noscript}</p></noscript>
+      <div data-part="loading" class="page-center" role="status">
+        <Fermate class="page-mark" />
+        <p class="page-lead">{t.loading}</p>
+      </div>
+      <div data-part="missing" class="page-center" hidden>
+        <Fermate class="page-mark" />
+        <h1 class="page-title">{t.missing.heading}</h1>
+        <p class="page-lead">{t.missing.text}</p>
+        <div class="page-actions"><a class="btn btn-primary" href={t.missing.cta.href}>{t.missing.cta.label}</a></div>
+      </div>
+      <div data-part="error" class="page-center" hidden>
+        <Fermate class="page-mark" />
+        <p class="page-lead" role="alert">{t.error}</p>
+      </div>
+      <div data-part="ready" class="welcome" hidden>
+        <div>
+          <p class="eyebrow">{t.eyebrow}</p>
+          <h1 class="welcome-title" data-part="greeting"></h1>
+          <div class="place-card">
+            <Fermate class="place-mark" />
+            <p class="place-label">{t.placeLabel}</p>
+            <p class="place-number" data-part="place"></p>
+            <p class="place-region">{t.regionPrefix} <span data-part="region"></span></p>
+            <div class="place-notes">
+              <p data-part="bonus" hidden></p>
+              <p>{t.placeNote}</p>
+            </div>
+          </div>
+          <div class="founding-badge" data-part="founding" hidden>
+            <Fermate />
+            <div>
+              <strong>{t.founding.label}</strong>
+              <p>{t.founding.text} <a href={t.founding.link.href}>{t.founding.link.label}</a></p>
+            </div>
+          </div>
+        </div>
+        <div>
+          <div class="card">
+            <h2>{t.invite.title}</h2>
+            <div data-part="invite-open" hidden>
+              <p>{t.invite.text}</p>
+              <div class="copy-row">
+                <div class="field">
+                  <label for="invite-link">{t.invite.label}</label>
+                  <input class="input" id="invite-link" type="text" readonly data-part="invite-link" />
+                </div>
+                <button class="btn btn-primary" type="button" data-part="copy">{t.invite.copy}</button>
+              </div>
+              <p class="copy-status" data-part="copy-status" role="status"></p>
+            </div>
+            <p data-part="invite-used" hidden>{t.invite.used}</p>
+            <p data-part="invite-none" hidden>{t.invite.none}</p>
+          </div>
+          <div class="card">
+            <h2>{t.nextTitle}</h2>
+            <ul class="next-list">
+              {t.next.map((n) => <li>{n}</li>)}
+            </ul>
+          </div>
+          <a class="unsubscribe-link" href="/abmelden" data-part="unsubscribe">{t.unsubscribe}</a>
+        </div>
+      </div>
+    </div>
+  </section>
+</Base>
+<script>
+  import "../scripts/willkommen";
+</script>

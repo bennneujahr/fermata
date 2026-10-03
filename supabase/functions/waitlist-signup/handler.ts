@@ -3,7 +3,7 @@
 // Die Antwort ist für neue, unbestätigte und bestätigte Adressen gleich (202 {"ok": true}).
 import { z } from "zod";
 import { db } from "../_shared/db.ts";
-import { functionsUrl, siteUrl } from "../_shared/env.ts";
+import { functionsUrl, optionalEnv, siteUrl } from "../_shared/env.ts";
 import { clientIp, handler, HttpError, json, readJson } from "../_shared/http.ts";
 import { sendMail } from "../_shared/mail/mod.ts";
 import { waitlistAlreadyMail, waitlistConfirmMail } from "../_shared/mail/templates/waitlist.ts";
@@ -50,6 +50,12 @@ export function validate(b: z.infer<typeof Body>): Record<string, FieldError> {
 
 const accepted = (req: Request) => json(req, { ok: true }, 202);
 
+/** Supabase führt die Function dann in Frankfurt aus (Regional Invocation, PLAN 2.1). */
+function regionParam(): string {
+  const region = optionalEnv("FERMATA_FUNCTIONS_REGION") ?? "eu-central-1";
+  return region === "none" ? "" : `&forceFunctionRegion=${encodeURIComponent(region)}`;
+}
+
 export default handler(["POST"], async (req) => {
   const parsed = Body.safeParse(await readJson(req));
   if (!parsed.success) throw new HttpError(400, "invalid_body");
@@ -88,7 +94,7 @@ export default handler(["POST"], async (req) => {
       ]);
       const draft = waitlistConfirmMail({
         firstName: r.first_name ?? "",
-        confirmUrl: `${functionsUrl()}/waitlist-confirm?t=${confirm.token}`,
+        confirmUrl: `${functionsUrl()}/waitlist-confirm?t=${confirm.token}${regionParam()}`,
         validHours,
         retentionDays,
       });

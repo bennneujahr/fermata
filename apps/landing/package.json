@@ -7,7 +7,7 @@
   "scripts": {
     "prepare-assets": "node scripts/copy-brand.mjs",
     "dev": "node scripts/copy-brand.mjs && astro dev --port 4331",
-    "build": "node scripts/copy-brand.mjs && astro build && node scripts/check-dist.mjs",
+    "build": "node scripts/copy-brand.mjs && node scripts/pull-settings.mjs && astro build && node scripts/check-dist.mjs",
     "preview": "astro preview --port 4331",
     "typecheck": "astro check",
     "test:e2e": "playwright test",

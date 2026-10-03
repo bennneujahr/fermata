@@ -1,0 +1,43 @@
+---
+import { site, telHref } from "../content/site";
+import Fermate from "./Fermate.astro";
+const f = site.footer;
+---
+<footer class="site-footer">
+  <div class="wrap">
+    <div class="footer-grid">
+      <div>
+        <a class="brand" href="/" aria-label={site.homeLabel}>
+          <Fermate class="brand-mark" />
+          <span class="brand-name">{site.name}</span>
+        </a>
+        <p class="footer-tagline">{f.tagline}</p>
+      </div>
+      {f.columns.map((col) => (
+        <div class="footer-col">
+          <h2>{col.title}</h2>
+          <ul>
+            {col.links.map((l) => (
+              <li><a href={l.href}>{l.label}</a></li>
+            ))}
+          </ul>
+        </div>
+      ))}
+      <div class="footer-col">
+        <h2>{f.help.title}</h2>
+        <p>
+          {f.help.text}<br />
+          <a class="footer-number" href={telHref(f.help.number)}>{f.help.number}</a><br />
+          {f.help.hours}
+        </p>
+        <p>{f.help.emergency}</p>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <p>{f.copyright}</p>
+      <ul class="footer-facts">
+        {f.facts.map((fact) => <li>{fact}</li>)}
+      </ul>
+    </div>
+  </div>
+</footer>

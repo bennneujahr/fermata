@@ -1,0 +1,11 @@
+---
+// Die gravierte Fermate (packages/brand/svg/fermate-graviert.svg) als Inline-SVG, rein dekorativ.
+interface Props {
+  class?: string;
+}
+const { class: className } = Astro.props;
+---
+<svg class={className} viewBox="0 0 120 72" aria-hidden="true" focusable="false">
+  <path fill="currentColor" d="M3.2 64.6C3.4 28.6 28 5 60 5s56.6 23.6 56.8 59.6c0 1.3-1.9 1.4-2.1.1C110.6 36.2 88.8 15.4 60 15.4S9.4 36.2 5.3 64.7c-.2 1.3-2.1 1.2-2.1-.1Z"></path>
+  <circle fill="currentColor" cx="60" cy="56" r="7.6"></circle>
+</svg>
