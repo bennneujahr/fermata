@@ -67,6 +67,9 @@ grant select, insert, update on app.match_run_members to fermata_matcher;
 create policy match_run_members_matcher_write on app.match_run_members for all to fermata_matcher using (true) with check (true);
 
 -- Der Job berechnet fehlende Embeddings (Titan V2) aus der geprüften Zusammenfassung ohne Namen und Art.-9-Inhalte.
+-- Für den Typ vector und den Operator <=> (pgvector) braucht er das Schema extensions (anon/authenticated haben das
+-- bei Supabase ohnehin). Der Schlüssel für die Art.-9-Spalten liegt in Vault und bleibt unerreichbar.
+grant usage on schema extensions to fermata_matcher;
 grant insert, update on app.profile_embeddings to fermata_matcher;
 create policy profile_embeddings_matcher_insert on app.profile_embeddings for insert to fermata_matcher with check (true);
 create policy profile_embeddings_matcher_update on app.profile_embeddings for update to fermata_matcher using (true) with check (true);
