@@ -113,7 +113,10 @@ export async function respondCheckin(
 /** „Abend teilen“: Ansicht für die Vertrauensperson (trust-view, JSON). null = Link ungültig. */
 export async function loadTrustView(token: string): Promise<ActionResult<TrustView | null>> {
   if (!TOKEN.test(token)) return { ok: true, data: null };
-  const res = await callPublicFunction<TrustView>("trust-view", { method: "GET", query: { t: token } });
+  // Bevorzugt mit dem Schlüssel im JSON-Körper (landet nicht in Zugriffsprotokollen); kann die Function das noch
+  // nicht (405), wie bisher per GET mit ?t=.
+  let res = await callPublicFunction<TrustView>("trust-view", { method: "POST", body: { t: token } });
+  if (res.status === 405 || (!res.ok && !res.json)) res = await callPublicFunction<TrustView>("trust-view", { method: "GET", query: { t: token } });
   if (res.ok && res.data) return { ok: true, data: res.data };
   if (res.status === 404 || res.status === 400) return { ok: true, data: null };
   return { ok: false, error: res.error ?? "generic" };

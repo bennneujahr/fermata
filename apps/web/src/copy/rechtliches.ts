@@ -20,7 +20,6 @@ export const legal = {
     "datenschutz_kenntnis",
     "art9_profile",
     "art9_religion",
-    "art9_health",
     "biometrie",
     "gespraech",
     "push",

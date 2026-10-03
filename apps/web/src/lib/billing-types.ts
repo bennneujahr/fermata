@@ -75,6 +75,8 @@ export interface OrderSummary {
   summary_hash: string;
   /** Vertrag mit der Härtung: Text des Häkchens „vorzeitiger Beginn“ (Pflicht vor dem Bestellknopf). */
   start_request_text?: string | null;
+  /** Fassung des Häkchen-Texts (wird mit der Bestellung gespeichert). */
+  start_request_version?: string | null;
   /** Vertrag mit der Härtung: Adresse der Widerrufsbelehrung (z. B. /rechtliches/widerruf). */
   withdrawal_policy_url?: string | null;
 }
