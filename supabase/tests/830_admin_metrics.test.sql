@@ -2,7 +2,7 @@
 -- Nur Admin mit Zwei-Faktor, k-Anonymität (k ≥ 5), keine Art.-9-Merkmale, Audit, Reihenfolge der Warteliste,
 -- Abende zum Klären, Gespräche nur bei offenem Sicherheitsfall.
 begin;
-select plan(42);
+select plan(43);
 
 create function pg_temp.u(n int) returns uuid language sql as $$ select ('00000000-0000-0000-0000-000000000' || n)::uuid; $$;
 grant execute on function pg_temp.u(int) to public;
@@ -162,6 +162,14 @@ select is((select count(*)::int from api.admin_pairing_times('83000000-0000-0000
 select is((select bool_or(preview) from api.admin_pairing_times('83000000-0000-0000-0000-0000000000a1')), false,
   'Terminvorschläge: freigegebene zeigen die Zeiten des Abends, keine Vorschau');
 select tests.reset_role();
+
+-- Keine Admin-Funktion, die ins Audit schreibt, darf STABLE sein (PostgREST: schreibgeschützte Transaktion).
+select is(
+  (select coalesce(string_agg(p.oid::regprocedure::text, ', ' order by 1), '')
+   from pg_proc p join pg_namespace n on n.oid = p.pronamespace
+   where n.nspname = 'api' and p.provolatile in ('s', 'i')
+     and (p.prosrc ilike '%ops.audit%' or p.prosrc ilike '%insert into%')),
+  '', 'Schreibende API-Funktionen sind VOLATILE');
 
 select * from finish();
 rollback;

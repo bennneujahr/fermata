@@ -5,6 +5,8 @@ import { num } from "@/app/admin/_lib/format";
 export interface Column {
   key: string;
   label: string;
+  /** Kurze Beschriftung unter der Achse (sonst nur erste und letzte). */
+  short?: string;
   value: number;
 }
 
@@ -18,19 +20,20 @@ export function ColumnChart({
   columns,
   labelHeader,
   valueHeader,
-  every = 1,
+  table = true,
 }: {
   title: string;
   summary: string;
   columns: Column[];
   labelHeader: string;
   valueHeader: string;
-  /** Jede n-te Beschriftung unter der Achse zeigen. */
-  every?: number;
+  /** Eigene Werte-Tabelle zeigen (aus, wenn die Seite eine ausführlichere Tabelle hat). */
+  table?: boolean;
 }) {
   const max = Math.max(1, ...columns.map((x) => x.value));
   const first = columns[0];
   const last = columns[columns.length - 1];
+  const all = columns.length <= 12 && columns.every((x) => x.short);
   return (
     <figure className="chart">
       <figcaption className="chart__title">{title}</figcaption>
@@ -50,8 +53,8 @@ export function ColumnChart({
             );
           })}
         </ol>
-        <div className="chart__xlabels" aria-hidden="true">
-          {every <= 1 && columns.length <= 12 ? columns.map((x) => <span key={x.key}>{x.label}</span>) : (
+        <div className={all ? "chart__xlabels chart__xlabels--all" : "chart__xlabels"} aria-hidden="true">
+          {all ? columns.map((x) => <span key={x.key}>{x.short}</span>) : (
             <>
               <span>{first?.label}</span>
               <span>{last?.label}</span>
@@ -59,6 +62,7 @@ export function ColumnChart({
           )}
         </div>
       </div>
+      {table ? (
       <details className="values">
         <summary>{c.chartTable}</summary>
         <TableWrap label={title}>
@@ -82,6 +86,7 @@ export function ColumnChart({
           </table>
         </TableWrap>
       </details>
+      ) : null}
     </figure>
   );
 }

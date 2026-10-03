@@ -31,7 +31,7 @@ export default async function WaitlistPage({ searchParams }: { searchParams: Pro
         <p className="muted text-sm">{c.generatedAt(dateTime(stats.generated_at))}</p>
       </PageHeader>
 
-      <Card title={c.totals} headingLevel={2}>
+      <Card title={c.totals} headingLevel={2} id="gesamt">
         <Figures
           items={[
             { label: c.confirmed, value: num(stats.totals.confirmed) },
@@ -44,8 +44,8 @@ export default async function WaitlistPage({ searchParams }: { searchParams: Pro
         />
       </Card>
 
-      <div className="two-col">
-        <Card title={c.byRegion} headingLevel={2}>
+      <div className="stack">
+        <Card title={c.byRegion} headingLevel={2} id="regionen">
           <TableWrap label={c.byRegion}>
             <table className="table table--dense">
               <thead>
@@ -71,7 +71,7 @@ export default async function WaitlistPage({ searchParams }: { searchParams: Pro
             </table>
           </TableWrap>
         </Card>
-        <Card title={c.bySource} headingLevel={2}>
+        <Card title={c.bySource} headingLevel={2} id="quellen">
           <TableWrap label={c.bySource}>
             <table className="table table--dense">
               <thead>
@@ -105,7 +105,7 @@ export default async function WaitlistPage({ searchParams }: { searchParams: Pro
         </Card>
       </div>
 
-      <Card title={c.byDay} headingLevel={2}>
+      <Card title={c.byDay} headingLevel={2} id="tage">
         <p className="soft text-sm">{c.byDayLead}</p>
         {days.length === 0 ? (
           <p className="muted">{c.empty}</p>
@@ -117,6 +117,7 @@ export default async function WaitlistPage({ searchParams }: { searchParams: Pro
               columns={days.map((d) => ({ key: d.day, label: dayMonth(d.day), value: d.signups }))}
               labelHeader={c.dayCols.day}
               valueHeader={c.dayCols.signups}
+              table={false}
             />
             <details className="values">
               <summary>{`${c.dayCols.signups} / ${c.dayCols.confirmations}: ${adminCommon.chartTable}`}</summary>
@@ -145,7 +146,7 @@ export default async function WaitlistPage({ searchParams }: { searchParams: Pro
         )}
       </Card>
 
-      <Card title={c.invite.title} headingLevel={2} variant="accent">
+      <Card title={c.invite.title} headingLevel={2} variant="accent" id="einladen">
         <p className="soft">{c.invite.lead}</p>
         <form method="get" className="inline-form" role="search" aria-label={c.invite.title}>
           <Select label={c.invite.region} name="region" defaultValue={region} options={GROUPS.map((g) => ({ value: g, label: labelOf(c.groups, g) }))} />

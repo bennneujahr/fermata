@@ -229,7 +229,7 @@ begin
     'runtime_seconds', round(extract(epoch from (r.finished_at - r.started_at))::numeric, 1))
   into v_last_run
   from app.match_runs r
-  where r.status in ('review', 'approved', 'partially_approved', 'cancelled')
+  where r.status in ('review', 'approved', 'partially_approved', 'cancelled') and r.started_at is not null
   order by coalesce(r.finished_at, r.created_at) desc limit 1;
 
   select jsonb_build_object(
@@ -238,7 +238,7 @@ begin
     'cost_eur_avg', round(avg(r.cost_eur), 2),
     'cost_eur_per_proposal', round(sum(r.cost_eur) / nullif(sum(r.proposed_pairs), 0), 3))
   into v_runs
-  from app.match_runs r where r.status in ('review', 'approved', 'partially_approved', 'cancelled');
+  from app.match_runs r where r.status in ('review', 'approved', 'partially_approved', 'cancelled') and r.started_at is not null;
 
   -- Abende: Ausgang (Verteilung, k-anonym)
   select jsonb_build_object(
@@ -488,6 +488,14 @@ end;
 $$;
 comment on function api.admin_case_sessions(uuid) is
   'Admin: Gespräche (nur Metadaten) einer Person, zu der ein offener Hinweis oder eine offene Meldung besteht. Im Audit.';
+
+-- ---------------------------------------------------------------------------
+-- 8. Fund aus der Oberfläche: PostgREST führt STABLE-Funktionen in einer schreibgeschützten Transaktion aus
+--    („cannot execute INSERT in a read-only transaction“). Diese beiden schreiben ins Audit-Protokoll und
+--    müssen deshalb VOLATILE sein (in pgTAP fiel das nicht auf, dort ist die Transaktion beschreibbar).
+-- ---------------------------------------------------------------------------
+alter function api.admin_report(uuid) volatile;
+alter function api.admin_police_report_template(uuid) volatile;
 
 -- ---------------------------------------------------------------------------
 -- Rechte: nur angemeldete Personen dürfen aufrufen; jede Funktion prüft selbst app.is_admin() (aal2).

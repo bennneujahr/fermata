@@ -30,7 +30,7 @@ export function OpenTranscript({ sessionId, label }: { sessionId: string; label?
         ) : result.turns.length === 0 ? (
           <Notice tone="info">{c.empty}</Notice>
         ) : (
-          <div className="table-wrap" role="region" aria-label={label ?? c.sessionInfo} tabIndex={0}>
+          <div className="table-wrap scroll-box" role="region" aria-label={label ?? c.sessionInfo} tabIndex={0}>
             <ol className="transcript">
               {result.turns.map((t, i) => (
                 <li key={i} className={`transcript__turn transcript__turn--${t.role === "person" ? "person" : "viola"}`}>
@@ -91,7 +91,7 @@ export function OpenTranscript({ sessionId, label }: { sessionId: string; label?
         onChange={(e) => setReason(e.target.value)}
         error={error}
         required
-        minLength={10}
+       
         maxLength={1000}
       />
       <div className="cluster">

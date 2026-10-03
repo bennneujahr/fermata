@@ -30,6 +30,7 @@ export default async function AppealsPage({ searchParams }: { searchParams: Prom
       {rows.map((a) => (
         <Card
           key={a.id}
+          id={`widerspruch-${a.id}`}
           headingLevel={2}
           title={a.person ?? "–"}
           eyebrow={`${c.received} ${dateTime(a.created_at)}`}

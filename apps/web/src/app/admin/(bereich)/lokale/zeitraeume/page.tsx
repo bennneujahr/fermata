@@ -17,7 +17,7 @@ export default async function PeriodsPage() {
   return (
     <>
       <PageHeader title={p.title} lead={p.lead} />
-      <Card title={p.createTitle} headingLevel={2}>
+      <Card title={p.createTitle} headingLevel={2} id="zeitraum-anlegen">
         <ActionForm action={createPeriodAction} submitLabel={p.submit} errors={c.errors} resetOnSuccess>
           <div className="form-grid">
             <Field label={p.startsOn} name="starts_on" type="date" />

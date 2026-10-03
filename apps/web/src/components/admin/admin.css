@@ -194,11 +194,15 @@
 }
 
 /* ---------- Kennzahlen ---------- */
+/* Kennzahlen-Karten in Spalten (unterschiedlich hoch, ohne Lücken) */
 .kpi-grid {
-  display: grid;
-  gap: var(--space-4);
-  grid-template-columns: repeat(auto-fill, minmax(min(100%, 21rem), 1fr));
-  align-items: start;
+  columns: 3 19rem;
+  column-gap: var(--space-4);
+}
+
+.kpi-grid > .kpi {
+  break-inside: avoid;
+  margin-bottom: var(--space-4);
 }
 
 .kpi {
@@ -502,17 +506,23 @@ details.values[open] > summary {
 }
 
 .pairing__decide {
-  display: grid;
+  display: flex;
+  flex-direction: column;
   gap: var(--space-3);
   padding-top: var(--space-4);
   border-top: 1px solid var(--color-line);
 }
 
-@media (min-width: 48rem) {
-  .pairing__decide {
-    grid-template-columns: minmax(0, 1fr) auto;
-    align-items: end;
-  }
+.pairing__buttons {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--space-3);
+}
+
+.pairing__buttons > :first-child {
+  margin-inline-end: auto;
 }
 
 .scores {
@@ -657,8 +667,6 @@ kbd {
   display: flex;
   flex-direction: column;
   gap: var(--space-3);
-  max-block-size: 32rem;
-  overflow-y: auto;
   padding: var(--space-3);
   border-radius: var(--radius-md);
   border: 1px solid var(--color-line);
@@ -697,8 +705,6 @@ kbd {
   line-height: 1.55;
   white-space: pre-wrap;
   overflow-wrap: anywhere;
-  max-block-size: 40rem;
-  overflow-y: auto;
 }
 
 .timeline {
@@ -966,4 +972,125 @@ kbd {
   font-family: var(--font-body);
   font-size: var(--text-md);
   min-block-size: 4rem;
+}
+
+.facts--compact {
+  grid-template-columns: minmax(0, 1fr) auto;
+}
+
+.facts--compact dd {
+  text-align: end;
+  font-variant-numeric: lining-nums tabular-nums;
+}
+
+.chart__xlabels--all {
+  gap: 2px;
+}
+
+.chart__xlabels--all > span {
+  flex: 1 1 0;
+  min-inline-size: 0;
+  text-align: center;
+}
+
+/* Beschreibungslisten im Admin: lange Begriffe dürfen die Werte nicht zusammendrücken. */
+.shell--admin .facts {
+  grid-template-columns: minmax(7rem, 13rem) minmax(0, 1fr);
+}
+
+.shell--admin .facts.facts--compact {
+  grid-template-columns: minmax(0, 1fr) auto;
+}
+
+/* Hinweise als Liste */
+.flag-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius-md);
+  background: var(--color-paper-raised);
+}
+
+.flag-list > li + li {
+  margin-top: 0;
+}
+
+.flag {
+  display: grid;
+  gap: var(--space-3) var(--space-5);
+  grid-template-columns: minmax(0, 1fr);
+  padding: var(--space-4);
+  border-bottom: 1px solid var(--color-line);
+}
+
+.flag:last-child {
+  border-bottom: none;
+}
+
+.flag--alert {
+  box-shadow: inset 4px 0 0 var(--color-danger);
+  background: color-mix(in srgb, var(--color-danger) 6%, transparent);
+}
+
+.flag--done {
+  background: transparent;
+}
+
+.flag__main {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  min-inline-size: 0;
+  overflow-wrap: anywhere;
+}
+
+@media (min-width: 56rem) {
+  .flag {
+    grid-template-columns: minmax(0, 1fr) minmax(16rem, 24rem);
+    align-items: start;
+  }
+
+  .flag__wide {
+    grid-column: 1 / -1;
+  }
+}
+
+.input--sm {
+  min-block-size: 2.5rem;
+  padding: 0.35rem 0.6rem;
+  font-size: var(--text-sm);
+}
+
+.table .actions .inline-form,
+.table .actions .cluster {
+  flex-wrap: nowrap;
+}
+
+@media (max-width: 30rem) {
+  .kpi,
+  .todo,
+  .pairing {
+    padding: var(--space-4);
+  }
+
+  .bar-cell {
+    inline-size: 25%;
+    min-inline-size: 2.5rem;
+  }
+
+  .table--dense th,
+  .table--dense td {
+    padding: 0.45rem 0.5rem;
+  }
+
+  .table thead th {
+    white-space: normal;
+  }
+}
+
+/* Lange Inhalte (Transkript, Vorlage) scrollen im eigenen, per Tastatur erreichbaren Bereich. */
+.scroll-box {
+  max-block-size: 36rem;
+  overflow-y: auto;
 }

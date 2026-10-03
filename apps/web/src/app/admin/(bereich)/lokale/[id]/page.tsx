@@ -48,11 +48,11 @@ export default async function VenuePage({ params, searchParams }: { params: Prom
         </Notice>
       ) : null}
 
-      <Card title={c.form.basics} headingLevel={2}>
+      <Card title={c.form.basics} headingLevel={2} id="lokal">
         <VenueForm venue={venue} />
       </Card>
 
-      <Card title={c.active.title} headingLevel={2}>
+      <Card title={c.active.title} headingLevel={2} id="stand">
         <p className="soft">{venue.active ? c.active.isActive : c.active.isInactive}</p>
         <ActionForm
           action={setVenueActiveAction}
@@ -66,7 +66,7 @@ export default async function VenuePage({ params, searchParams }: { params: Prom
         </ActionForm>
       </Card>
 
-      <Card title={s.title} headingLevel={2}>
+      <Card title={s.title} headingLevel={2} id="plaetze-anlegen">
         <p className="soft text-sm">{s.lead}</p>
         <ActionForm action={createSlotsAction} submitLabel={s.submit} errors={c.errors} testId="slot-form">
           <input type="hidden" name="venue_id" value={venue.id} />
@@ -136,7 +136,10 @@ export default async function VenuePage({ params, searchParams }: { params: Prom
                         <ActionForm action={updateSlotAction} submitLabel={s.setTablesSubmit} variant="secondary" size="sm" errors={c.errors} className="inline-form">
                           <input type="hidden" name="slot_id" value={x.slot_id} />
                           <input type="hidden" name="venue_id" value={venue.id} />
-                          <Field label={`${s.setTables} ${dateTime(x.starts_at)}`} name="tables" type="number" min={x.reserved} max={50} defaultValue={String(x.tables)} className="input--narrow" />
+                          <label className="visually-hidden" htmlFor={`tische-${x.slot_id}`}>
+                            {`${s.setTables} ${dateTime(x.starts_at)}`}
+                          </label>
+                          <input id={`tische-${x.slot_id}`} className="input input--narrow input--sm" name="tables" type="number" min={x.reserved} max={50} defaultValue={String(x.tables)} />
                         </ActionForm>
                         {x.reserved === 0 ? (
                           <ActionForm

@@ -7,12 +7,12 @@ import { adminRuns } from "@/copy/admin-auswahl";
 
 const r = adminRuns.report;
 
-function CountTable({ caption, rows, labels, total }: { caption: string; rows: Record<string, number> | undefined; labels: Record<string, string>; total?: { label: string; value: number | undefined } }) {
+function CountTable({ caption, rows, labels, total, hideCaption }: { caption: string; rows: Record<string, number> | undefined; labels: Record<string, string>; total?: { label: string; value: number | undefined }; hideCaption?: boolean }) {
   const entries = Object.entries(rows ?? {}).sort((a, b) => b[1] - a[1]);
   return (
     <TableWrap label={caption}>
       <table className="table table--dense">
-        <caption className="table__caption">{caption}</caption>
+        <caption className={hideCaption ? "visually-hidden" : "table__caption"}>{caption}</caption>
         <thead>
           <tr>
             <th scope="col">{r.reason}</th>
@@ -99,14 +99,14 @@ export function RunReportView({ report }: { report: RunReport }) {
       <div className="two-col">
         <Card title={r.pool} headingLevel={3}>
           <p className="soft text-sm">{r.poolLead}</p>
-          <CountTable caption={r.pool} rows={report.pool?.ausgeschlossen} labels={r.poolReasons} total={{ label: r.inPool, value: report.pool?.im_pool }} />
+          <CountTable hideCaption caption={r.pool} rows={report.pool?.ausgeschlossen} labels={r.poolReasons} total={{ label: r.inPool, value: report.pool?.im_pool }} />
           <p className="muted text-sm">
             {r.accounts}: {num(report.pool?.konten)}
           </p>
         </Card>
         <Card title={r.filter} headingLevel={3}>
           <p className="soft text-sm">{r.filterLead}</p>
-          <CountTable caption={r.filter} rows={report.filter?.verworfen} labels={r.filterReasons} total={{ label: r.passed, value: report.filter?.paare_bestanden }} />
+          <CountTable hideCaption caption={r.filter} rows={report.filter?.verworfen} labels={r.filterReasons} total={{ label: r.passed, value: report.filter?.paare_bestanden }} />
           <p className="muted text-sm">
             {r.checked}: {num(report.filter?.paare_geprueft)} · {r.preselect}: {num(report.vorauswahl?.paare)}
             {report.mindestscore ? ` · ${r.minScore(score(report.mindestscore.wert))}: ${num(report.mindestscore.paare_darueber)}` : ""}
@@ -120,7 +120,7 @@ export function RunReportView({ report }: { report: RunReport }) {
           <ColumnChart
             title={r.histogram}
             summary={r.histogramLabel(q?.anzahl ?? 0)}
-            columns={hist.map((h) => ({ key: String(h.von), label: r.bucket(score(h.von), score(h.bis)), value: h.anzahl }))}
+            columns={hist.map((h) => ({ key: String(h.von), label: r.bucket(score(h.von), score(h.bis)), short: num(h.von, 1), value: h.anzahl }))}
             labelHeader={r.group}
             valueHeader={r.count}
           />
@@ -165,7 +165,7 @@ export function RunReportView({ report }: { report: RunReport }) {
 
       <div className="two-col">
         <Card title={r.result} headingLevel={3}>
-          <dl className="facts">
+          <dl className="facts facts--compact">
             <dt>{r.proposals}</dt>
             <dd>{num(report.ergebnis?.vorschlaege)}</dd>
             <dt>{r.share}</dt>
@@ -182,13 +182,13 @@ export function RunReportView({ report }: { report: RunReport }) {
 
       <div className="two-col">
         <Card title={r.venues} headingLevel={3}>
-          <CountTable caption={r.perVenue} rows={report.lokale?.nach_lokal} labels={{}} />
+          <CountTable hideCaption caption={r.perVenue} rows={report.lokale?.nach_lokal} labels={{}} />
           <p className="muted text-sm">
             {r.ratioExceeded}: {num(report.lokale?.verhaeltnis_ueberschritten)}
           </p>
         </Card>
         <Card title={r.review} headingLevel={3}>
-          <dl className="facts">
+          <dl className="facts facts--compact">
             <dt>{r.replaced}</dt>
             <dd>{num(report.pruefung?.ersatztext_verwendet)}</dd>
             <dt>{r.agentSuspicion}</dt>
@@ -201,7 +201,7 @@ export function RunReportView({ report }: { report: RunReport }) {
 
       <div className="two-col">
         <Card title={r.llm} headingLevel={3}>
-          <dl className="facts">
+          <dl className="facts facts--compact">
             <dt>{r.llmModel}</dt>
             <dd>{llm.modell ?? llm.backend ?? "–"}</dd>
             <dt>{r.llmCalls}</dt>

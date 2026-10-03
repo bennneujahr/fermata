@@ -104,7 +104,7 @@ export default async function MembershipPage({ searchParams }: { searchParams: P
         </TableWrap>
       </section>
 
-      <Card title={l.title} headingLevel={2} variant="accent">
+      <Card title={l.title} headingLevel={2} variant="accent" id="kontingent">
         <p className="soft">{l.lead}</p>
         <form method="get" className="inline-form" role="search" aria-label={l.search}>
           <Field label={l.searchLabel} name="q" type="search" defaultValue={sp.q ?? ""} />
@@ -158,7 +158,7 @@ export default async function MembershipPage({ searchParams }: { searchParams: P
                 <Field label={l.amount} hint={l.amountHint} name="amount" type="number" min={-20} max={20} step={1} required />
                 <Field label={l.expiresAt} name="expires_at" type="date" />
               </div>
-              <TextArea label={l.note} name="note" rows={2} className="textarea--plain" required minLength={3} maxLength={500} />
+              <TextArea label={l.note} name="note" rows={2} className="textarea--plain" required maxLength={500} />
             </ActionForm>
             <TableWrap label={l.entries}>
               <table className="table table--dense">

@@ -20,7 +20,7 @@ export default async function EveningsToResolvePage() {
       {rows.map((r) => {
         const name = (uid: string) => (uid === r.a_user_id ? r.a_name : r.b_name);
         return (
-          <Card key={r.evening_id} headingLevel={2} title={`${r.a_name} · ${r.b_name}`} eyebrow={`${dateTime(r.starts_at)} · ${r.venue_name ?? "–"}${r.venue_city ? `, ${r.venue_city}` : ""}`} variant="accent">
+          <Card key={r.evening_id} id={`abend-${r.evening_id}`} headingLevel={2} title={`${r.a_name} · ${r.b_name}`} eyebrow={`${dateTime(r.starts_at)} · ${r.venue_name ?? "–"}${r.venue_city ? `, ${r.venue_city}` : ""}`} variant="accent">
             <div className="cluster">
               {r.reasons.map((x) => (
                 <Badge key={x} tone={x === "meldung" ? "danger" : "warning"}>

@@ -53,7 +53,7 @@ export default async function ReportPage({ params }: { params: Promise<{ id: str
       </PageHeader>
 
       <div className="two-col">
-        <Card title={r.facts} headingLevel={2}>
+        <Card title={r.facts} headingLevel={2} id="meldung">
           <dl className="facts">
             <dt>{r.context}</dt>
             <dd>{labelOf(c.contexts, rep.context)}</dd>
@@ -78,7 +78,7 @@ export default async function ReportPage({ params }: { params: Promise<{ id: str
           <blockquote className="quote">{rep.description || r.noDescription}</blockquote>
         </Card>
 
-        <Card title={r.people} headingLevel={2}>
+        <Card title={r.people} headingLevel={2} id="beteiligte">
           <dl className="facts">
             <dt>{r.reporter}</dt>
             <dd>{d.reporter.user_id ? <Link href={`/admin/konten/${d.reporter.user_id}`}>{d.reporter.name}</Link> : "–"}</dd>
@@ -95,7 +95,7 @@ export default async function ReportPage({ params }: { params: Promise<{ id: str
         </Card>
       </div>
 
-      <Card title={r.evening} headingLevel={2}>
+      <Card title={r.evening} headingLevel={2} id="abend">
         {d.evening ? (
           <div className="two-col">
             <dl className="facts">
@@ -140,7 +140,7 @@ export default async function ReportPage({ params }: { params: Promise<{ id: str
         )}
       </Card>
 
-      <Card title={r.history} headingLevel={2}>
+      <Card title={r.history} headingLevel={2} id="vorgeschichte">
         <div className="two-col">
           <div className="stack stack-sm">
             <h3 className="pairing__label">{r.priorReports}</h3>
@@ -196,7 +196,7 @@ export default async function ReportPage({ params }: { params: Promise<{ id: str
       </Card>
 
       {isOpen ? (
-        <Card title={r.actions} headingLevel={2} variant="accent">
+        <Card title={r.actions} headingLevel={2} variant="accent" id="entscheiden">
           {rep.status === "open" ? (
             <ActionForm action={takeReportAction} submitLabel={r.takeReview} variant="secondary" errors={c.errors}>
               <input type="hidden" name="report_id" value={rep.id} />
@@ -207,7 +207,7 @@ export default async function ReportPage({ params }: { params: Promise<{ id: str
             <input type="hidden" name="report_id" value={rep.id} />
             <input type="hidden" name="has_provisional" value={provisional ? "1" : "0"} />
             <RadioGroup legend={r.decision} name="decision" options={Object.entries(r.decisions).map(([value, label]) => ({ value, label }))} required />
-            <TextArea label={r.resolutionLabel} hint={r.resolutionHint} name="resolution" rows={3} className="textarea--plain" required minLength={3} maxLength={4000} />
+            <TextArea label={r.resolutionLabel} hint={r.resolutionHint} name="resolution" rows={3} className="textarea--plain" required maxLength={4000} />
             {provisional ? <Checkbox name="lift_provisional" label={r.liftProvisional} description={r.liftProvisionalHint} defaultChecked /> : null}
           </ActionForm>
         </Card>
@@ -216,14 +216,14 @@ export default async function ReportPage({ params }: { params: Promise<{ id: str
       )}
 
       {d.reported ? (
-        <Card title={c.sanction.title} headingLevel={2}>
+        <Card title={c.sanction.title} headingLevel={2} id="sanktion">
           <p className="soft">{c.sanction.for(d.reported.name ?? "–")}</p>
           <ImposeSanctionForm userId={d.reported.user_id} reportId={rep.id} />
         </Card>
       ) : null}
 
       <div className="two-col">
-        <Card title={r.police} headingLevel={2}>
+        <Card title={r.police} headingLevel={2} id="polizei">
           <p className="soft text-sm">{r.policeHint}</p>
           <div>
             <ButtonLink href={`/admin/sicherheit/meldungen/${rep.id}/polizei`} variant="secondary" icon="external">
@@ -232,7 +232,7 @@ export default async function ReportPage({ params }: { params: Promise<{ id: str
           </div>
         </Card>
         {d.reported ? (
-          <Card title={c.transcript.title} headingLevel={2}>
+          <Card title={c.transcript.title} headingLevel={2} id="gespraeche">
             <p className="soft text-sm">{c.transcript.lead}</p>
             <CaseSessions userId={d.reported.user_id} />
           </Card>

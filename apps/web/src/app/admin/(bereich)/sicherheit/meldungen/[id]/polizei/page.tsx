@@ -29,7 +29,7 @@ export default async function PoliceTemplatePage({ params }: { params: Promise<{
         {c.police.draft}
       </Notice>
       <CopyButton targetId="polizeivorlage" label={c.police.copy} />
-      <div className="table-wrap" role="region" aria-label={c.police.textLabel} tabIndex={0}>
+      <div className="table-wrap scroll-box" role="region" aria-label={c.police.textLabel} tabIndex={0}>
         <pre className="template" id="polizeivorlage">
           {res.data}
         </pre>

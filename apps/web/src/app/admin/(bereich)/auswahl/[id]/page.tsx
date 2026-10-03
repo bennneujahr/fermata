@@ -53,7 +53,7 @@ export default async function RunPage({ params }: { params: Promise<{ id: string
         </div>
       </PageHeader>
 
-      <Card title={c.detail.summary} headingLevel={2}>
+      <Card title={c.detail.summary} headingLevel={2} id="ueberblick">
         <Figures
           items={[
             { label: c.detail.pool, value: num(run.pool_size) },
@@ -79,7 +79,7 @@ export default async function RunPage({ params }: { params: Promise<{ id: string
       </section>
 
       {canDecide ? (
-        <Card title={c.finish.title} headingLevel={2} variant="accent">
+        <Card title={c.finish.title} headingLevel={2} variant="accent" id="abschluss">
           <p className="soft">{c.finish.lead}</p>
           {run.pending_review > 0 ? <Notice tone="warning">{c.finish.pending(run.pending_review)}</Notice> : null}
           <ActionForm

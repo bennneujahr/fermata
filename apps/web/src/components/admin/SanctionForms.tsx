@@ -22,7 +22,7 @@ export function ImposeSanctionForm({ userId, reportId }: { userId: string; repor
         defaultValue="hinweis"
         options={Object.entries(c.sanction.kinds).map(([value, label]) => ({ value, label }))}
       />
-      <TextArea label={c.sanction.reason} hint={c.sanction.reasonHint} name="reason" rows={3} className="textarea--plain" required minLength={3} maxLength={2000} />
+      <TextArea label={c.sanction.reason} hint={c.sanction.reasonHint} name="reason" rows={3} className="textarea--plain" required maxLength={2000} />
       <Field label={c.sanction.endsAt} hint={c.sanction.endsAtHint} name="ends_at" type="datetime-local" />
       <Notice tone="info">{c.sanction.exclusionNote}</Notice>
       <p className="muted text-sm">{c.sanction.provisionalNote}</p>
@@ -42,7 +42,7 @@ export function LiftSanctionForm({ sanctionId, compact }: { sanctionId: string; 
       confirm={{ title: c.lift.dialogTitle, text: c.lift.dialogText, confirmLabel: c.lift.confirm }}
     >
       <input type="hidden" name="sanction_id" value={sanctionId} />
-      <Field label={c.lift.reason} name="reason" required minLength={3} maxLength={500} />
+      <Field label={c.lift.reason} name="reason" required maxLength={500} />
     </ActionForm>
   );
 }
@@ -62,7 +62,7 @@ export function DecideAppealForm({ appealId }: { appealId: string }) {
         options={Object.entries(c.appeals.decisions).map(([value, label]) => ({ value, label }))}
         required
       />
-      <TextArea label={c.appeals.note} name="note" rows={3} className="textarea--plain" required minLength={3} maxLength={2000} />
+      <TextArea label={c.appeals.note} name="note" rows={3} className="textarea--plain" required maxLength={2000} />
     </ActionForm>
   );
 }
@@ -71,7 +71,7 @@ export function ReviewFlagForm({ flagId }: { flagId: string }) {
   return (
     <ActionForm action={reviewFlagAction} submitLabel={c.flags.review} variant="secondary" size="sm" errors={c.errors} className="inline-form">
       <input type="hidden" name="flag_id" value={flagId} />
-      <Field label={c.flags.outcome} name="outcome" required minLength={2} maxLength={500} />
+      <Field label={c.flags.outcome} name="outcome" required maxLength={500} />
     </ActionForm>
   );
 }

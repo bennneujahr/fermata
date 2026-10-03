@@ -1,7 +1,7 @@
 "use client";
-import { useActionState, useEffect, useRef, useState, type ReactNode } from "react";
+import { startTransition, useActionState, useEffect, useRef, useState, type ReactNode } from "react";
 import { initialState, type ActionState } from "@/app/actions/state";
-import { Button, Dialog, Notice, SubmitButton, type ButtonVariant, type IconName } from "@/components/ui";
+import { Button, Dialog, Notice, type ButtonVariant, type IconName } from "@/components/ui";
 import { adminCommon as c } from "@/copy/admin-common";
 
 export type AdminAction = (prev: ActionState, fd: FormData) => Promise<ActionState>;
@@ -22,6 +22,8 @@ export function resultError(state: ActionState, errors?: Record<string, string>)
 /**
  * Formular für eine Server Action im Admin: Absenden-Knopf mit Ladezustand, optional Rückfrage im Dialog,
  * Ergebnis als Hinweis (Erfolg höflich angesagt, Fehler sofort). Felder kommen als children.
+ * Die Action wird von Hand ausgelöst (nicht über das action-Attribut), weil React Formulare nach einer
+ * Form-Action zurücksetzt – nach einem Fehler wären sonst alle Eingaben weg.
  */
 export function ActionForm({
   action,
@@ -56,7 +58,7 @@ export function ActionForm({
   extraButtons?: ReactNode;
   testId?: string;
 }) {
-  const [state, formAction] = useActionState(action, initialState);
+  const [state, dispatch, pending] = useActionState(action, initialState);
   const form = useRef<HTMLFormElement>(null);
   const confirmed = useRef(false);
   const submitter = useRef<HTMLElement | null>(null);
@@ -71,25 +73,27 @@ export function ActionForm({
     <>
       <form
         ref={form}
-        action={formAction}
         className={className ?? "stack stack-sm"}
         data-testid={testId}
         onSubmit={(e) => {
-          if (!confirm) return;
-          if (confirmed.current) {
-            confirmed.current = false;
+          e.preventDefault();
+          if (pending) return;
+          const by = (e.nativeEvent as SubmitEvent).submitter ?? null;
+          if (confirm && !confirmed.current) {
+            submitter.current = by;
+            setOpen(true);
             return;
           }
-          e.preventDefault();
-          submitter.current = (e.nativeEvent as SubmitEvent).submitter ?? null;
-          setOpen(true);
+          confirmed.current = false;
+          const fd = new FormData(e.currentTarget, by instanceof HTMLButtonElement ? by : undefined);
+          startTransition(() => dispatch(fd));
         }}
       >
         {children}
         <div className="cluster">
-          <SubmitButton variant={variant} size={size} icon={icon} pendingLabel={pendingLabel ?? c.working} name={submitName} value={submitValue}>
-            {submitLabel}
-          </SubmitButton>
+          <Button type="submit" variant={variant} size={size} icon={icon} loading={pending} name={submitName} value={submitValue}>
+            {pending ? (pendingLabel ?? c.working) : submitLabel}
+          </Button>
           {extraButtons}
         </div>
         {state.ok && state.message ? (

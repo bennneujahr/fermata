@@ -149,6 +149,32 @@ function PairingCard({
       </div>
 
       <div className="pairing__grid">
+        <section className="pairing__section" aria-label={c.pairings.reasons}>
+          <h4 className="pairing__label">{c.pairings.reasons}</h4>
+          <blockquote className="quote">{p.reasons_text || c.pairings.noReasons}</blockquote>
+        </section>
+        <section className="pairing__section" aria-label={c.pairings.venue}>
+          <h4 className="pairing__label">{c.pairings.venue}</h4>
+          <p>
+            <strong>{p.venue_name ?? c.pairings.noVenue}</strong>
+            {p.venue_city ? `, ${p.venue_city}` : ""}
+          </p>
+          {p.venue_reason ? <p className="text-sm soft">{p.venue_reason}</p> : null}
+          <h4 className="pairing__label">{c.pairings.times}</h4>
+          {p.times.length === 0 ? (
+            <p className="text-sm warn-list__item">
+              <Icon name="warning" size={18} />
+              <span>{c.pairings.noTimes}</span>
+            </p>
+          ) : (
+            <ul className="text-sm">
+              {p.times.map((t) => (
+                <li key={t}>{dateTime(t)}</li>
+              ))}
+            </ul>
+          )}
+          {p.times.length > 0 && p.timesPreview ? <p className="muted text-sm">{c.pairings.timesPreview}</p> : null}
+        </section>
         <section className="pairing__section" aria-label={c.pairings.total}>
           <h4 className="pairing__label">{c.pairings.total}</h4>
           <ScoreRows
@@ -188,30 +214,6 @@ function PairingCard({
           ) : null}
           <h4 className="pairing__label">{c.pairings.rationale}</h4>
           <p className="text-sm">{p.llm_rationale || c.pairings.noRationale}</p>
-        </section>
-        <section className="pairing__section" aria-label={c.pairings.reasons}>
-          <h4 className="pairing__label">{c.pairings.reasons}</h4>
-          <blockquote className="quote">{p.reasons_text || c.pairings.noReasons}</blockquote>
-          <h4 className="pairing__label">{c.pairings.venue}</h4>
-          <p>
-            <strong>{p.venue_name ?? c.pairings.noVenue}</strong>
-            {p.venue_city ? `, ${p.venue_city}` : ""}
-          </p>
-          {p.venue_reason ? <p className="text-sm soft">{p.venue_reason}</p> : null}
-          <h4 className="pairing__label">{c.pairings.times}</h4>
-          {p.times.length === 0 ? (
-            <p className="text-sm warn-list__item">
-              <Icon name="warning" size={18} />
-              <span>{c.pairings.noTimes}</span>
-            </p>
-          ) : (
-            <ul className="text-sm">
-              {p.times.map((t) => (
-                <li key={t}>{dateTime(t)}</li>
-              ))}
-            </ul>
-          )}
-          {p.times.length > 0 && p.timesPreview ? <p className="muted text-sm">{c.pairings.timesPreview}</p> : null}
           {p.review_comment ? (
             <p className="text-sm">
               <span className="soft">{c.pairings.comment}: </span>
@@ -232,7 +234,7 @@ function PairingCard({
             className="textarea--plain"
             maxLength={1000}
           />
-          <div className="cluster">
+          <div className="pairing__buttons">
             {!warn ? (
               <label className="choice choice--plain" htmlFor={`sel-${p.pairing_id}`}>
                 <input

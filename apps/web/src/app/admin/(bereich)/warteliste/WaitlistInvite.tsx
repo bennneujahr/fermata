@@ -87,7 +87,6 @@ export function WaitlistInvite({ entries, defaultCount }: { entries: WaitlistEnt
               <th scope="col">{i.cols.name}</th>
               <th scope="col">{i.cols.email}</th>
               <th scope="col">{i.cols.region}</th>
-              <th scope="col">{i.cols.source}</th>
               <th scope="col">{i.cols.confirmed}</th>
               <th scope="col">{i.cols.invited}</th>
               <th scope="col">{i.cols.action}</th>
@@ -124,10 +123,7 @@ export function WaitlistInvite({ entries, defaultCount }: { entries: WaitlistEnt
                   ) : null}
                 </th>
                 <td>{e.email}</td>
-                <td>
-                  {e.postal_code} <span className="muted">({e.region})</span>
-                </td>
-                <td>{e.source ?? c.noSource}</td>
+                <td>{e.postal_code}</td>
                 <td className="nowrap">{dateShort(e.confirmed_at)}</td>
                 <td className="nowrap">{e.invited_to_app_at ? i.invited(dateShort(e.invited_to_app_at)) : "–"}</td>
                 <td>
