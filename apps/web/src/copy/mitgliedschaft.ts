@@ -491,3 +491,33 @@ export const withdrawPublic = {
 };
 
 export const required = "Pflichtfeld";
+
+/** Bestätigungsseiten für Links aus der Mail (ohne Anmeldung). */
+export const contractLink = {
+  cancel: {
+    title: "Kündigung bestätigen",
+    lead: "Sie haben die Kündigung ohne Anmeldung abgeschickt. Bitte bestätigen Sie sie hier.",
+    button: "Kündigung bestätigen",
+    doneTitle: "Ihre Kündigung ist eingegangen",
+    doneText: "Die Bestätigung mit Datum und Uhrzeit haben wir Ihnen per E-Mail geschickt.",
+    effective: "Wirksam zum",
+  },
+  withdraw: {
+    title: "Widerruf bestätigen",
+    lead: "Sie haben den Widerruf ohne Anmeldung abgeschickt. Bitte bestätigen Sie ihn hier.",
+    button: "Widerruf bestätigen",
+    doneTitle: "Ihr Widerruf ist eingegangen",
+    doneText: "Die Eingangsbestätigung mit Datum und Uhrzeit haben wir Ihnen per E-Mail geschickt.",
+    effective: "Wirksam ab",
+  },
+  labels: { contract: "Vertrag", requested: "Abgeschickt am", received: "Eingang" },
+  loading: "Einen Moment, wir prüfen den Link …",
+  ignore: "Wenn Sie das nicht möchten, schließen Sie diese Seite einfach. Ohne Klick passiert nichts.",
+  missingTitle: "Kein Link gefunden",
+  missingText: "Bitte öffnen Sie den Link genau so, wie er in der E-Mail steht.",
+  invalidTitle: "Dieser Link gilt nicht mehr",
+  invalidText: "Der Link ist abgelaufen oder wurde schon benutzt. Sie können das Formular einfach noch einmal ausfüllen.",
+  errorText: "Das hat gerade nicht geklappt. Bitte versuchen Sie es in einem Moment noch einmal.",
+  retry: "Noch einmal versuchen",
+  again: { cancel: { href: "/kuendigen", label: "Zum Kündigungsformular" }, withdraw: { href: "/widerrufen", label: "Zum Widerrufsformular" } },
+};

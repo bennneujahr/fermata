@@ -145,6 +145,36 @@ test("Bildschirmfotos Mitgliedschaft und Sicherheit", async ({ browser }) => {
   await shoot(browser, "10-kuendigen-ohne-anmeldung", "/kuendigen");
   await shoot(browser, "11-widerrufen-ohne-anmeldung", "/widerrufen", { schemes: LIGHT });
 
+  // Bestätigungsseiten aus der Mail (ohne Anmeldung): je Bild ein eigener Link wie aus dem Formular
+  const contractLink = async (kind: "cancel" | "withdraw") => {
+    const m = await onboardedMember({ first: "Lena" });
+    const { contractNumber } = await activeMembership(m.id, "auftakt");
+    const details = kind === "cancel"
+      ? { kind: "ordentlich", name: "Lena Beispiel", channel: "ohne_anmeldung" }
+      : { name: "Lena Beispiel", contract_number: contractNumber, channel: "ohne_anmeldung" };
+    const [r] = await sql`select billing.create_contract_request(${kind}, ${m.email}, ${contractNumber}, ${sql.json(details)}::jsonb) as r`;
+    const token = (r!.r as { token: string }).token;
+    return `/${kind === "cancel" ? "kuendigen" : "widerrufen"}/bestaetigen#t=${token}`;
+  };
+  await shoot(browser, "11a-kuendigung-link", () => contractLink("cancel"), {
+    prepare: async (p) => {
+      await expect(p.getByRole("button", { name: "Kündigung bestätigen" })).toBeVisible();
+    },
+  });
+  await shoot(browser, "11b-kuendigung-link-eingegangen", () => contractLink("cancel"), {
+    schemes: LIGHT,
+    prepare: async (p) => {
+      await p.getByRole("button", { name: "Kündigung bestätigen" }).click();
+      await expect(p.getByRole("heading", { name: "Ihre Kündigung ist eingegangen" })).toBeVisible();
+    },
+  });
+  await shoot(browser, "11c-widerruf-link", () => contractLink("withdraw"), {
+    schemes: LIGHT,
+    prepare: async (p) => {
+      await expect(p.getByRole("button", { name: "Widerruf bestätigen" })).toBeVisible();
+    },
+  });
+
   // --- Sicherheit ---
   const me = await onboardedMember({ first: "Mira" });
   const other = await onboardedMember({ first: "Jonas" });

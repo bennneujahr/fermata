@@ -123,3 +123,51 @@ export async function requestWithdrawal(input: { name: string; email: string; co
   if (!res.ok) return fail(res.error, res.status);
   return { ok: true, data: { sentAt } };
 }
+
+// ---------------------------------------------------------------------------
+// Bestätigungslink aus der Mail (ohne Anmeldung): /kuendigen/bestaetigen#t=… und /widerrufen/bestaetigen#t=…
+// Öffnen zeigt nur den Vertrag; erst der Knopf führt aus (Link-Vorschauen in Mailprogrammen lösen nichts aus).
+// ---------------------------------------------------------------------------
+
+const LINK_TOKEN = /^[A-Za-z0-9_.=%-]{8,256}$/;
+
+export interface ContractLinkInfo {
+  valid: boolean;
+  contractNumber: string | null;
+  requestedAt: string | null;
+}
+
+function linkFunction(kind: "cancel" | "withdraw"): string {
+  return kind === "cancel" ? "billing-cancel" : "billing-withdraw";
+}
+
+export async function loadContractLink(kind: "cancel" | "withdraw", token: string): Promise<ActionResult<ContractLinkInfo>> {
+  if (!LINK_TOKEN.test(token)) return { ok: true, data: { valid: false, contractNumber: null, requestedAt: null } };
+  const res = await callPublicFunction<{ valid?: boolean; contract_number?: string; requested_at?: string }>(linkFunction(kind), {
+    method: "GET",
+    query: { t: token },
+  });
+  if (res.status === 404 || res.status === 400) return { ok: true, data: { valid: false, contractNumber: null, requestedAt: null } };
+  if (!res.ok || !res.data) return fail(res.error, res.status);
+  return {
+    ok: true,
+    data: { valid: res.data.valid === true, contractNumber: res.data.contract_number ?? null, requestedAt: res.data.requested_at ?? null },
+  };
+}
+
+export async function confirmContractLink(
+  kind: "cancel" | "withdraw",
+  token: string,
+): Promise<ActionResult<{ contractNumber: string | null; receivedAt: string | null; effectiveAt: string | null }>> {
+  if (!LINK_TOKEN.test(token)) return { ok: false, error: "invalid_link" };
+  const res = await callPublicFunction<{ contractNumber?: string; receivedAt?: string; effectiveAt?: string }>(linkFunction(kind), {
+    method: "POST",
+    body: { action: "confirm_link", t: token },
+  });
+  if (res.status === 404) return { ok: false, error: "invalid_link" };
+  if (!res.ok || !res.data) return fail(res.error, res.status);
+  return {
+    ok: true,
+    data: { contractNumber: res.data.contractNumber ?? null, receivedAt: res.data.receivedAt ?? null, effectiveAt: res.data.effectiveAt ?? null },
+  };
+}

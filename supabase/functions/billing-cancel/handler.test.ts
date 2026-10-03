@@ -121,10 +121,24 @@ Deno.test({ name: "billing-cancel: ohne Anmeldung – gleiche Antwort, Link per 
     assert.equal(mailer.sent.length, 1);
     const linkMail = mailer.sent[0]!;
     assert.equal(linkMail.template, "billing.cancel_link");
-    const link = /https:\/\/fn\.fermata\.test\/functions\/v1\/billing-cancel\?t=[0-9a-f]{64}/.exec(linkMail.text)![0];
-    const token = new URL(link).searchParams.get("t")!;
+    // Der Link führt in die Web-App; das Kürzel steht hinter # und landet nie in Server-Logs
+    const appLink = /https:\/\/app\.fermata\.test\/kuendigen\/bestaetigen#t=[0-9a-f]{64}/.exec(linkMail.text)![0];
+    const token = new URL(appLink).hash.slice(3);
+    const link = `https://fn.fermata.test/functions/v1/billing-cancel?t=${token}`;
 
-    // Link öffnen (z. B. Vorschau durch das Mailprogramm): führt nichts aus
+    // Web-App fragt den Link ab (Accept: application/json): führt nichts aus
+    const peek = await handler(new Request(link, { headers: { accept: "application/json" } }));
+    assert.equal(peek.status, 200);
+    const info = await peek.json();
+    assert.equal(info.valid, true);
+    assert.equal(info.kind, "cancel");
+    assert.equal(info.contract_number, c.contractNumber);
+    assert.ok(info.requested_at && info.expires_at);
+    const bad = await handler(new Request(link.replace(/t=[0-9a-f]+/, "t=" + "0".repeat(64)), { headers: { accept: "application/json" } }));
+    assert.equal(bad.status, 404);
+    assert.deepEqual(await bad.json(), { valid: false, error: "invalid_link" });
+
+    // Ohne JSON bleibt die schlichte Seite (z. B. Vorschau durch das Mailprogramm): führt nichts aus
     const page = await handler(new Request(link));
     assert.equal(page.status, 200);
     const html = await page.text();

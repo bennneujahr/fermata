@@ -202,9 +202,9 @@ test("Kündigungsknopf ohne Anmeldung: Fuß-Link, Formular, Bestätigungslink au
   await expect(page.getByText(/Abgeschickt am \d{2}\.\d{2}\.\d{4} um \d{2}:\d{2}:\d{2} Uhr\./)).toBeVisible();
   await expectAccessible(page, "/kuendigen abgeschickt");
 
-  // Link aus der Mail (lokal in ops.mail_outbox): Bestätigungsseite der Edge Function, erst der Knopf führt aus
+  // Link aus der Mail (lokal in ops.mail_outbox): Bestätigungsseite der Web-App (#t=…), erst der Knopf führt aus
   const mail = await waitForOutbox(me.email, "billing.cancel_link", before);
-  const link = linkFromMail(mail.text, "billing-cancel?t=");
+  const link = linkFromMail(mail.text, "/kuendigen/bestaetigen#t=");
   const confirmPage = await context.newPage();
   await confirmPage.goto(link);
   await expect(confirmPage.getByRole("heading", { name: "Kündigung bestätigen" })).toBeVisible();
@@ -284,7 +284,7 @@ test("Widerrufsbutton ohne Anmeldung: Formular und Bestätigungslink", async ({ 
   await expect(page.getByRole("heading", { name: "Danke. Ihr Widerruf ist abgeschickt." })).toBeVisible();
   const mail = await waitForOutbox(me.email, "billing.withdraw_link", before);
   const confirmPage = await context.newPage();
-  await confirmPage.goto(linkFromMail(mail.text, "billing-withdraw?t="));
+  await confirmPage.goto(linkFromMail(mail.text, "/widerrufen/bestaetigen#t="));
   await confirmPage.getByRole("button", { name: "Widerruf bestätigen" }).click();
   await expect(confirmPage.getByRole("heading", { name: "Ihr Widerruf ist eingegangen" })).toBeVisible();
   const [m] = await sql`select status from billing.memberships where user_id = ${me.id}::uuid`;

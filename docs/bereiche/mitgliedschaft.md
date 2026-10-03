@@ -141,8 +141,7 @@ Endpunkt: `https://<projekt>.supabase.co/functions/v1/stripe-webhook` (ohne Supa
 | `STRIPE_PRICE_<STUFE>` | optional, feste Preis-IDs |
 | `SUPABASE_JWT_SECRET` oder `SUPABASE_URL` | Anmeldung prüfen (HS256 bzw. JWKS der neuen Supabase-Schlüssel) |
 | `FERMATA_INTERNAL_SECRET` | Schutz für `billing-extend` und `safety-dispatch` (gleicher Wert im Vault als `fermata_internal_secret`) |
-| `FERMATA_FUNCTIONS_URL` | öffentliche Adresse der Functions (für Bestätigungslinks ohne Anmeldung) |
-| `FERMATA_APP_URL` | Adresse der Web-App (Links in Mails) |
+| `FERMATA_APP_URL` | Adresse der Web-App (Links in Mails, auch die Bestätigungslinks ohne Anmeldung) |
 
 5. **Aufrufe aus der Datenbank** (sofortiger Mailversand, Verlängerung): Erweiterung `pg_net` einschalten, Einstellung `internal.functions_base_url` setzen, Vault-Eintrag `fermata_internal_secret` anlegen. Ohne das laufen die Zeitpläne trotzdem; `billing-extend` dann stündlich per externem Cron aufrufen.
 6. **Stripe-Kundenportal** ist nicht nötig (Kündigen und Widerrufen laufen über Fermata).
@@ -178,12 +177,12 @@ Direkt lesbar (RLS, nur eigene Zeilen): `billing.evening_ledger`, `billing.membe
 - angemeldet `{action: "preview"}` → `{possible, reason, contract_number, tier, tier_name, status, effective_at, immediate, name, email, kinds, entryLabel, buttonLabel}`
 - angemeldet `{action: "confirm", kind: "ordentlich"|"ausserordentlich", reason?, name?, contactEmail?}` → `{contractActionId, contractNumber, kind, receivedAt, effectiveAt, immediate, stripe: "ok"|"failed"|"skipped", confirmationSent}`; Fehler 409 `no_contract` / `already_cancelled`, 400 `reason_required` / `invalid_email`
 - ohne Anmeldung `{action: "request", email, contractNumber, kind?, reason?, name?}` → immer 202 `{ok, message}`
-- `GET ?t=` → Bestätigungsseite; `{action: "confirm_link", t}` (JSON oder Formular) → wie `confirm` bzw. HTML-Seite; 404 `invalid_link`
+- Die Mail verlinkt auf die Web-App: `<App>/kuendigen/bestaetigen#t=<Schlüssel>` (Schlüssel im Fragment, nie in Server-Logs). Die Seite fragt `GET ?t=` mit `Accept: application/json` → `{valid, kind, contract_number, requested_at, expires_at}` bzw. 404 `{valid:false, error:"invalid_link"}`; erst ihr Knopf schickt `{action: "confirm_link", t}` → wie `confirm`. Ohne JSON liefert `GET ?t=` weiter eine schlichte HTML-Seite mit Formular (Rückfall für alte Links); 404 `invalid_link`
 
 **`billing-withdraw`** (wie oben)
 - `{action: "preview"}` → `{possible, reason, until, contractNumber, tierName, name, email, paidCents, eveningsUsed, valuePerEveningCents, wertersatzCents, refundCents, entryLabel, buttonLabel, legalStatus}`
 - `{action: "confirm", name, contractNumber, contactEmail?}` → `{contractActionId, contractNumber, receivedAt, paidCents, eveningsUsed, wertersatzCents, refundCents, refund: "ok"|"manual"|"none", stripe, cancelledEvenings, confirmationSent}`; Fehler 400 `name_required` / `contract_required` / `contract_mismatch`, 409 `period_over` / `already_withdrawn` / `no_contract`
-- `request`, `GET ?t=`, `confirm_link` wie beim Kündigen
+- `request`, `GET ?t=`, `confirm_link` wie beim Kündigen; Seite der Web-App: `<App>/widerrufen/bestaetigen#t=<Schlüssel>`
 
 **`account-delete`** (Härtung, Vertrag 5; POST `{confirm: true}`, angemeldet): sagt offene Abende ab, beendet ein laufendes Stripe-Abo **sofort** (`DELETE /v1/subscriptions/{id}`, keine anteilige Erstattung – PLATZHALTER C15; die Web-App sollte vorher darauf hinweisen), hält das als Vertragshandlung `cancel` (`details.kind = 'kontoloeschung'`, `details.reason = 'konto_geloescht'`, ohne Name und E-Mail) fest und löscht dann das Konto. Antwort `{deleted, mail_sent, evenings_cancelled, subscription_cancelled}` (`subscription_cancelled`: `true`, `false` = Stripe-Fehler, Benn erhält einen Hinweis „hoch“ und beendet das Abo von Hand, `null` = kein Abo). Ein Stripe-Fehler hält die Löschung nicht auf.
 

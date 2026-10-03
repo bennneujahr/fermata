@@ -47,6 +47,18 @@ export default handler(["GET", "POST"], async (req) => {
     const token = new URL(req.url).searchParams.get("t") ?? "";
     const [row] = await sql`select billing.peek_contract_request(${token}) as p`;
     const p = row?.p as Obj | null;
+    // Web-App (/widerrufen/bestaetigen#t=…) fragt mit Accept: application/json; Supabase liefert
+    // HTML-Seiten von *.supabase.co nur als Text aus, deshalb zeigt die Web-App die Seite selbst.
+    if ((req.headers.get("accept") ?? "").includes("application/json")) {
+      if (!p || !p.valid || p.kind !== "withdraw") return json(req, { valid: false, error: "invalid_link" }, 404);
+      return json(req, {
+        valid: true,
+        kind: p.kind,
+        contract_number: p.contract_number ?? null,
+        requested_at: p.requested_at ?? null,
+        expires_at: p.expires_at ?? null,
+      });
+    }
     if (!p || !p.valid || p.kind !== "withdraw") {
       return await html(page("Link nicht gültig", "<h1>Dieser Link ist nicht mehr gültig</h1><p>Bitte füllen Sie das Widerrufsformular erneut aus.</p>"), 404);
     }

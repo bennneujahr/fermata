@@ -146,13 +146,20 @@ Deno.test({ name: "billing-withdraw: ohne Anmeldung über Formular und Link", ..
       json: { action: "request", email: m.email, contractNumber: c.contractNumber, name: "Test Person" },
     }));
     assert.equal(res.status, 202);
-    const link = /https:\/\/\S+billing-withdraw\?t=[0-9a-f]{64}/.exec(mailer.sent[0]!.text)![0];
+    const appLink = /https:\/\/app\.fermata\.test\/widerrufen\/bestaetigen#t=[0-9a-f]{64}/.exec(mailer.sent[0]!.text)![0];
+    const token = new URL(appLink).hash.slice(3);
+    const link = `https://fn.fermata.test/functions/v1/billing-withdraw?t=${token}`;
+    const peek = await handler(new Request(link, { headers: { accept: "application/json" } }));
+    const info = await peek.json();
+    assert.equal(peek.status, 200, JSON.stringify(info));
+    assert.equal(info.kind, "withdraw");
+    assert.equal(info.contract_number, c.contractNumber);
     const page = await handler(new Request(link));
     assert.ok((await page.text()).includes("Widerruf bestätigen"));
     const done = await handler(new Request(link, {
       method: "POST",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({ action: "confirm_link", t: new URL(link).searchParams.get("t") }),
+      body: JSON.stringify({ action: "confirm_link", t: token }),
     }));
     const r = await done.json();
     assert.equal(done.status, 200, JSON.stringify(r));

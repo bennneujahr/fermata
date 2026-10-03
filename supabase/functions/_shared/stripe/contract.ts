@@ -3,7 +3,7 @@
 // Schlägt Stripe fehl, bleibt die Erklärung gültig; das Ergebnis steht in billing.contract_actions.result
 // und Benn bekommt einen Hinweis.
 import type { Sql } from "../db.ts";
-import { appUrl, optionalEnv } from "../env.ts";
+import { appUrl } from "../env.ts";
 import { HttpError } from "../http.ts";
 import { sendMail } from "../mail/mod.ts";
 import { cancelConfirmation, contractLink, withdrawReceipt } from "../mail/templates/billing.ts";
@@ -205,15 +205,8 @@ export async function executeWithdrawal(
 export const GENERIC_REQUEST_ANSWER =
   "Wenn die Angaben zu einem Vertrag passen, erhalten Sie gleich eine E-Mail mit einem Bestätigungslink. Als Eingang gilt der jetzige Zeitpunkt.";
 
-export function functionUrl(req: Request, name: string): string {
-  const base = optionalEnv("FERMATA_FUNCTIONS_URL");
-  if (base) return `${base.replace(/\/$/, "")}/${name}`;
-  const u = new URL(req.url);
-  return `${u.origin}${u.pathname}`;
-}
-
 export async function requestContractLink(
-  req: Request,
+  _req: Request,
   sql: Sql,
   kind: "cancel" | "withdraw",
   body: Obj,
@@ -233,7 +226,8 @@ export async function requestContractLink(
     select billing.create_contract_request(${kind}, ${email}, ${contractNumber}, ${sql.json(details as any)}::jsonb) as r`);
   const r = row?.r as Obj | null;
   if (!r?.token) return { sent: false };
-  const url = `${functionUrl(req, kind === "cancel" ? "billing-cancel" : "billing-withdraw")}?t=${encodeURIComponent(r.token)}`;
+  // Link auf die Seite der Web-App; der Schlüssel steht im Fragment und erreicht keinen Server-Log.
+  const url = `${appUrl()}/${kind === "cancel" ? "kuendigen" : "widerrufen"}/bestaetigen#t=${encodeURIComponent(r.token)}`;
   const msg = contractLink({ kind, url, requestedAt: r.requested_at, expiresAt: r.expires_at, contractNumber: contractNumber.toUpperCase() });
   await sendMail({ to: email, ...msg }, r.user_id);
   return { sent: true };
