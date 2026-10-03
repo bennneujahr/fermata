@@ -25,11 +25,11 @@ export default async function TrustSharePage({ searchParams }: { searchParams: P
   return (
     <div className="stack stack-lg">
       <p>
-        <Link href="/sicherheit">{titles.sicherheit}</Link>
+        <Link href="/sicherheit">{titles.back}</Link>
       </p>
       <PageHeader title={c.title} lead={c.lead} />
-      <div className="share-sees">
-        <Card title={c.seesTitle} variant="sunk" id="sieht">
+      <Card title={c.seesTitle} variant="sunk" id="sieht">
+        <div className="share-sees">
           <ul className="list-check list-plain stack stack-sm">
             {c.sees.map((s) => (
               <li key={s}>
@@ -38,15 +38,18 @@ export default async function TrustSharePage({ searchParams }: { searchParams: P
               </li>
             ))}
           </ul>
-          <p className="soft">{c.notSees}</p>
-        </Card>
-        <Card variant="outline">
-          <p className="cluster">
-            <Icon name="clock" />
-            <span className="soft">{c.expiry}</span>
-          </p>
-        </Card>
-      </div>
+          <div className="stack stack-sm">
+            <p className="inline-icon">
+              <Icon name="shield" size={18} />
+              <span>{c.notSees}</span>
+            </p>
+            <p className="inline-icon soft">
+              <Icon name="clock" size={18} />
+              <span>{c.expiry}</span>
+            </p>
+          </div>
+        </div>
+      </Card>
       {evenings === null ? <Notice tone="warning">{c.unavailable}</Notice> : null}
       {focus && !list.some((e) => e.evening_id === focus) && evenings !== null ? <Notice tone="info">{c.errors.evening_not_confirmed}</Notice> : null}
       {evenings !== null && shown.length === 0 ? (

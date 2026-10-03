@@ -60,12 +60,14 @@ export function HelpNumbers({
       {showPolice ? (
         <div className="help-numbers__item help-numbers__item--police">
           <Call tel={contacts.police.tel} label={c.policeCta(contacts.police.number)} emergency />
-          {variant !== "compact" ? <p className="help-numbers__note">{c.policeText}</p> : null}
+          {variant === "urgent" ? <p className="help-numbers__note">{c.policeText}</p> : null}
         </div>
       ) : null}
       {variant !== "compact" ? (
         <div className="help-numbers__item">
-          <Call tel={contacts.emergency.tel} label={c.emergencyCta(contacts.emergency.number)} sub={c.emergencyText} />
+          {variant === "full" ? <H className="help-numbers__title">{c.emergencyTitle}</H> : null}
+          {variant === "full" ? <p className="help-numbers__text soft">{c.emergencyText}</p> : null}
+          <Call tel={contacts.emergency.tel} label={c.emergencyCta(contacts.emergency.number)} sub={variant === "full" ? null : c.emergencyTitle} />
         </div>
       ) : null}
       {h ? (

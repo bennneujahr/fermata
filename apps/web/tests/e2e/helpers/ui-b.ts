@@ -23,7 +23,7 @@ let venueCounter = 0;
 export async function confirmedEvening(
   a: string,
   b: string,
-  opts: { startsInMinutes?: number; venueName?: string } = {},
+  opts: { startsInMinutes?: number; venueName?: string; day?: number; time?: string } = {},
 ): Promise<{ eveningId: string; reservationId: string; tableCode: string; startsAt: Date; venueName: string }> {
   const venueName = opts.venueName ?? `Café am See ${++venueCounter}`;
   const minutes = opts.startsInMinutes ?? 2 * 24 * 60;
@@ -37,10 +37,16 @@ export async function confirmedEvening(
     values (${run!.id}, least(${a}::uuid, ${b}::uuid), greatest(${a}::uuid, ${b}::uuid), 0.8, ${v!.id},
             'Sie gehen beide gern am Wasser spazieren.', 'proposed')
     returning id`;
-  const [s] = await sql`
-    insert into app.venue_slots (venue_id, starts_at, tables)
-    values (${v!.id}, date_trunc('minute', app.now()) + make_interval(mins => ${minutes}), 2)
-    returning starts_at`;
+  // Entweder „in n Minuten“ oder ein Tag (ab heute) mit Uhrzeit in Europe/Berlin, z. B. day 3, time „19:30“.
+  const [s] = opts.day !== undefined
+    ? await sql`
+      insert into app.venue_slots (venue_id, starts_at, tables)
+      values (${v!.id}, app.berlin_at((app.now() at time zone 'Europe/Berlin')::date + ${opts.day}::int, ${opts.time ?? "19:30"}::time), 2)
+      returning starts_at`
+    : await sql`
+      insert into app.venue_slots (venue_id, starts_at, tables)
+      values (${v!.id}, date_trunc('minute', app.now()) + make_interval(mins => ${minutes}), 2)
+      returning starts_at`;
   const [e] = await sql`
     insert into app.evenings (pairing_id, user_a, user_b, starts_at, venue_id)
     values (${p!.id}, least(${a}::uuid, ${b}::uuid), greatest(${a}::uuid, ${b}::uuid), ${s!.starts_at}, ${v!.id})

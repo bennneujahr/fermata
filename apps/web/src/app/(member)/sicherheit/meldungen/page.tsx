@@ -17,7 +17,7 @@ export default async function MyReportsPage() {
   return (
     <div className="stack stack-lg">
       <p>
-        <Link href="/sicherheit">{titles.sicherheit}</Link>
+        <Link href="/sicherheit">{titles.back}</Link>
       </p>
       <PageHeader title={c.title} lead={c.lead} actions={<ButtonLink href="/sicherheit/melden" icon="flag">{c.newReport}</ButtonLink>} />
       {reports === null ? (

@@ -66,6 +66,11 @@ export const membership = (f: AddressForm) => ({
     "Ihr erster Abend ist kostenlos, ganz ohne Karte. Erst danach brauchen Sie für neue Vorschläge eine Mitgliedschaft.",
     "Dein erster Abend ist kostenlos, ganz ohne Karte. Erst danach brauchst du für neue Vorschläge eine Mitgliedschaft.",
   ),
+  freeActiveMember: af(
+    f,
+    "Ihr erster Abend bleibt trotzdem kostenlos. Die Abende Ihrer Mitgliedschaft kommen danach dran und bleiben bis zum Ende des Zeitraums erhalten.",
+    "Dein erster Abend bleibt trotzdem kostenlos. Die Abende deiner Mitgliedschaft kommen danach dran und bleiben bis zum Ende des Zeitraums erhalten.",
+  ),
   freeEnded: (date: string) => af(f, `Ihre Gratisphase endete am ${date}.`, `Deine Gratisphase endete am ${date}.`),
   needMembership: af(
     f,

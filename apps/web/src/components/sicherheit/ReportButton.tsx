@@ -48,7 +48,7 @@ export function ReportButton({
       >
         {label ?? c.open}
       </Button>
-      <Dialog open={open} onClose={() => setOpen(false)} title={c.dialogTitle}>
+      <Dialog open={open} onClose={() => setOpen(false)} title={c.dialogTitle} className="report-dialog">
         {open ? (
           <ReportForm
             key={round}

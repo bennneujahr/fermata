@@ -23,7 +23,6 @@ export default async function HelpPage() {
       <Card title={c.emergencyTitle} variant="outline" id="notruf">
         <p className="soft">{c.emergencyText}</p>
         <HelpNumbers contacts={contacts} form={form} variant="full" />
-        <p className="muted text-sm">{contacts.note ?? c.note}</p>
       </Card>
       <div className="grid-auto">
         <Card title={c.reportTitle} id="melden">

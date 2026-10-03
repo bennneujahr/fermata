@@ -12,6 +12,7 @@ export function Dialog({
   children,
   actions,
   describedBy,
+  className,
 }: {
   open: boolean;
   onClose: () => void;
@@ -19,6 +20,8 @@ export function Dialog({
   children?: ReactNode;
   actions?: ReactNode;
   describedBy?: string;
+  /** Zusätzliche Klasse, z. B. für einen breiteren Dialog. */
+  className?: string;
 }) {
   const ref = useRef<HTMLDialogElement>(null);
   const id = useId();
@@ -39,7 +42,7 @@ export function Dialog({
   return (
     <dialog
       ref={ref}
-      className="dialog"
+      className={["dialog", className].filter(Boolean).join(" ")}
       aria-labelledby={`${id}-title`}
       aria-describedby={describedBy}
       onCancel={(e) => {

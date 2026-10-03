@@ -38,7 +38,7 @@ export default async function MembershipPage() {
     <div className="stack stack-lg">
       <PageHeader title={c.title} lead={c.lead} />
 
-      <div className="grid-auto">
+      <div className="grid-auto grid-start">
         <Card title={c.stateTitle} id="stand">
           <dl className="facts">
             <dt>{c.labels.status}</dt>
@@ -111,7 +111,7 @@ export default async function MembershipPage() {
 
         <Card title={c.freeTitle} id="gratis" variant="sunk">
           {o.free_phase.active ? (
-            <p className="soft">{c.freeActive}</p>
+            <p className="soft">{running || o.status === "pending" ? c.freeActiveMember : c.freeActive}</p>
           ) : (
             <>
               {o.free_phase.ended_at ? <p className="soft">{c.freeEnded(formatDate(o.free_phase.ended_at))}</p> : null}
@@ -121,7 +121,7 @@ export default async function MembershipPage() {
         </Card>
       </div>
 
-      <section className="stack" aria-labelledby="stufen">
+      <section className="stack stack-md" aria-labelledby="stufen">
         <h2 id="stufen">{c.tiersTitle}</h2>
         <p className="soft measure">{c.tiersText}</p>
         <TierCards tiers={tiers} form={form} currentTier={running || o.status === "pending" ? o.tier : null} canOrder={!running} />
@@ -129,7 +129,7 @@ export default async function MembershipPage() {
         {o.status === "pending" ? <p className="muted text-sm">{c.pendingHint}</p> : null}
       </section>
 
-      <section className="stack" aria-labelledby="vertrag">
+      <section className="stack stack-md" aria-labelledby="vertrag">
         <h2 id="vertrag">{c.contractTitle}</h2>
         <div className="grid-auto">
           <Card variant="outline" title={LABELS.cancelEntry} headingLevel={3} id="kuendigen">

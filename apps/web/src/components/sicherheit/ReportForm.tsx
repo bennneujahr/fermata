@@ -127,7 +127,7 @@ export function ReportForm({
       </Notice>
 
       {evening ? (
-        <p className="cluster">
+        <p className="inline-icon">
           <Icon name="evening" size={18} />
           <span>{c.eveningFixed(evening.label)}</span>
         </p>

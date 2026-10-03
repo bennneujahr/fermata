@@ -29,7 +29,7 @@ test("Melden aus einem Abend: Gegenüber, Null-Toleranz-Hinweis, ruhige Bestäti
   await expectAccessible(page, "Melden mit Fehler");
 
   await page.getByRole("radio", { name: /Belästigung/ }).check();
-  await page.getByLabel(/Was ist passiert\?/).fill("Er hat mich nach dem Abend mehrfach angesprochen.");
+  await page.getByRole("textbox", { name: /Beschreibung/ }).fill("Er hat mich nach dem Abend mehrfach angesprochen.");
   await expect(page.getByText("49 von 4000 Zeichen")).toBeVisible();
   await page.getByRole("button", { name: "Meldung abschicken" }).click();
   await expect(page.getByRole("heading", { name: "Danke. Ihre Meldung ist bei uns." })).toBeVisible();

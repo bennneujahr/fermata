@@ -3,6 +3,7 @@
 import { af, type AddressForm } from "./form";
 
 export const titles = {
+  back: "Zurück zur Sicherheit",
   hilfe: "Hilfe und Sicherheit",
   sicherheit: "Sicherheit",
   melden: "Etwas melden",
@@ -19,7 +20,8 @@ export const phones = (f: AddressForm) => ({
   policeCta: (n: string) => `Polizei-Notruf ${n} anrufen`,
   emergencyCta: (n: string) => `Notruf ${n} anrufen`,
   policeText: af(f, "Bei akuter Gefahr – rufen Sie sofort an.", "Bei akuter Gefahr – ruf sofort an."),
-  emergencyText: "Rettungsdienst und Feuerwehr.",
+  emergencyTitle: "Rettungsdienst und Feuerwehr",
+  emergencyText: "Bei einem medizinischen Notfall oder Feuer.",
   heimwegTitle: "Heimwegtelefon",
   heimwegText: af(
     f,
@@ -85,7 +87,6 @@ export const help = (f: AddressForm) => ({
   contactTitle: "Fragen zu Fermata",
   contactText: af(f, "Schreiben Sie uns. Wir antworten persönlich.", "Schreib uns. Wir antworten persönlich."),
   installLink: "Fermata als App installieren",
-  note: "Alle Nummern prüfen wir regelmäßig.",
 });
 
 export const safety = (f: AddressForm) => ({
@@ -176,14 +177,14 @@ export const report = (f: AddressForm) => ({
   aboutPerson: (name: string | null) => (name ? af(f, `Mein Gegenüber (${name})`, `Mein Gegenüber (${name})`) : "Mein Gegenüber"),
   aboutOther: "Etwas anderes, zum Beispiel das Lokal",
   categoryLegend: "Was ist passiert?",
-  zeroTitle: "Null Toleranz",
+  zeroTitle: "Null-Toleranz",
   zeroText: af(
     f,
     "Bei Übergriff, Bedrohung oder dem Verdacht auf Minderjährigkeit sperren wir das Konto der gemeldeten Person sofort vorläufig und sagen ihre Abende ab, bis wir den Fall geprüft haben. Danach entscheidet ein Mensch.",
     "Bei Übergriff, Bedrohung oder dem Verdacht auf Minderjährigkeit sperren wir das Konto der gemeldeten Person sofort vorläufig und sagen ihre Abende ab, bis wir den Fall geprüft haben. Danach entscheidet ein Mensch.",
   ),
   otherLegend: "Weitere Gründe",
-  description: "Was ist passiert?",
+  description: "Beschreibung",
   descriptionOptional: "freiwillig",
   descriptionHint: af(
     f,

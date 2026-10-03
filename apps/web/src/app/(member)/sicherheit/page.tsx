@@ -18,7 +18,7 @@ export default async function SafetyPage() {
   return (
     <div className="stack stack-lg">
       <PageHeader title={c.title} lead={c.lead} />
-      <div className="grid-auto">
+      <div className="grid-auto grid-start">
         <Card title={c.reportTitle} id="melden" variant="accent">
           <p className="soft">{c.reportText}</p>
           <div>
@@ -36,16 +36,16 @@ export default async function SafetyPage() {
             </ButtonLink>
           </div>
         </Card>
-        <Card title={c.helpTitle} id="hilfe" variant="outline">
-          <HelpNumbers contacts={contacts} form={form} variant="compact" />
-          <p className="text-sm">
-            <ButtonLink href="/hilfe" variant="quiet" iconAfter="arrowRight">
-              {c.helpCta}
-            </ButtonLink>
-          </p>
-        </Card>
       </div>
-      <div className="grid-auto">
+      <Card title={c.helpTitle} id="hilfe" variant="outline">
+        <HelpNumbers contacts={contacts} form={form} variant="compact" />
+        <div>
+          <ButtonLink href="/hilfe" variant="quiet" iconAfter="arrowRight">
+            {c.helpCta}
+          </ButtonLink>
+        </div>
+      </Card>
+      <div className="grid-auto grid-start">
         <Card title={c.reportsTitle} id="meldungen" variant="sunk" headingLevel={2}>
           <p className="soft">{c.reportsCount(reports?.length ?? 0)}</p>
           <div>

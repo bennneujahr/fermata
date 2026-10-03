@@ -18,7 +18,7 @@ export default async function SanctionsPage() {
   return (
     <div className="stack stack-lg">
       <p>
-        <Link href="/sicherheit">{titles.sicherheit}</Link>
+        <Link href="/sicherheit">{titles.back}</Link>
       </p>
       <PageHeader title={c.title} lead={c.lead} />
       {sanctions === null ? (

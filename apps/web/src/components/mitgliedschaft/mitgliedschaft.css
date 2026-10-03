@@ -1,3 +1,5 @@
+@import "../../styles/layout-extra.css";
+
 /* Mitgliedschaft: Stufen, Bestellübersicht, Zahlungsfeld, Kündigen, Widerrufen, Eingangsbestätigung. Nur Tokens. */
 
 /* ---------- Stufen ---------- */
@@ -237,3 +239,4 @@
     display: none !important;
   }
 }
+
