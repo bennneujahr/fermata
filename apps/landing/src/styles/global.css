@@ -648,6 +648,7 @@ strong {
 .panel-night {
   position: relative;
   overflow: hidden;
+  color-scheme: dark;
   border-radius: var(--radius-lg);
   background:
     radial-gradient(60% 75% at 22% 45%, color-mix(in srgb, var(--color-brass-decor) 20%, transparent), transparent 70%),
@@ -912,7 +913,7 @@ strong {
 .tier {
   display: flex;
   flex-direction: column;
-  padding: var(--space-6);
+  padding: var(--space-5) var(--space-5) var(--space-6);
   border: 1px solid var(--color-line);
   border-radius: var(--radius-lg);
   background: var(--color-paper-raised);
@@ -932,7 +933,15 @@ strong {
   align-items: baseline;
   flex-wrap: wrap;
   gap: var(--space-2);
-  margin-top: var(--space-6);
+  margin-top: var(--space-5);
+}
+@media (min-width: 56rem) {
+  .tier {
+    padding: var(--space-6);
+  }
+  .tier-price {
+    margin-top: var(--space-6);
+  }
 }
 .tier-price strong {
   font-family: var(--font-display);
