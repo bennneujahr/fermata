@@ -1,0 +1,43 @@
+---
+import "@fermata/brand/atem.css";
+import { viola } from "../content/home";
+import { hoerprobeSrc, settings } from "../settings";
+const showHoerprobe = settings["landing.hoerprobe_enabled"];
+---
+<section class="section" id={viola.id} aria-labelledby="viola-title">
+  <div class="wrap">
+    <div class="panel-night viola-grid">
+      <figure class="viola-figure">
+        <fermata-atem state="ruhig" label={viola.atemLabel} data-atem></fermata-atem>
+        <figcaption>{viola.atemCaption}</figcaption>
+      </figure>
+      <div>
+        <p class="eyebrow">{viola.eyebrow}</p>
+        <h2 class="section-title" id="viola-title">{viola.title}</h2>
+        <p class="section-intro">{viola.lead}</p>
+        <ul class="viola-facts">
+          {viola.facts.map((f) => (
+            <li>
+              <h3>{f.title}</h3>
+              <p>{f.text}</p>
+            </li>
+          ))}
+        </ul>
+        {showHoerprobe && (
+          <div class="hoerprobe" data-hoerprobe>
+            <h3>{viola.hoerprobe.title}</h3>
+            <p>{viola.hoerprobe.text}</p>
+            <audio controls preload="none" src={hoerprobeSrc} data-hoerprobe-audio></audio>
+            <details>
+              <summary>{viola.hoerprobe.transcriptLabel}</summary>
+              <p>{viola.hoerprobe.transcript}</p>
+            </details>
+          </div>
+        )}
+      </div>
+    </div>
+  </div>
+</section>
+<script>
+  import "../scripts/viola";
+</script>

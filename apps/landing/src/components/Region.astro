@@ -1,0 +1,63 @@
+---
+import { region } from "../content/home";
+const f = region.founding;
+// Orte (Länge/Breite) auf 600 × 400 projiziert: x = 20 + (lon − 9,7) · 213, y = 20 + (54,3 − lat) · 360.
+const start = [
+  { name: "Wismar", x: 397, y: 168, dx: 12, dy: 5, big: true },
+  { name: "Schwerin", x: 384, y: 261, dx: 12, dy: 5, big: true },
+  { name: "Ludwigslust", x: 403, y: 369, dx: 10, dy: 4, big: false },
+  { name: "Parchim", x: 478, y: 333, dx: 10, dy: 4, big: false },
+];
+const later = [
+  { name: "Hamburg", x: 84, y: 290, dx: -10, dy: 26, anchor: "start" },
+  { name: "Lübeck", x: 231, y: 175, dx: -12, dy: 5, anchor: "end" },
+  { name: "Rostock", x: 531, y: 96, dx: 0, dy: 28, anchor: "middle" },
+];
+---
+<section class="section" id={region.id} aria-labelledby="region-title">
+  <div class="wrap">
+    <div class="region-grid">
+      <div>
+        <p class="eyebrow">{region.eyebrow}</p>
+        <h2 class="section-title" id="region-title">{region.title}</h2>
+        <p class="region-text">{region.text}</p>
+        <ul class="region-list">
+          {region.list.map((r) => (
+            <li class:list={[{ active: r.active }]}>
+              <span class="name">{r.name}</span>
+              <span class="status">{r.status}</span>
+            </li>
+          ))}
+        </ul>
+      </div>
+      <svg class="map" viewBox="0 0 600 400" role="img" aria-labelledby="map-title">
+        <title id="map-title">{region.mapLabel}</title>
+        <path class="area" d="M318 140C350 118 420 112 448 138C470 160 470 200 488 240C512 280 540 318 520 352C500 384 430 392 380 388C340 384 318 350 312 310C306 270 296 230 300 190C302 165 306 150 318 140Z"></path>
+        <path class="sea" d="M250 -10C250 40 258 80 258 100C258 120 262 135 272 142C295 140 320 128 340 128C360 130 380 150 394 160C400 150 402 130 412 116C420 100 425 92 432 86C445 78 455 74 470 72C495 68 512 64 527 62C550 58 580 46 610 34L610 -10Z"></path>
+        <path class="coast" d="M250 -10C250 40 258 80 258 100C258 120 262 135 272 142C295 140 320 128 340 128C360 130 380 150 394 160C400 150 402 130 412 116C420 100 425 92 432 86C445 78 455 74 470 72C495 68 512 64 527 62C550 58 580 46 610 34"></path>
+        <text class="sea-label" x="318" y="66">Ostsee</text>
+        <text class="area-label" x="318" y="304">Westmecklenburg</text>
+        {later.map((c) => (
+          <g>
+            <circle class="city-later" cx={c.x} cy={c.y} r="6"></circle>
+            <text class="label-later" x={c.x + c.dx} y={c.y + c.dy} text-anchor={c.anchor}>{c.name}</text>
+          </g>
+        ))}
+        {start.map((c) => (
+          <g>
+            <circle class="city-start" cx={c.x} cy={c.y} r={c.big ? 6.5 : 4.5}></circle>
+            <text class={c.big ? "label" : "label-small"} x={c.x + c.dx} y={c.y + c.dy}>{c.name}</text>
+          </g>
+        ))}
+      </svg>
+    </div>
+    <div class="founding">
+      <p class="founding-number" aria-hidden="true">{f.number}</p>
+      <div>
+        <h3>{f.title}</h3>
+        <p>{f.text}</p>
+        <a class="text-link" href={f.link.href}>{f.link.label} <span aria-hidden="true">→</span></a>
+      </div>
+    </div>
+  </div>
+</section>

@@ -1,0 +1,23 @@
+---
+import { steps } from "../content/home";
+---
+<section class="section" id={steps.id} aria-labelledby="ablauf-title">
+  <div class="wrap">
+    <header class="section-head">
+      <div>
+        <p class="eyebrow">{steps.eyebrow}</p>
+        <h2 class="section-title" id="ablauf-title">{steps.title}</h2>
+      </div>
+      <p class="section-intro">{steps.intro}</p>
+    </header>
+    <ol class="steps">
+      {steps.items.map((s, i) => (
+        <li>
+          <span class="step-num" aria-hidden="true">{i + 1}</span>
+          <h3><span class="visually-hidden">{`Schritt ${i + 1}: `}</span>{s.title}</h3>
+          <p>{s.text}</p>
+        </li>
+      ))}
+    </ol>
+  </div>
+</section>

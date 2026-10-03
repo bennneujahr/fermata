@@ -1,0 +1,33 @@
+{
+  "name": "@fermata/landing",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Fermata Landingpage mit Warteliste (Astro, statisch, eine Server-Funktion für Plakat-Kürzel).",
+  "scripts": {
+    "prepare-assets": "node scripts/copy-brand.mjs",
+    "dev": "node scripts/copy-brand.mjs && astro dev --port 4331",
+    "build": "node scripts/copy-brand.mjs && node scripts/pull-settings.mjs && astro build && node scripts/check-dist.mjs",
+    "preview": "astro preview --port 4331",
+    "typecheck": "astro check",
+    "test:e2e": "playwright test",
+    "screenshots": "playwright test --config playwright.screenshots.config.ts",
+    "lighthouse": "node scripts/lighthouse.mjs"
+  },
+  "dependencies": {
+    "@astrojs/vercel": "11.0.11",
+    "@fermata/brand": "workspace:*",
+    "@fermata/tokens": "workspace:*",
+    "astro": "7.3.5"
+  },
+  "devDependencies": {
+    "@astrojs/check": "0.9.10",
+    "@astrojs/node": "11.1.6",
+    "@axe-core/playwright": "4.13.0",
+    "@playwright/test": "1.56.1",
+    "chrome-launcher": "1.2.2",
+    "lighthouse": "13.5.0",
+    "postgres": "3.4.9",
+    "typescript": "5.9.3"
+  }
+}

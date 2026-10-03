@@ -1,0 +1,24 @@
+---
+import Fermate from "../components/Fermate.astro";
+import { abmelden as t } from "../content/pages";
+import Base from "../layouts/Base.astro";
+const texts = { missing: t.missing, error: t.error, working: t.working, confirm: t.confirm };
+---
+<Base title={t.title} noindex>
+  <section class="page" data-unsubscribe data-texts={JSON.stringify(texts)}>
+    <div class="wrap page-center">
+      <Fermate class="page-mark" />
+      <h1 class="page-title">{t.heading}</h1>
+      <p class="page-lead">{t.text}</p>
+      <noscript><p class="noscript-note">{t.noscript}</p></noscript>
+      <p class="noscript-note" data-message role="alert" hidden></p>
+      <div class="page-actions">
+        <button class="btn btn-primary" type="button" data-confirm disabled>{t.confirm}</button>
+        <a class="btn btn-quiet" href={t.cancel.href}>{t.cancel.label}</a>
+      </div>
+    </div>
+  </section>
+  <script>
+    import "../scripts/abmelden";
+  </script>
+</Base>

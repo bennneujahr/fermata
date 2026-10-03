@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <!-- Wie favicon.svg, aber ohne <style> und style-Attribute (für Seiten mit strenger CSP). Ein Farbschema für hell und dunkel. -->
+  <rect width="32" height="32" rx="7" fill="#1C1E33"/>
+  <path fill="none" stroke="#F1EADC" stroke-width="3.4" stroke-linecap="round" d="M6.5 23.5C6.5 15 10.6 9.6 16 9.6S25.5 15 25.5 23.5"/>
+  <circle fill="#F1EADC" cx="16" cy="20.9" r="3.1"/>
+</svg>

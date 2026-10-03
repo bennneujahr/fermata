@@ -1,0 +1,55 @@
+---
+import { hero, principles } from "../content/home";
+import Fermate from "./Fermate.astro";
+import Icon from "./Icon.astro";
+const c = hero.card;
+---
+<section class="hero" aria-labelledby="hero-title">
+  <div class="wrap">
+    <div class="hero-grid">
+      <div>
+        <p class="eyebrow">{hero.eyebrow}</p>
+        <h1 class="hero-title" id="hero-title">{hero.titleLead} <em>{hero.titleEm}</em></h1>
+        <p class="hero-lead">{hero.lead}</p>
+        <div class="hero-actions">
+          <a class="btn btn-primary" href={hero.primary.href}>{hero.primary.label}</a>
+          <a class="text-link" href={hero.secondary.href}>{hero.secondary.label} <span aria-hidden="true">↓</span></a>
+        </div>
+        <p class="hero-note">{hero.note}</p>
+      </div>
+      <figure class="invite-card">
+        <div class="invite">
+          <div class="invite-top">
+            <Fermate class="invite-mark" />
+            <span class="invite-tag">{c.label}</span>
+          </div>
+          <p class="invite-kicker">{c.kicker}</p>
+          <p class="invite-when">{c.day} <span>{c.time}</span></p>
+          <dl class="invite-rows">
+            <div>
+              <dt>{c.placeLabel}</dt>
+              <dd>{c.place}<small>{c.placeNote}</small></dd>
+            </div>
+            <div>
+              <dt>{c.whyLabel}</dt>
+              <dd class="invite-quote">„{c.why}“</dd>
+            </div>
+          </dl>
+          <div class="invite-foot">
+            <span>{c.deadline}</span>
+            <span><Icon name="check" />{c.checked}</span>
+          </div>
+        </div>
+        <figcaption>{c.caption}</figcaption>
+      </figure>
+    </div>
+    <ul class="principles">
+      {principles.map((p) => (
+        <li>
+          <h2>{p.title}</h2>
+          <p>{p.text}</p>
+        </li>
+      ))}
+    </ul>
+  </div>
+</section>
