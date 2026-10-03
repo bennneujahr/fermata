@@ -123,6 +123,6 @@ test("Einstellungen: Gruppen, Platzhalter mit Frage aus PLATZHALTER.md, ändern"
   await page.locator(".setting", { has: field }).getByRole("button", { name: "Speichern" }).click();
   await expect(page.locator(".setting", { has: field }).getByText("Gespeichert.")).toBeVisible();
   expect(Number((await sql`select value from ops.app_settings where key = 'matching.wait_bonus_max'`)[0]!.value)).toBe(0.08);
-  await sql`update ops.app_settings set value = ${before}::jsonb where key = 'matching.wait_bonus_max'`;
+  await sql`update ops.app_settings set value = ${sql.json(JSON.parse(before))} where key = 'matching.wait_bonus_max'`;
   await ctx.close();
 });

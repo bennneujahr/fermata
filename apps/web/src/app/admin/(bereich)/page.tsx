@@ -305,7 +305,7 @@ export default async function AdminToday() {
             <Figures
               items={[
                 { label: t.safetyDecided, value: kNum(kpis.safety.decided, k) },
-                { label: t.safetyInTime, value: kpis.safety.in_time_share === null ? adminCommon.kLess(k) : pct(kpis.safety.in_time_share) },
+                { label: t.safetyInTime, value: kpis.safety.decided === 0 ? "–" : kpis.safety.in_time_share === null ? adminCommon.kLess(k) : pct(kpis.safety.in_time_share) },
                 { label: t.safetyMedian, value: kpis.safety.median_hours_to_decision === null ? "–" : adminCommon.hours(Math.round(kpis.safety.median_hours_to_decision)) },
               ]}
             />
