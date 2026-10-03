@@ -58,6 +58,9 @@ importers:
       '@fermata/tokens':
         specifier: workspace:*
         version: link:../../packages/tokens
+      '@stripe/stripe-js':
+        specifier: 9.17.0
+        version: 9.17.0
       '@supabase/ssr':
         specifier: 0.12.7
         version: 0.12.7(@supabase/supabase-js@2.117.2(@opentelemetry/api@1.9.1))
@@ -1172,6 +1175,10 @@ packages:
 
   '@shikijs/vscode-textmate@10.0.2':
     resolution: {integrity: sha512-83yeghZ2xxin3Nj8z1NMd/NCuca+gsYXswywDy5bHvwlWL8tpTQmzGeUuHd9FC3E/SBEMvzJRwWEOz5gGes9Qg==}
+
+  '@stripe/stripe-js@9.17.0':
+    resolution: {integrity: sha512-uidL4OJum5kivsOAQnVfQmYLJ2zdgirtmT0zWgskASZ4TPXxpXQ0MNrzW4NsXB90uEqmPHpSEtciLFbF1QQvNA==}
+    engines: {node: '>=12.16'}
 
   '@supabase/auth-js@2.117.2':
     resolution: {integrity: sha512-Z3WnGwrphYZubrLbxp5Iv0tLA9A5GhvKzJ/ZXglxqwd2QEH2R4dXRltjVJ8sIn4xEW2BSFIGT0yALVJIgZeDYw==}
@@ -4326,6 +4333,8 @@ snapshots:
       '@types/hast': 3.0.5
 
   '@shikijs/vscode-textmate@10.0.2': {}
+
+  '@stripe/stripe-js@9.17.0': {}
 
   '@supabase/auth-js@2.117.2':
     dependencies:

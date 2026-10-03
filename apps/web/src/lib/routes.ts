@@ -1,6 +1,13 @@
 // Wege der Web-App. Eine Stelle für Navigation, Schutz und Weiterleitungen.
 
-export const MEMBER_PREFIXES = ["/start", "/gespraech", "/abende", "/mitgliedschaft", "/konto", "/onboarding"] as const;
+export const MEMBER_PREFIXES = ["/start", "/gespraech", "/abende", "/mitgliedschaft", "/sicherheit", "/konto", "/onboarding"] as const;
+
+/** Bestellseite mit Stripe Payment Element: nur hier erlaubt die CSP Stripe (src/proxy.ts). */
+export const STRIPE_PREFIX = "/mitgliedschaft/bestellen";
+
+export function isStripePath(path: string): boolean {
+  return path === STRIPE_PREFIX || path.startsWith(`${STRIPE_PREFIX}/`);
+}
 
 export function isMemberPath(path: string): boolean {
   return MEMBER_PREFIXES.some((p) => path === p || path.startsWith(`${p}/`));

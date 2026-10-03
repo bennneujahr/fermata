@@ -1,0 +1,312 @@
+/* Sicherheit: Hilfe-Nummern, Melden, Check-in, Abend teilen, öffentliche Seiten. Nur Tokens aus packages/tokens. */
+
+/* ---------- Hilfe-Nummern ---------- */
+.help-numbers {
+  display: grid;
+  gap: var(--space-5);
+}
+
+.help-numbers--compact,
+.help-numbers--urgent {
+  gap: var(--space-3);
+}
+
+.help-numbers__item {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.help-numbers__title {
+  font-size: var(--text-lg);
+}
+
+.help-numbers__note {
+  font-size: var(--text-sm);
+  color: var(--color-ink-muted);
+}
+
+.help-numbers__list {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.help-numbers--urgent .call--emergency {
+  font-size: var(--text-xl);
+  min-block-size: 4.5rem;
+}
+
+@media (min-width: 48rem) {
+  .help-numbers--full {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .help-numbers--full .help-numbers__item--police {
+    grid-column: 1 / -1;
+  }
+}
+
+/* ---------- Check-in ---------- */
+.checkin-choices {
+  display: grid;
+  gap: var(--space-3);
+  border: none;
+  margin: 0;
+  padding: 0;
+  min-inline-size: 0;
+}
+
+.checkin-choice {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  inline-size: 100%;
+  min-block-size: 5rem;
+  padding: var(--space-4) var(--space-5);
+  border-radius: var(--radius-lg);
+  border: 2px solid var(--choice-color, var(--color-line-strong));
+  background: var(--color-paper-raised);
+  color: var(--color-ink);
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+  transition: background-color var(--motion-fast) var(--motion-ease), border-color var(--motion-fast) var(--motion-ease),
+    transform var(--motion-fast) var(--motion-ease);
+  -webkit-tap-highlight-color: transparent;
+}
+
+.checkin-choice:hover {
+  background: color-mix(in srgb, var(--choice-color, var(--color-ink)) 6%, var(--color-paper-raised));
+}
+
+.checkin-choice:active {
+  transform: translateY(1px);
+}
+
+.checkin-choice[aria-pressed="true"] {
+  background: color-mix(in srgb, var(--choice-color, var(--color-ink)) 10%, var(--color-paper-raised));
+  box-shadow: inset 0 0 0 1px var(--choice-color, var(--color-ink));
+}
+
+.checkin-choice[disabled] {
+  cursor: progress;
+}
+
+.checkin-choice--gut {
+  --choice-color: var(--color-success);
+}
+
+.checkin-choice--unsicher {
+  --choice-color: var(--color-warning);
+}
+
+.checkin-choice--hilfe {
+  --choice-color: var(--color-danger);
+  background: var(--color-danger);
+  color: var(--color-paper-raised);
+}
+
+.checkin-choice--hilfe:hover,
+.checkin-choice--hilfe[aria-pressed="true"] {
+  background: color-mix(in srgb, var(--color-danger) 86%, var(--color-ink));
+  color: var(--color-paper-raised);
+}
+
+.checkin-choice__icon {
+  flex: none;
+  display: grid;
+  place-items: center;
+  inline-size: 3rem;
+  block-size: 3rem;
+  border-radius: 50%;
+  color: var(--choice-color, var(--color-ink));
+  background: color-mix(in srgb, currentColor 12%, transparent);
+}
+
+.checkin-choice--hilfe .checkin-choice__icon {
+  color: var(--color-paper-raised);
+}
+
+.checkin-choice__text {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.checkin-choice__label {
+  font-size: var(--text-xl);
+  font-weight: 650;
+  line-height: 1.2;
+}
+
+.checkin-choice__description {
+  font-size: var(--text-sm);
+  color: var(--color-ink-soft);
+}
+
+.checkin-choice--hilfe .checkin-choice__description {
+  color: var(--color-paper-raised);
+}
+
+.urgent-help {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  padding: var(--space-5);
+  border-radius: var(--radius-lg);
+  border: 2px solid var(--color-danger);
+  background: color-mix(in srgb, var(--color-danger) 6%, var(--color-paper-raised));
+}
+
+.urgent-help__title {
+  font-size: var(--text-2xl);
+}
+
+.urgent-help__number {
+  font-family: var(--font-display);
+  font-size: var(--text-4xl);
+  line-height: 1;
+  font-variant-numeric: lining-nums tabular-nums;
+  color: var(--color-danger);
+}
+
+/* ---------- Melden ---------- */
+.report-emergency {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2) var(--space-4);
+}
+
+.report-emergency a {
+  font-weight: 650;
+}
+
+.category-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  border-radius: var(--radius-md);
+  border: 1.5px solid color-mix(in srgb, var(--color-danger) 45%, var(--color-line));
+  background: color-mix(in srgb, var(--color-danger) 4%, var(--color-paper-raised));
+}
+
+.category-group__title {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-weight: 650;
+  color: var(--color-ink);
+}
+
+.category-group__title svg {
+  color: var(--color-danger);
+}
+
+.category-group__text {
+  font-size: var(--text-sm);
+  color: var(--color-ink-soft);
+}
+
+.char-counter {
+  align-self: flex-end;
+  font-size: var(--text-sm);
+  color: var(--color-ink-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.report-dialog .dialog__inner {
+  max-block-size: calc(100dvh - 2rem);
+  overflow-y: auto;
+}
+
+.dialog.report-dialog {
+  inline-size: min(40rem, calc(100vw - 2rem));
+}
+
+/* ---------- Listen (Meldungen, Sanktionen, Links) ---------- */
+.item-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-2) var(--space-4);
+}
+
+.item-head h3 {
+  font-size: var(--text-lg);
+}
+
+.item-meta {
+  font-size: var(--text-sm);
+  color: var(--color-ink-muted);
+}
+
+.item-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin-top: var(--space-2);
+}
+
+/* ---------- Abend teilen ---------- */
+.link-box {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  border-radius: var(--radius-md);
+  background: var(--color-paper-sunk);
+  border: 1px solid var(--color-line);
+}
+
+.link-box .input {
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+}
+
+.share-sees {
+  display: grid;
+  gap: var(--space-5);
+}
+
+@media (min-width: 48rem) {
+  .share-sees {
+    grid-template-columns: 3fr 2fr;
+  }
+}
+
+/* ---------- Öffentliche Seiten ---------- */
+.public-when {
+  font-family: var(--font-display);
+  font-size: var(--text-2xl);
+  line-height: var(--leading-snug);
+}
+
+.public-address {
+  font-style: normal;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.public-address strong {
+  font-size: var(--text-lg);
+}
+
+.venue-code {
+  font-family: var(--font-mono);
+  font-size: var(--text-xl);
+  letter-spacing: 0.08em;
+}
+
+.text-success {
+  color: var(--color-success);
+}
+
+.textarea--prose {
+  font-family: var(--font-body);
+  font-size: var(--text-md);
+  line-height: var(--leading-body);
+}

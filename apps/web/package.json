@@ -19,6 +19,7 @@
   "dependencies": {
     "@fermata/brand": "workspace:*",
     "@fermata/tokens": "workspace:*",
+    "@stripe/stripe-js": "9.17.0",
     "@supabase/ssr": "0.12.7",
     "@supabase/supabase-js": "2.117.2",
     "next": "16.3.8",

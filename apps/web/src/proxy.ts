@@ -5,17 +5,21 @@
 //    Ob jemand Admin ist, prüfen zusätzlich die Admin-Seiten und die Datenbank (app.is_admin()).
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
-import { buildCsp, newNonce } from "@/lib/csp";
-import { isAdminPath, isMemberPath, isMfaPath, loginRedirectTarget } from "@/lib/routes";
+import { buildCsp, newNonce, STRIPE_CSP } from "@/lib/csp";
+import { isAdminPath, isMemberPath, isMfaPath, isStripePath, loginRedirectTarget } from "@/lib/routes";
 
 export async function proxy(request: NextRequest) {
   const nonce = newNonce();
+  // Stripe (Skript, Rahmen, API) nur auf der Bestellseite, sonst nirgends.
+  const stripe = isStripePath(request.nextUrl.pathname);
   const csp = buildCsp({
     nonce,
     supabaseUrl: process.env.NEXT_PUBLIC_SUPABASE_URL ?? "",
     dev: process.env.NODE_ENV === "development",
-    extraConnect: (process.env.FERMATA_CSP_EXTRA_CONNECT ?? "").split(/\s+/).filter(Boolean),
-    extraFrame: (process.env.FERMATA_CSP_EXTRA_FRAME ?? "").split(/\s+/).filter(Boolean),
+    extraConnect: [...(process.env.FERMATA_CSP_EXTRA_CONNECT ?? "").split(/\s+/).filter(Boolean), ...(stripe ? STRIPE_CSP.connect : [])],
+    extraFrame: [...(process.env.FERMATA_CSP_EXTRA_FRAME ?? "").split(/\s+/).filter(Boolean), ...(stripe ? STRIPE_CSP.frame : [])],
+    extraScript: stripe ? [...STRIPE_CSP.script] : [],
+    extraImg: stripe ? [...STRIPE_CSP.img] : [],
   });
 
   const requestHeaders = new Headers(request.headers);
