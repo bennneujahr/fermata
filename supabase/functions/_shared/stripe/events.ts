@@ -49,6 +49,25 @@ export function subscriptionPeriodEnd(sub: Obj): string | null {
   return ts(sub.current_period_end ?? sub.items?.data?.[0]?.current_period_end);
 }
 
+// Datensparsamkeit: Diese Felder speichern wir nie (Kartendetails, Anschriften, Telefonnummern, Namen).
+const DROP_KEYS = new Set([
+  "payment_method_details", "card", "billing_details", "customer_address", "customer_shipping", "customer_phone",
+  "customer_name", "shipping", "shipping_details", "address", "phone", "sources", "payment_method", "default_payment_method",
+  "customer_tax_ids", "account_tax_ids",
+]);
+
+/** Kopie des Ereignisses ohne Karten- und Adressdaten, wie sie in billing.stripe_events gespeichert wird. */
+export function minimizeEvent<T>(value: T, depth = 0): T {
+  if (depth > 12 || value === null || typeof value !== "object") return value;
+  if (Array.isArray(value)) return value.map((v) => minimizeEvent(v, depth + 1)) as T;
+  const out: Record<string, unknown> = {};
+  for (const [k, v] of Object.entries(value as Record<string, unknown>)) {
+    if (DROP_KEYS.has(k)) continue;
+    out[k] = minimizeEvent(v, depth + 1);
+  }
+  return out as T;
+}
+
 export async function processStripeEvent(sql: Sql, event: Obj): Promise<EventOutcome> {
   const type = String(event.type);
   const obj: Obj = event.data?.object ?? {};

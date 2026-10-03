@@ -10,7 +10,7 @@ import { handler, json } from "../_shared/http.ts";
 import { sendMail } from "../_shared/mail/mod.ts";
 import { membershipActivated, paymentFailed } from "../_shared/mail/templates/billing.ts";
 import { manageUrl, userContact } from "../_shared/stripe/contract.ts";
-import { type EventOutcome, processStripeEvent } from "../_shared/stripe/events.ts";
+import { type EventOutcome, minimizeEvent, processStripeEvent } from "../_shared/stripe/events.ts";
 import { verifyStripeSignature } from "../_shared/stripe/webhook.ts";
 
 type Obj = Record<string, any>;
@@ -55,7 +55,7 @@ export default handler(["POST"], async (req) => {
   if (typeof event?.id !== "string" || typeof event?.type !== "string") return json(req, { error: "invalid_event" }, 400);
 
   const sql = db();
-  const [accepted] = await sql`select billing.accept_stripe_event(${event.id}, ${event.type}, ${sql.json(event as any)}::jsonb) as fresh`;
+  const [accepted] = await sql`select billing.accept_stripe_event(${event.id}, ${event.type}, ${sql.json(minimizeEvent(event) as any)}::jsonb) as fresh`;
   if (!accepted?.fresh) return json(req, { received: true, duplicate: true });
 
   let outcome: EventOutcome | undefined;

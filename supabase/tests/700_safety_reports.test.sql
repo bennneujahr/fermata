@@ -1,7 +1,7 @@
 -- M7: Melden überall, Beziehungsprüfung, Drossel, vorläufige Sperre bei Null-Toleranz,
 -- Absage der Abende mit neutraler Nachricht, Anonymität der meldenden Person, Widerspruch.
 begin;
-select plan(48);
+select plan(50);
 
 create function pg_temp.u(n int) returns uuid language sql as $$ select ('00000000-0000-0000-0000-000000000' || n)::uuid; $$;
 select tests.create_user('s' || n || '@example.test', pg_temp.u(n)) from generate_series(701, 706) n;
@@ -97,6 +97,9 @@ select is((select count(*)::int from safety.mail_queue where recipient_user = pg
   'Gemeldete Person wird neutral informiert');
 select is((select count(*)::int from safety.safety_flags where kind = 'vorlaeufige_sperre' and severity = 'akut' and user_id = pg_temp.u(702)), 1,
   'Akuter Hinweis für Benn');
+select is((select count(*)::int from safety.mail_queue where to_admin and data ->> 'kind' = 'meldung' and (data ->> 'provisional_suspension')::boolean), 1,
+  'Eine Sofort-Mail an Benn nennt Meldung und vorläufige Sperre');
+select is((select count(*)::int from safety.mail_queue where to_admin and data ->> 'kind' = 'vorlaeufige_sperre'), 0, 'Keine doppelte Mail');
 select is((select count(*)::int from app.evening_events where event = 'cancel_admin' and details ->> 'notify_by' = 'safety'), 2,
   'Absagen tragen den Hinweis für M5, dass Sicherheit benachrichtigt');
 

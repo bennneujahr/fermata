@@ -159,7 +159,8 @@ set search_path = ''
 as $$ select billing.invoke_internal('safety-dispatch'); $$;
 
 -- Hinweis für Benn; ab safety.admin_alert_min_severity auch per Mail.
-create or replace function safety.raise_flag(p_user uuid, p_source text, p_kind text, p_severity text, p_details jsonb default '{}'::jsonb)
+create or replace function safety.raise_flag(p_user uuid, p_source text, p_kind text, p_severity text, p_details jsonb default '{}'::jsonb,
+  p_notify boolean default true)
 returns uuid
 language plpgsql
 security definer
@@ -171,7 +172,7 @@ begin
   insert into safety.safety_flags (user_id, source, kind, severity, details, created_at)
   values (p_user, p_source, p_kind, p_severity, coalesce(p_details, '{}'::jsonb), app.now())
   returning id into fid;
-  if safety.severity_rank(p_severity) >= safety.severity_rank(ops.setting_text('safety.admin_alert_min_severity')) then
+  if p_notify and safety.severity_rank(p_severity) >= safety.severity_rank(ops.setting_text('safety.admin_alert_min_severity')) then
     perform safety.enqueue_mail(null, true, 'safety.admin_alert',
       jsonb_build_object('flag_id', fid, 'kind', p_kind, 'severity', p_severity) || coalesce(p_details, '{}'::jsonb));
   end if;
@@ -282,8 +283,9 @@ begin
           app.now(), app.now(), prev)
   returning id into sid;
   cancelled := safety.suspend_account(p_user, 'sicherheit');
+  -- Hinweis ohne eigene Mail: die Mail zur Meldung nennt die vorläufige Sperre bereits.
   perform safety.raise_flag(p_user, 'report', 'vorlaeufige_sperre', 'akut',
-    jsonb_build_object('report_id', p_report_id, 'sanction_id', sid, 'cancelled_evenings', cancelled));
+    jsonb_build_object('report_id', p_report_id, 'sanction_id', sid, 'cancelled_evenings', cancelled), false);
   perform safety.enqueue_mail(p_user, false, 'safety.account_suspended', jsonb_build_object('provisional', true));
   perform ops.audit('safety.provisional_suspension', 'safety.sanctions', sid::text,
     jsonb_build_object('report_id', p_report_id, 'cancelled_evenings', cancelled));
