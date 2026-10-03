@@ -81,6 +81,17 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
         >
           <p className="soft">{c.consentsLead}</p>
         </Card>
+        <Card
+          title={c.identityTitle}
+          id="ueber-sie"
+          footer={
+            <ButtonLink href="/onboarding/identitaet?zurueck=konto" variant="secondary" size="sm" icon="settings">
+              {actions.edit}
+            </ButtonLink>
+          }
+        >
+          <p className="soft">{c.identityText}</p>
+        </Card>
         <Card title={c.notificationsTitle} id="mitteilungen">
           <p className="soft">{c.notificationsText}</p>
         </Card>
