@@ -134,7 +134,7 @@ def assign(
     edges: list[Edge],
     *,
     maxcardinality: bool = True,
-    timeout_seconds: float = 120.0,
+    timeout_seconds: float = 600.0,
     inline_max_nodes: int = 600,
     engine: str = "auto",
     fallback: Callable[[list[Edge], bool], list[tuple[int, int]]] | None = None,

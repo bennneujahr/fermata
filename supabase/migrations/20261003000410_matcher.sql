@@ -32,7 +32,7 @@ insert into ops.app_settings (key, value, description, category) values
   ('matching.proposal_lead_hours', '48',
    'Terminvorschläge bei der Freigabe frühestens so viele Stunden später (zwei 24-Stunden-Fristen).', 'auswahl'),
   ('matching.proposed_times_count', '3', 'So viele Terminvorschläge bekommt ein freigegebener Abend.', 'auswahl'),
-  ('matching.assignment_timeout_seconds', '120',
+  ('matching.assignment_timeout_seconds', '600',
    'PLAN 5.9: Braucht networkx für einen Teilgraphen länger, übernimmt die Ersatz-Zuordnung.', 'auswahl'),
   ('matching.assignment_inline_max_nodes', '600',
    'Teilgraphen bis zu so vielen Knoten rechnet networkx direkt (ohne eigenen Prozess mit Zeitlimit).', 'auswahl'),

@@ -84,7 +84,7 @@ class MatchSettings:
     slot_lead_hours: int = 72
     proposal_lead_hours: int = 48
     proposed_times_count: int = 3
-    assignment_timeout_seconds: float = 120.0
+    assignment_timeout_seconds: float = 600.0
     assignment_inline_max_nodes: int = 600
     fairness_min_group_size: int = 5
     llm_price_usd_per_mtok: dict[str, float] = field(
