@@ -36,6 +36,11 @@ grant usage on schema private, sensitive, safety, ops to service_role;
 grant usage on schema api to anon;
 
 -- Standard: neue Funktionen sind nicht für alle ausführbar.
+-- Wichtig: Postgres gibt PUBLIC global EXECUTE auf jede neue Funktion. Eine Angabe „in schema …“
+-- kann diese globale Voreinstellung nicht entfernen, deshalb zuerst global für die Rolle postgres.
+-- Die Migration 20261003099000_function_privileges.sql räumt zusätzlich alle bestehenden Funktionen auf,
+-- und der Test 990_privileges.test.sql prüft es dauerhaft.
+alter default privileges for role postgres revoke execute on functions from public;
 alter default privileges in schema app, private, sensitive, safety, billing, ops, api revoke execute on functions from public;
 alter default privileges in schema app, private, sensitive, safety, billing, ops, api revoke execute on functions from anon, authenticated;
 alter default privileges in schema app, private, sensitive, safety, billing, ops, api grant execute on functions to service_role;

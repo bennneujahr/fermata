@@ -4,6 +4,8 @@ begin;
 select plan(50);
 
 create function pg_temp.u(n int) returns uuid language sql as $$ select ('00000000-0000-0000-0000-000000000' || n)::uuid; $$;
+-- Testhilfe: auch als authenticated aufrufbar (Funktionen sind standardmäßig nicht für PUBLIC ausführbar).
+grant execute on function pg_temp.u(int) to public;
 select tests.create_user('t' || n || '@example.test', pg_temp.u(n)) from generate_series(711, 715) n;
 select tests.create_user('benn@example.test', pg_temp.u(719));
 insert into app.admin_users (user_id, display_name) values (pg_temp.u(719), 'Benn');
