@@ -3,7 +3,9 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import "@/styles/gespraech-abende.css";
 import { RevokeButton } from "@/app/(member)/konto/einwilligungen/RevokeButton";
+import { ConsentRenewal } from "@/components/gespraech/ConsentRenewal";
 import { InlineConsent } from "@/components/gespraech/InlineConsent";
+import { renewal } from "@/copy/gespraech";
 import { ButtonLink, Card, PageHeader } from "@/components/ui";
 import { Icon } from "@/components/ui/Icon";
 import { push as pushCopy } from "@/copy/push";
@@ -17,7 +19,8 @@ export default async function NotificationsPage() {
   const [{ form }, consents, { supabase }] = await Promise.all([requireMember("/konto/mitteilungen"), getConsents(), getSession()]);
   const c = pushCopy(form);
   const consent = consents.find((k) => k.kind === "push");
-  const granted = Boolean(consent?.granted && !consent.needs_renewal);
+  const granted = Boolean(consent?.granted);
+  const renew = Boolean(consent?.granted && consent.needs_renewal);
   const { data } = await supabase.schema("app").from("push_subscriptions").select("id, endpoint, platform, created_at, last_success_at").order("created_at");
   const devices: DeviceRow[] = ((data ?? []) as { id: string; endpoint: string; platform: string | null; created_at: string; last_success_at: string | null }[]).map((r) => ({
     id: r.id,
@@ -45,6 +48,7 @@ export default async function NotificationsPage() {
           ))}
         </ul>
       </Card>
+      {renew ? <ConsentRenewal kind="push" form={form} returnTo="/konto/mitteilungen" name={renewal(form).names.push!} /> : null}
       {granted ? (
         <Card title={c.cardTitle} id="geraet">
           <PushSettings form={form} devices={devices} sampleBody={c.sample} />

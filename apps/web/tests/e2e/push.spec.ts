@@ -134,3 +134,28 @@ test("Mitteilungen auf dem iPhone im Browser-Tab: Hinweis auf den Home-Bildschir
   console.expectClean();
   await ctx.close();
 });
+
+test("Neue Fassung der Einwilligung: alte gilt weiter, ruhiger Hinweis zum neu Bestätigen (Mitteilungen und Gespräch)", async ({ page }) => {
+  const console = watchConsole(page);
+  const m = await member("Ole");
+  for (const kind of ["push", "gespraech"]) {
+    await sql`insert into app.consents (user_id, kind, action, document_version) values (${m.id}::uuid, ${kind}, 'granted', 'e2e-alte-fassung')`;
+  }
+  await loginByLink(page, m.email);
+  await page.goto("/konto/mitteilungen");
+  const hint = page.getByText("Neue Fassung: Mitteilungen auf dem Gerät");
+  await expect(hint).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Mitteilungen auf diesem Gerät" })).toBeVisible();
+  await expectAccessible(page, "/konto/mitteilungen (neue Fassung)");
+  await page.getByText("Neue Fassung lesen und neu bestätigen").click();
+  await page.getByLabel("Ich habe die neue Fassung gelesen und willige ein.").check();
+  await page.getByRole("button", { name: "Zustimmen und weiter" }).click();
+  await expect(page).toHaveURL(/\/konto\/mitteilungen$/);
+  await expect(hint).toHaveCount(0);
+
+  await page.goto("/gespraech");
+  await expect(page.getByText("Neue Fassung: Gespräch mit Viola")).toBeVisible();
+  await expect(page.getByRole("button", { name: "Lieber schreiben" })).toBeEnabled();
+  await expectAccessible(page, "/gespraech (neue Fassung)");
+  console.expectClean();
+});

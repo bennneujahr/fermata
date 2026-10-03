@@ -47,7 +47,8 @@ export interface ContactShare {
   status: "none" | "pending" | "closed" | "released";
   released_at?: string;
   mine: { share_email: boolean; share_phone: boolean } | null;
-  counterpart: { first_name: string | null; email: string | null; phone: string | null } | null;
+  /** withdrawn: Das Gegenüber hat die Einwilligung „kontakttausch“ widerrufen – dann keine Daten mehr zeigen. */
+  counterpart: { first_name: string | null; email: string | null; phone: string | null; withdrawn?: boolean } | null;
 }
 
 export interface DebriefOffer {

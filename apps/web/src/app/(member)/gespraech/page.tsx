@@ -2,16 +2,17 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import "@/styles/gespraech-abende.css";
 import { Conversation } from "@/components/gespraech/Conversation";
+import { ConsentRenewal } from "@/components/gespraech/ConsentRenewal";
 import { InlineConsent } from "@/components/gespraech/InlineConsent";
 import { Badge, ButtonLink, Card, PageHeader } from "@/components/ui";
 import { Icon } from "@/components/ui/Icon";
-import { gespraech } from "@/copy/gespraech";
+import { gespraech, renewal } from "@/copy/gespraech";
 import { titles } from "@/copy/titles";
 import { formatWhen } from "@/lib/berlin";
 import { getConsents, requireMember } from "@/lib/data";
 import { getDbNow, getEveningDetail } from "@/lib/evenings";
 import { formatDate } from "@/lib/format";
-import { continuableSession, getInterviewSessions, getProfileSummary, getTier, getTranscriptDeletion, KINDS_BY_TIER, openSession, voiceSetup } from "@/lib/gespraech";
+import { continuableSession, getCrisisFallback, getInterviewSessions, getProfileSummary, getTier, getTranscriptDeletion, KINDS_BY_TIER, openSession, voiceSetup } from "@/lib/gespraech";
 import { onboardingPath } from "@/lib/routes";
 import { INTERVIEW_KINDS, type InterviewKind } from "@/lib/viola/types";
 
@@ -21,7 +22,7 @@ const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 export default async function ConversationPage({ searchParams }: { searchParams: Promise<{ art?: string; abend?: string }> }) {
   const sp = await searchParams;
-  const [{ overview, form }, consents, sessions, deletion, profile, tier, now] = await Promise.all([
+  const [{ overview, form }, consents, sessions, deletion, profile, tier, now, crisisFallback] = await Promise.all([
     requireMember("/gespraech"),
     getConsents(),
     getInterviewSessions(),
@@ -29,11 +30,14 @@ export default async function ConversationPage({ searchParams }: { searchParams:
     getProfileSummary(),
     getTier(),
     getDbNow(),
+    getCrisisFallback(),
   ]);
   const c = gespraech(form);
   const o = overview.onboarding;
   const verified = Boolean(o.verification?.verified);
-  const consentOk = consents.some((k) => k.kind === "gespraech" && k.granted && !k.needs_renewal);
+  const consentState = consents.find((k) => k.kind === "gespraech");
+  const consentOk = Boolean(consentState?.granted);
+  const consentRenew = Boolean(consentState?.granted && consentState.needs_renewal);
   const hasSummary = Boolean(profile?.summary_confirmed_at);
   const allowed = KINDS_BY_TIER[tier];
 
@@ -97,6 +101,8 @@ export default async function ConversationPage({ searchParams }: { searchParams:
       ) : !consentOk ? (
         <InlineConsent kind="gespraech" form={form} label={c.consentAgree} returnTo={self} title={c.consentTitle} lead={c.consentLead} readLabel={c.consentRead} />
       ) : (
+        <>
+        {consentRenew ? <ConsentRenewal kind="gespraech" form={form} returnTo={self} name={renewal(form).names.gespraech!} /> : null}
         <Conversation
           form={form}
           kind={kind}
@@ -105,7 +111,9 @@ export default async function ConversationPage({ searchParams }: { searchParams:
           openSessionId={open?.id ?? null}
           continueSession={cont && cont.kind === kind ? { id: cont.id, mode: cont.mode } : null}
           intro={intro}
+          crisisFallback={crisisFallback}
         />
+        </>
       )}
 
       <div className="grid-auto gespraech-secondary">

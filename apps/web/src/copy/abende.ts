@@ -239,6 +239,13 @@ export const abende = (f: AddressForm) => ({
     "Für den Kontakttausch brauchen wir einmal deine Einwilligung. Danach kannst du hier wählen.",
   ),
   contactConsentAgree: "Ich habe den Text gelesen und willige ein.",
+  contactConsentRenewTitle: "Neue Fassung der Einwilligung",
+  contactConsentRenewLead: af(
+    f,
+    "Der Text zum Kontakttausch wurde überarbeitet. Ihre bisherige Einwilligung gilt weiter; neu bestätigen ist freiwillig.",
+    "Der Text zum Kontakttausch wurde überarbeitet. Deine bisherige Einwilligung gilt weiter; neu bestätigen ist freiwillig.",
+  ),
+  contactConsentRenewAgree: "Ich habe die neue Fassung gelesen und willige ein.",
   contactConsentRead: "Ganzen Text lesen",
   feedbackSubmit: "Rückmeldung senden",
   feedbackRequired: af(f, "Bitte sagen Sie uns, ob Sie dort waren.", "Bitte sag uns, ob du dort warst."),
@@ -255,6 +262,8 @@ export const abende = (f: AddressForm) => ({
     "Dein Ja ist gespeichert. Sagt dein Gegenüber innerhalb von 7 Tagen nach dem Abend auch Ja, siehst du hier die Kontaktdaten.",
   ),
   contactClosed: "Der Kontakttausch für diesen Abend ist abgeschlossen.",
+  contactWithdrawn: (name: string | null) =>
+    name ? `${name} hat die Freigabe der Kontaktdaten zurückgezogen.` : af(f, "Ihr Gegenüber hat die Freigabe zurückgezogen.", "Dein Gegenüber hat die Freigabe zurückgezogen."),
   contactNone: af(f, "Sie haben keinen Kontakttausch gewählt.", "Du hast keinen Kontakttausch gewählt."),
   contactNoteApp: "Kontaktdaten stehen nur hier in der App, nie in einer E-Mail.",
   email: "E-Mail",

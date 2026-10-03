@@ -8,6 +8,13 @@ import { telHref } from "@/lib/format";
 export function ContactResult({ share, form, name }: { share: ContactShare; form: AddressForm; name: string | null }) {
   const c = abende(form);
   const mine = share.mine ? [share.mine.share_email && c.shareEmail, share.mine.share_phone && c.sharePhone].filter(Boolean).join(", ") : "";
+  if (share.status === "released" && share.counterpart?.withdrawn) {
+    return (
+      <Card title={c.contactTitle} id="kontakt" variant="sunk">
+        <p className="soft">{c.contactWithdrawn(share.counterpart.first_name ?? name)}</p>
+      </Card>
+    );
+  }
   if (share.status === "released" && share.counterpart) {
     const cp = share.counterpart;
     return (

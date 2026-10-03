@@ -59,6 +59,7 @@ export function FeedbackForm({
   counterpartName,
   hasPhone,
   consentGranted,
+  consentRenewal = false,
   consentVersion,
   consentDoc,
   reportHref,
@@ -68,6 +69,8 @@ export function FeedbackForm({
   counterpartName: string | null;
   hasPhone: boolean;
   consentGranted: boolean;
+  /** Erteilt, aber es gibt eine neue Fassung: neu bestätigen ist freiwillig. */
+  consentRenewal?: boolean;
   consentVersion: string | null;
   consentDoc: ReactNode;
   reportHref: string;
@@ -116,7 +119,7 @@ export function FeedbackForm({
         wantsContact: wants,
         shareEmail: wants && shareEmail,
         sharePhone: wants && sharePhone,
-        contactConsentVersion: wants && !consentGranted ? consentVersion : null,
+        contactConsentVersion: wants && (!consentGranted || (consentRenewal && consent)) ? consentVersion : null,
       });
       if (!res.ok) {
         setError(res.error);
@@ -203,6 +206,16 @@ export function FeedbackForm({
                       {consentDoc}
                     </details>
                     <Checkbox label={c.contactConsentAgree} checked={consent} onChange={(e) => setConsent(e.target.checked)} name="contact_consent" />
+                  </div>
+                ) : consentRenewal ? (
+                  <div className="stack stack-sm inline-consent">
+                    <p className="fieldset__legend">{c.contactConsentRenewTitle}</p>
+                    <p className="soft">{c.contactConsentRenewLead}</p>
+                    <details className="inline-consent__doc">
+                      <summary>{c.contactConsentRead}</summary>
+                      {consentDoc}
+                    </details>
+                    <Checkbox label={c.contactConsentRenewAgree} checked={consent} onChange={(e) => setConsent(e.target.checked)} name="contact_consent_renew" />
                   </div>
                 ) : null}
               </>

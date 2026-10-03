@@ -33,8 +33,9 @@ export default async function FeedbackPage({ params }: { params: Promise<{ id: s
   const links = eveningLinks(id);
   if (d.feedback.submitted) redirect(`${links.detail}?rueckmeldung=danke`);
   const consent = consents.find((k) => k.kind === "kontakttausch");
-  const consentGranted = Boolean(consent?.granted && !consent.needs_renewal);
-  const doc = consentGranted ? null : await getLegalDocument("kontakttausch");
+  const consentGranted = Boolean(consent?.granted);
+  const consentRenewal = Boolean(consent?.granted && consent.needs_renewal);
+  const doc = consentGranted && !consentRenewal ? null : await getLegalDocument("kontakttausch");
   const notYet = d.starts_at && new Date(d.starts_at).getTime() > now.getTime();
   return (
     <div className="stack stack-lg">
@@ -54,6 +55,7 @@ export default async function FeedbackPage({ params }: { params: Promise<{ id: s
           counterpartName={d.counterpart_first_name}
           hasPhone={phone}
           consentGranted={consentGranted}
+          consentRenewal={consentRenewal}
           consentVersion={doc?.version ?? null}
           consentDoc={
             doc ? (

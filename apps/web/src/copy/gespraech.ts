@@ -262,3 +262,16 @@ export const summary = (f: AddressForm) => ({
   speakerMe: af(f, "Sie", "Du"),
   meta: (kind: string, date: string, mode: string) => `${kind} vom ${date}, ${mode}`,
 });
+
+/** Neue Fassung einer schon erteilten Einwilligung (needs_renewal): freundliches Angebot, die alte gilt weiter. */
+export const renewal = (f: AddressForm) => ({
+  title: (name: string) => `Neue Fassung: ${name}`,
+  text: af(
+    f,
+    "Der Text dieser Einwilligung wurde überarbeitet. Ihre bisherige Einwilligung gilt weiter; wenn Sie möchten, lesen und bestätigen Sie die neue Fassung.",
+    "Der Text dieser Einwilligung wurde überarbeitet. Deine bisherige Einwilligung gilt weiter; wenn du möchtest, liest und bestätigst du die neue Fassung.",
+  ),
+  open: "Neue Fassung lesen und neu bestätigen",
+  agree: "Ich habe die neue Fassung gelesen und willige ein.",
+  names: { gespraech: "Gespräch mit Viola", push: "Mitteilungen auf dem Gerät", kontakttausch: "Kontakt teilen" } as Record<string, string>,
+});

@@ -35,9 +35,11 @@ export interface ConversationProps {
   openSessionId: string | null;
   continueSession: { id: string; mode: InterviewMode } | null;
   intro?: React.ReactNode;
+  /** Nummern aus api.help_contacts(), falls ein Datenpaket ohne Nummern käme. */
+  crisisFallback?: CrisisLines | null;
 }
 
-export function Conversation({ form, kind, eveningId, voice, openSessionId, continueSession, intro }: ConversationProps) {
+export function Conversation({ form, kind, eveningId, voice, openSessionId, continueSession, intro, crisisFallback }: ConversationProps) {
   const c = gespraech(form);
   const router = useRouter();
   const [stage, setStage] = useState<Stage>({ name: "choose" });
@@ -46,9 +48,19 @@ export function Conversation({ form, kind, eveningId, voice, openSessionId, cont
   const [crisis, setCrisis] = useState<CrisisLines | null>(null);
   const [info, setInfo] = useState<string | null>(null);
 
-  const onEvent = useCallback((ev: ViolaEvent) => {
-    if (ev.type === "crisis_resources") setCrisis(ev.lines);
-  }, []);
+  const onEvent = useCallback(
+    (ev: ViolaEvent) => {
+      if (ev.type !== "crisis_resources") return;
+      const lines = ev.lines ?? {};
+      const own = Array.isArray(lines.telefonseelsorge) && lines.telefonseelsorge.length > 0;
+      setCrisis({
+        ...lines,
+        telefonseelsorge: own ? lines.telefonseelsorge : (crisisFallback?.telefonseelsorge ?? []),
+        notruf: typeof lines.notruf === "string" && lines.notruf ? lines.notruf : (crisisFallback?.notruf ?? "112"),
+      });
+    },
+    [crisisFallback],
+  );
 
   const request = async (mode: InterviewMode, continues: string | null = null) => {
     setError(null);

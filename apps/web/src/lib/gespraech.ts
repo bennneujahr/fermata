@@ -3,7 +3,7 @@ import "server-only";
 import { cache } from "react";
 import { fermataEnv } from "@/lib/env";
 import { getSession } from "@/lib/data";
-import type { InterviewKind, SessionRow, TranscriptRow } from "@/lib/viola/types";
+import type { CrisisLines, InterviewKind, SessionRow, TranscriptRow } from "@/lib/viola/types";
 
 export type Tier = "auftakt" | "andante" | "loge";
 
@@ -91,3 +91,20 @@ export function continuableSession(rows: SessionRow[], now: Date): SessionRow | 
   if (rows.some((r) => r.created_at > latest.created_at)) return null;
   return latest;
 }
+
+/**
+ * Krisen-Nummern aus api.help_contacts() (eine Quelle mit safety.crisis_lines()). Nur Rückfall, falls ein
+ * Datenpaket crisis_resources ohne Nummern käme; das Paket von Viola hat Vorrang.
+ */
+export const getCrisisFallback = cache(async (): Promise<CrisisLines | null> => {
+  try {
+    const { supabase } = await getSession();
+    const { data } = await supabase.schema("api").rpc("help_contacts");
+    const h = (data ?? {}) as { telefonseelsorge?: { numbers?: unknown }; emergency?: { number?: unknown } };
+    const numbers = Array.isArray(h.telefonseelsorge?.numbers) ? h.telefonseelsorge.numbers.filter((n): n is string => typeof n === "string") : [];
+    const notruf = typeof h.emergency?.number === "string" ? h.emergency.number : undefined;
+    return numbers.length || notruf ? { telefonseelsorge: numbers, notruf } : null;
+  } catch {
+    return null;
+  }
+});
