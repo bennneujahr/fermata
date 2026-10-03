@@ -132,6 +132,13 @@ down() {
   kill_pid gateway
   kill_pid functions
   kill_pid next
+  # Sicherheitsnetz: nur eigene Prozesse (Arbeitsordner dieses Repos und Port des Bereichs web) beenden.
+  for p in $(pgrep -f "dev-server.ts|gateway.mjs|next start --port $APP_PORT" || true); do
+    cwd="$(readlink "/proc/$p/cwd" 2>/dev/null || true)"
+    case "$cwd" in
+      "$ROOT/supabase/functions" | "$APP_DIR") kill "$p" 2>/dev/null || true ;;
+    esac
+  done
   docker rm -f "$AUTH_CONTAINER" "$REST_CONTAINER" "$MAIL_CONTAINER" >/dev/null 2>&1 || true
   (cd "$ROOT" && bash scripts/db.sh stop)
 }
