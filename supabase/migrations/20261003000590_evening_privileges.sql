@@ -94,6 +94,7 @@ declare
     'ops.notify_finish_if_done',
     'ops.notify_kick',
     'ops.process_evening_deadlines',
+    'ops.purge_evening_data',
     'ops.push_subscription_result',
     'ops.quiet_hours_end',
     'ops.schedule_evening_jobs',

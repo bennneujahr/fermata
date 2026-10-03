@@ -229,5 +229,15 @@ select tests.act_as(tests.m5_id('anna'));
 select is(tests.hint_of(format('select api.submit_feedback(%L, true)', :'e1')), null, 'Späte Rückmeldung innerhalb der 7 Tage geht noch');
 select tests.reset_role();
 
+-- Aufräumen: Erkennungszeichen nach dem Finde-Fenster, erledigte Nachrichten nach der Aufbewahrungsfrist
+select is((ops.purge_evening_data() ->> 'hints')::int, 2, 'Erkennungszeichen nach dem Finde-Fenster gelöscht');
+select is((select count(*)::int from app.evening_hints), 0, 'Keine Erkennungszeichen mehr');
+update ops.notification_queue set email_state = 'sent', push_state = null, sent_at = now()
+ where id in (select id from ops.notification_queue order by id limit 3);
+select is((ops.purge_evening_data() ->> 'queue')::int, 0, 'Vor Ablauf der Aufbewahrung bleibt alles');
+select tests.m5_clock_to(now() + interval '91 days');
+select is((ops.purge_evening_data() ->> 'queue')::int, 3, 'Erledigte Nachrichten nach 90 Tagen gelöscht');
+select is((select count(*)::int from ops.notification_queue where sent_at is not null or failed_at is not null), 0, 'Nur Offenes bleibt');
+
 select * from finish();
 rollback;
