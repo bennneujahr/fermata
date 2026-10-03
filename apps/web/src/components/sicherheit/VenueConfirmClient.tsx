@@ -6,7 +6,7 @@ import { confirmVenueReservation, loadVenueReservation } from "@/app/actions/saf
 import { Button, Card, EmptyState, Notice, PageHeader, Skeleton } from "@/components/ui";
 import { venueConfirm as copy } from "@/copy/sicherheit";
 import { formatDate } from "@/lib/format";
-import { formatDayTime, formatReceipt, formatTime } from "@/lib/datetime";
+import { formatReceipt, formatTime } from "@/lib/datetime";
 import { tokenFromLocation } from "@/lib/safety-rules";
 import type { VenueReservation } from "@/lib/safety-types";
 import "./sicherheit.css";
@@ -65,6 +65,9 @@ export function VenueConfirmClient() {
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- der Schlüssel steht nur im Browser (Fragment)
     void load();
+    const onHash = () => void load();
+    window.addEventListener("hashchange", onHash);
+    return () => window.removeEventListener("hashchange", onHash);
   }, [load]);
 
   function confirm(token: string, current: VenueReservation | null) {
@@ -144,7 +147,6 @@ export function VenueConfirmClient() {
       <PageHeader title={cancelled ? copy.cancelledTitle : copy.title} lead={cancelled ? copy.cancelledText : copy.lead} />
       <Card>
         {r ? <Details r={r} /> : <p className="soft">{copy.detailsInMail}</p>}
-        {r?.starts_at ? <p className="soft text-sm">{formatDayTime(r.starts_at)}</p> : null}
         {r?.reservation_name ? <p className="soft">{copy.guests(r.reservation_name)}</p> : null}
       </Card>
       {confirmError ? (
