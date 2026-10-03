@@ -21,7 +21,7 @@ type Stage =
   | { name: "mic_problem"; problem: MicProblem }
   | { name: "requesting"; mode: InterviewMode }
   | { name: "voice"; token: InterviewTokenResponse }
-  | { name: "text"; token: InterviewTokenResponse; items: ChatItem[] }
+  | { name: "text"; token: InterviewTokenResponse; items: ChatItem[]; ended?: { reason: string; summaryPending: boolean } }
   | { name: "lost"; sessionId: string }
   | { name: "ended"; sessionId: string; reason: string; summaryPending: boolean };
 
@@ -97,9 +97,46 @@ export function Conversation({ form, kind, eveningId, voice, openSessionId, cont
     setStage({ name: "text", token: res.data, items });
   };
 
-  const onEnded = useCallback((sessionId: string) => (reason: string, summaryPending: boolean) => {
-    setStage({ name: "ended", sessionId, reason, summaryPending });
-  }, []);
+  const onEnded = useCallback(
+    (sessionId: string) => (reason: string, summaryPending: boolean) => {
+      // Im Textmodus bleibt der Verlauf stehen (Violas letzte Worte), darunter der Abschluss.
+      setStage((s) => (s.name === "text" ? { ...s, ended: { reason, summaryPending } } : { name: "ended", sessionId, reason, summaryPending }));
+    },
+    [],
+  );
+
+  const endedCard = (sessionId: string, reason: string, summaryPending: boolean) => (
+    <Card variant="night" id="beendet" title={c.endedTitle}>
+      <div className="stack stack-sm">
+        <Icon name="checkCircle" size={28} />
+        <p role="status" className="soft">
+          {SAFETY_ENDS.has(reason) ? c.endedSafety : summaryPending ? c.endedText : c.endedNoSummary}
+        </p>
+      </div>
+      <div className="cluster">
+        {SAFETY_ENDS.has(reason) ? (
+          <ButtonLink href="/hilfe" variant="secondary" icon="help">
+            {c.toHelp}
+          </ButtonLink>
+        ) : (
+          <ButtonLink href={`/gespraech/${sessionId}`} iconAfter="arrowRight">
+            {c.toSummary}
+          </ButtonLink>
+        )}
+        <Button
+          variant="quiet"
+          size="sm"
+          onClick={() => {
+            setStage({ name: "choose" });
+            setNotice(null);
+            router.refresh();
+          }}
+        >
+          {c.backToStart}
+        </Button>
+      </div>
+    </Card>
+  );
 
   const errorText = error ? (c.errors[error] ?? c.errors.generic) : null;
 
@@ -240,38 +277,8 @@ export function Conversation({ form, kind, eveningId, voice, openSessionId, cont
         </Notice>
       ) : null}
 
-      {stage.name === "ended" ? (
-        <Card variant="night" id="beendet" title={c.endedTitle}>
-          <div className="stack stack-sm">
-            <Icon name="checkCircle" size={28} />
-            <p role="status" className="soft">
-              {SAFETY_ENDS.has(stage.reason) ? c.endedSafety : stage.summaryPending ? c.endedText : c.endedNoSummary}
-            </p>
-          </div>
-          <div className="cluster">
-            {SAFETY_ENDS.has(stage.reason) ? (
-              <ButtonLink href="/hilfe" variant="secondary" icon="help">
-                {c.toHelp}
-              </ButtonLink>
-            ) : (
-              <ButtonLink href={`/gespraech/${stage.sessionId}`} iconAfter="arrowRight">
-                {c.toSummary}
-              </ButtonLink>
-            )}
-            <Button
-              variant="quiet"
-              size="sm"
-              onClick={() => {
-                setStage({ name: "choose" });
-                setNotice(null);
-                router.refresh();
-              }}
-            >
-              {c.backToStart}
-            </Button>
-          </div>
-        </Card>
-      ) : null}
+      {stage.name === "text" && stage.ended ? endedCard(stage.token.session.id, stage.ended.reason, stage.ended.summaryPending) : null}
+      {stage.name === "ended" ? endedCard(stage.sessionId, stage.reason, stage.summaryPending) : null}
     </div>
   );
 }

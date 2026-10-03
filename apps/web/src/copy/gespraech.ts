@@ -122,6 +122,7 @@ export const gespraech = (f: AddressForm) => ({
   summaryProposedTitle: "Violas Zusammenfassung",
   summaryProposedHint: af(f, "Antworten Sie Viola, ob das so stimmt. Danach lesen Sie die Zusammenfassung noch einmal in Ruhe.", "Antworte Viola, ob das so stimmt. Danach liest du die Zusammenfassung noch einmal in Ruhe."),
   summaryPartialHint: "Das ist ein Zwischenstand. Beim nächsten Mal geht es hier weiter.",
+  summaryProposedHintVoice: af(f, "Sagen Sie Viola, ob das so stimmt. Danach lesen Sie die Zusammenfassung noch einmal in Ruhe.", "Sag Viola, ob das so stimmt. Danach liest du die Zusammenfassung noch einmal in Ruhe."),
 
   // Krise
   crisisTitle: "Hilfe in schweren Momenten",

@@ -12,7 +12,13 @@ test("Sicherheits-Header: strenge CSP mit Nonce, keine Drittanbieter", async ({ 
   expect(script).not.toContain("unsafe-eval");
   expect(csp).toContain("frame-ancestors 'none'");
   const supabase = stack.NEXT_PUBLIC_SUPABASE_URL ?? "http://localhost:54345";
-  expect(/connect-src ([^;]+)/.exec(csp)![1]).toBe(`'self' ${supabase} ${supabase.replace(/^http/, "ws")}`);
+  // Dazu nur, was eingerichtet ist: LiveKit (wss und https) und der Viola-Textdienst für das Gespräch.
+  const livekit = stack.NEXT_PUBLIC_LIVEKIT_URL ? new URL(stack.NEXT_PUBLIC_LIVEKIT_URL).origin : null;
+  const extra = [
+    ...(livekit ? [livekit, livekit.replace(/^wss?:/, (p) => (p === "wss:" ? "https:" : "http:"))] : []),
+    ...(stack.NEXT_PUBLIC_VIOLA_TEXT_URL ? [new URL(stack.NEXT_PUBLIC_VIOLA_TEXT_URL).origin] : []),
+  ];
+  expect(/connect-src ([^;]+)/.exec(csp)![1]).toBe([`'self'`, supabase, supabase.replace(/^http/, "ws"), ...extra].join(" "));
   expect(res.headers()["x-frame-options"]).toBe("DENY");
   expect(res.headers()["referrer-policy"]).toBe("same-origin");
   const nonce = /'nonce-([^']+)'/.exec(script)![1]!;

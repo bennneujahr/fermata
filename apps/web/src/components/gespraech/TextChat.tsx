@@ -186,7 +186,7 @@ export function TextChat({
           </Button>
         ) : null}
       </div>
-      <div className="chat__log" role="log" aria-live="polite" aria-relevant="additions text" aria-label={c.chatLabel}>
+      <div className="chat__log" role="log" aria-live="polite" aria-relevant="additions text" aria-label={c.chatLabel} tabIndex={0}>
       <ol className="chat__list list-plain" ref={logRef}>
         {items.map((i) => (
           <li key={i.id} className={`chat__item chat__item--${i.role}`}>

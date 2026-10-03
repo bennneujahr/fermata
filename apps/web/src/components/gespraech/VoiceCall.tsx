@@ -33,6 +33,7 @@ export function VoiceCall({
   const [audio, setAudio] = useState<MediaStream | null>(null);
   const [audioBlocked, setAudioBlocked] = useState(false);
   const [captions, setCaptions] = useState<Caption[]>([]);
+  const [proposed, setProposed] = useState<{ text: string; partial: boolean } | null>(null);
   const [showCaptions, setShowCaptions] = useState(true);
   const [confirmEnd, setConfirmEnd] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -60,6 +61,7 @@ export function VoiceCall({
       onEvent: (ev) => {
         if (!alive) return;
         callbacks.current.onEvent(ev);
+        if (ev.type === "summary_proposed") setProposed({ text: ev.text, partial: ev.partial });
         if (ev.type === "ended") {
           finished.current = true;
           callbacks.current.onEnded(ev.reason, ev.summary_pending === true);
@@ -188,6 +190,13 @@ export function VoiceCall({
           ) : (
             <p className="voice__caption-empty">{c.captionsNote}</p>
           )}
+        </div>
+      ) : null}
+      {proposed ? (
+        <div className="voice__summary">
+          <p className="eyebrow">{c.summaryProposedTitle}</p>
+          <p>{proposed.text}</p>
+          <p className="voice__summary-hint">{proposed.partial ? c.summaryPartialHint : c.summaryProposedHintVoice}</p>
         </div>
       ) : null}
       <div className="voice__controls">

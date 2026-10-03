@@ -48,6 +48,15 @@
   max-block-size: min(45vh, 26rem);
 }
 
+.card--night .btn--quiet {
+  --btn-fg: var(--color-on-night);
+}
+
+.card--night .btn--quiet:hover {
+  --btn-bg: var(--color-night-raised);
+  --btn-fg: var(--color-on-night);
+}
+
 /* ---------- Gespräch: Start ---------- */
 .atem-stage--lg fermata-atem {
   --atem-size: clamp(10rem, 8rem + 14vw, 16rem);
@@ -203,6 +212,25 @@
 .voice__caption-empty {
   color: var(--color-on-night-muted);
   font-size: var(--text-sm);
+}
+
+.voice__summary {
+  inline-size: 100%;
+  max-inline-size: 36rem;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-4);
+  border-radius: var(--radius-md);
+  border-inline-start: 4px solid var(--color-brass-decor);
+  background: var(--color-night-raised);
+  text-align: start;
+  color: var(--color-on-night);
+}
+
+.voice__summary-hint {
+  font-size: var(--text-sm);
+  color: var(--color-on-night-muted);
 }
 
 .voice__controls {
