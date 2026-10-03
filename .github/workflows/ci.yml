@@ -137,3 +137,19 @@ jobs:
       - name: Datenbank stoppen
         if: always()
         run: bash scripts/db.sh stop
+
+  viola:
+    name: Viola (Python)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+      - name: ruff
+        working-directory: services/viola
+        run: uv run ruff check . && uv run ruff format --check .
+      - name: mypy
+        working-directory: services/viola
+        run: uv run mypy
+      - name: pytest
+        working-directory: services/viola
+        run: uv run pytest -q

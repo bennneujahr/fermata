@@ -3,7 +3,8 @@ create extension if not exists pgtap with schema extensions;
 
 -- Hilfsfunktionen für Tests: als bestimmte Person auftreten.
 create schema if not exists tests;
-grant usage on schema tests to anon, authenticated, service_role;
+-- Nur Test-Datenbank: die Hilfen sind für jede Rolle nutzbar (auch fermata_agent, fermata_matcher).
+grant usage on schema tests to public;
 
 create or replace function tests.create_user(p_email text, p_id uuid default gen_random_uuid())
 returns uuid
@@ -57,4 +58,4 @@ begin
   perform set_config('request.jwt.claims', '', true);
 end;
 $$;
-grant execute on all functions in schema tests to anon, authenticated, service_role;
+grant execute on all functions in schema tests to public;
