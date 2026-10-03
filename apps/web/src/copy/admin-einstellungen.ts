@@ -30,5 +30,6 @@ export const adminSettings = {
     loeschung: "Aufbewahrung und Löschung",
     datenschutz: "Datenschutz",
     retention: "Aufbewahrung und Löschung",
+    loeschfristen: "Löschfristen",
   } as Record<string, string>,
 };
