@@ -88,7 +88,8 @@ export async function agentFlagWithTranscript(user: string): Promise<{ sessionId
 export async function contractActions(user: string): Promise<void> {
   await sql`insert into billing.contract_actions (user_id, kind, at, details, confirmation_sent_at, effective_at)
             values (${user}::uuid, 'order', now() - interval '3 days', ${sql.json({ contract_number: "FM-E2E-0001", tier: "andante", name: "Clara Mertens" })}, now() - interval '3 days', now() - interval '3 days'),
-                   (${user}::uuid, 'cancel', now() - interval '1 day', ${sql.json({ contract_number: "FM-E2E-0001", name: "Clara Mertens", kind: "ordentlich" })}, null, now() + interval '25 days')`;
+                   (${user}::uuid, 'cancel', now() - interval '1 day', ${sql.json({ contract_number: "FM-E2E-0001", name: "Clara Mertens", kind: "ordentlich" })}, null, now() + interval '25 days'),
+                   (null, 'cancel', now() - interval '2 hours', ${sql.json({ contract_number: "FM-E2E-0002", reason: "konto_geloescht" })}, now() - interval '2 hours', now() - interval '2 hours')`;
 }
 
 /** Als Admin mit aal2 in der Datenbank handeln (z. B. Vorschläge vorab entscheiden). */

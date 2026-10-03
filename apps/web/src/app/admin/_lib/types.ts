@@ -293,7 +293,7 @@ export interface CaseSession {
 
 export interface TranscriptResult {
   session: Record<string, unknown> | null;
-  turns: { role?: string; text?: string; at?: string }[];
+  turns: { role?: string; text?: string; at?: string; mode?: string }[];
   deleted: boolean;
 }
 

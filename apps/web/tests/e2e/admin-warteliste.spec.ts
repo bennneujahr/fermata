@@ -75,6 +75,10 @@ test("Mitgliedschaft: Erklärungen mit Zeitpunkt und Bestätigung, Kontingent ko
   const actions = page.getByRole("table", { name: "Erklärungen" });
   await expect(actions.locator("tr", { hasText: "FM-E2E-0001" }).first()).toBeVisible();
   await expect(actions.getByText("noch nicht verschickt").first()).toBeVisible();
+  // Kontolöschung erscheint als Kündigung mit Grund, ohne Person
+  const deleted = actions.locator("tr", { hasText: "FM-E2E-0002" }).first();
+  await expect(deleted.getByText("wegen Kontolöschung")).toBeVisible();
+  await expect(deleted.getByText("Konto gelöscht")).toBeVisible();
   await expectAccessible(page, "/admin/mitgliedschaft");
   await page.getByRole("link", { name: "Kündigung", exact: true }).click();
   await expect(page).toHaveURL(/art=cancel/);

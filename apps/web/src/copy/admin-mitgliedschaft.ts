@@ -16,6 +16,9 @@ export const adminMembership = {
     refund: (s: string) => `Erstattung: ${s}`,
     tier: (s: string) => `Stufe ${s}`,
     stripe: (s: string) => `Stripe: ${s}`,
+    cancelKinds: { ordentlich: "ordentlich", ausserordentlich: "außerordentlich" } as Record<string, string>,
+    reasons: { konto_geloescht: "wegen Kontolöschung" } as Record<string, string>,
+    reason: (r: string) => `Grund: ${r}`,
   },
   ledger: {
     title: "Kontingent korrigieren",

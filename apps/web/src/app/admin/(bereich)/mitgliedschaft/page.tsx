@@ -83,6 +83,8 @@ export default async function MembershipPage({ searchParams }: { searchParams: P
                       <th scope="row">
                         <Badge tone={x.kind === "withdraw" ? "danger" : x.kind === "cancel" ? "warning" : "success"}>{labelOf(a.kinds, x.kind)}</Badge>
                         {txt(x.details.tier) ? <div className="muted text-sm">{a.tier(labelOf(adminToday.kpi.tiers, txt(x.details.tier)))}</div> : null}
+                        {x.kind === "cancel" && txt(x.details.kind) ? <div className="muted text-sm">{labelOf(a.cancelKinds, txt(x.details.kind))}</div> : null}
+                        {txt(x.details.reason) ? <div className="text-sm">{a.reasons[txt(x.details.reason)!] ?? a.reason(txt(x.details.reason)!)}</div> : null}
                       </th>
                       <td className="nowrap">{txt(x.details.contract_number) ?? "–"}</td>
                       <td>

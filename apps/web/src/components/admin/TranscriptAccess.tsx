@@ -36,6 +36,7 @@ export function OpenTranscript({ sessionId, label }: { sessionId: string; label?
                 <li key={i} className={`transcript__turn transcript__turn--${t.role === "person" ? "person" : "viola"}`}>
                   <span className="transcript__who">
                     {labelOf(c.roles, t.role ?? "system")}
+                    {t.mode ? ` · ${labelOf(c.modes, t.mode)}` : ""}
                     {t.at ? ` · ${dateTime(t.at)}` : ""}
                   </span>
                   <span>{t.text}</span>

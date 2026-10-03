@@ -26,5 +26,9 @@ export const adminSettings = {
     sicherheit: "Sicherheit",
     warteliste: "Warteliste",
     zeiten: "Zeitenabfrage",
+    aufbewahrung: "Aufbewahrung und Löschung",
+    loeschung: "Aufbewahrung und Löschung",
+    datenschutz: "Datenschutz",
+    retention: "Aufbewahrung und Löschung",
   } as Record<string, string>,
 };

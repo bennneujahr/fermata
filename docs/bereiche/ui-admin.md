@@ -195,10 +195,15 @@ Nur ergänzend:
 
 ## Offene Punkte
 
-1. **Transkript-Zugriff** ruft `api.admin_safety_transcript(p_session_id, p_reason)` aus dem Bereich Härtung auf. In
-   diesem Zweig gibt es die Funktion noch nicht; die Oberfläche zeigt dann „… Funktion api.admin_safety_transcript
-   fehlt …“ statt eines Fehlers, der Test akzeptiert beide Fälle. Nach dem Zusammenführen einmal mit echtem Hinweis
-   prüfen.
+1. **Transkript-Zugriff** ruft `api.admin_safety_transcript(p_session_id, p_reason)` aus dem Bereich Härtung auf
+   (Rückgabe `{session, turns: [{role, text, at, mode}], deleted}`, Fehler `admin_aal2_required`, `reason_required`,
+   `not_found`, `no_safety_case`; alle mit eigenem Text). In diesem Zweig gibt es die Funktion noch nicht; die
+   Oberfläche zeigt dann „… Funktion api.admin_safety_transcript fehlt …“ statt eines Fehlers, der Test akzeptiert
+   beide Fälle. Nach dem Zusammenführen einmal mit echtem Hinweis prüfen.
+10. **Aus der Härtung (nach dem Zusammenführen prüfen):** die Einstellungen `retention.*` erscheinen in ihrer Gruppe
+    (Bezeichnungen für die Gruppen „aufbewahrung“, „loeschung“, „datenschutz“, „retention“ sind hinterlegt, sonst
+    steht der Gruppenname roh da) und als Platzhalter markiert, wenn die Beschreibung „PLATZHALTER“ enthält. Eine
+    Kontolöschung erscheint unter Mitgliedschaft → Erklärungen als Kündigung „wegen Kontolöschung“ (ohne Person).
 2. **`STABLE`-Fund** (siehe oben) bitte beim Zusammenführen mit der Härtung abgleichen, falls dort dieselben
    Funktionen neu angelegt werden (sonst wieder `STABLE`).
 3. **Vorläufige Sperre von Hand** gibt es in der API nicht (`admin_impose_sanction` kennt Hinweis, Sperre,
