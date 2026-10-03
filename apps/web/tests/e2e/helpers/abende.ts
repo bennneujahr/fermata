@@ -107,3 +107,25 @@ export async function eveningRow(id: string) {
   const [row] = await sql`select state, starts_at, requested_by, countered_by from app.evenings where id = ${id}::uuid`;
   return row as { state: string; starts_at: Date | null; requested_by: string | null; countered_by: string | null };
 }
+
+/** RPC als Mitglied (wie PostgREST: Claims setzen, Rolle authenticated). */
+export async function asMember<T = unknown>(id: string, fn: (tx: typeof sql) => Promise<T>): Promise<T> {
+  return (await sql.begin(async (tx) => {
+    await tx`select set_config('request.jwt.claims', ${JSON.stringify({ sub: id, role: "authenticated" })}, true)`;
+    await tx`set local role authenticated`;
+    return fn(tx as unknown as typeof sql);
+  })) as T;
+}
+
+/** Bestätigter Abend an Tag 3, 19 Uhr (a wünscht, b bestätigt) – über die echten Funktionen. */
+export async function confirmedEvening(opts: Parameters<typeof proposedEvening>[0] = {}): Promise<EveningSeed & { startsAt: string }> {
+  const seed = await proposedEvening(opts);
+  const t = seed.proposed[0]!;
+  await asMember(seed.a.id, (tx) => tx`select api.evening_request_time(${seed.eveningId}::uuid, array[${t}::timestamptz])`);
+  await asMember(seed.b.id, (tx) => tx`select api.evening_confirm(${seed.eveningId}::uuid, ${t}::timestamptz)`);
+  return { ...seed, startsAt: t };
+}
+
+export async function giveConsent(id: string, kind: string): Promise<void> {
+  await asMember(id, (tx) => tx`select api.give_consent(${kind}, (select d.version from api.legal_document(${kind}) d))`);
+}
