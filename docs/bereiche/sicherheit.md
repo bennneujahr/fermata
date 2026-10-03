@@ -31,8 +31,11 @@ Texte für Mitglieder: ruhig, „Sie“, ohne Schuldzuweisung. Rechtliche Teile 
 
 ## 2. Melden
 
-`api.report(p_context, p_category, p_reported_user?, p_evening_id?, p_description?, p_wants_contact?)`
+`api.report(p_context, p_category, p_reported_user?, p_evening_id?, p_description?, p_wants_contact?, p_about_counterpart?)`
 
+- **Gegenüber:** Mit `p_about_counterpart => true` und einem Abend trägt die Funktion das Gegenüber dieses Abends selbst
+  als gemeldete Person ein; die Oberfläche kennt nur den Vornamen. Ohne diese Angabe bleibt die Meldung ohne Person
+  (z. B. zum Lokal), auch bei schweren Arten. Test: `715_report_counterpart`.
 - **Bereiche:** `abend`, `termin`, `gespraech`, `rueckmeldung`, `konto`, `sonstiges`.
 - **Arten und Stufen:** `uebergriff`, `bedrohung`, `minderjaehrig` → **akut** (Null-Toleranz, `safety.zero_tolerance_categories`); `belaestigung`, `diskriminierung`, `falsche_identitaet`, `betrug` → hoch; `nicht_erschienen`, `unangenehm`, `sonstiges` → mittel.
 - **Beziehungsprüfung:** Wer eine Person meldet, muss sie über Fermata kennen (gemeinsamer Abend oder ein gezeigter Vorschlag). Ausnahme: Bereich `sonstiges` – die Meldung wird angenommen, löst aber **keine** automatische Sperre aus (Schutz vor Missbrauch) und ist als „ohne Beziehung“ markiert. Bei Angabe eines Abends muss die meldende Person dazugehören und die gemeldete auch.
@@ -115,7 +118,7 @@ Fehler: deutscher Text (`message`) und fester Code (`hint`). Über PostgREST kom
 
 | Funktion | Wer | Rückgabe | Fehler (`hint`) |
 |---|---|---|---|
-| `api.report(p_context, p_category, p_reported_user?, p_evening_id?, p_description?, p_wants_contact? = true)` | angemeldet | `{report_id, status, due_at, severity}` | `not_authenticated`, `invalid_context`, `invalid_category`, `description_too_long`, `self_report`, `evening_not_found`, `not_related`, `rate_limited` |
+| `api.report(p_context, p_category, p_reported_user?, p_evening_id?, p_description?, p_wants_contact? = true, p_about_counterpart? = false)` | angemeldet | `{report_id, status, due_at, severity}` | `not_authenticated`, `invalid_context`, `invalid_category`, `description_too_long`, `self_report`, `evening_not_found`, `not_related`, `rate_limited` |
 | `api.my_reports()` | angemeldet | eigene Meldungen `(id, context, category, evening_id, status, created_at, due_at, resolved_at)` | – |
 | `api.my_sanctions()` (Kern) | angemeldet | eigene Sanktionen ohne Meldungsbezug | – |
 | `api.appeal(p_sanction_id, p_text)` | angemeldet | `{appeal_id, status}` | `sanction_not_found`, `sanction_lifted`, `invalid_text` (10–4000 Zeichen), `already_appealed` |

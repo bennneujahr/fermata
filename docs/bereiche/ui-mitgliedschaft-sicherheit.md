@@ -34,8 +34,9 @@ Alle rechtlichen Abläufe und Texte sind **ENTWURF** und brauchen die Prüfung d
 | `/mitgliedschaft/bestellen/ergebnis` | Mitglied | Danke / aktiv / Zahlung wird geprüft / Zahlung fehlgeschlagen (auch Rücksprung von Stripe mit `redirect_status`) | `api.billing_overview()` |
 | `/mitgliedschaft/kuendigen` | Mitglied | Kündigungsknopf: Schritt 1 Angaben (vorausgefüllt: Vertrag, Name, E-Mail, Art, Grund, Wirksamkeit), Schritt 2 „Jetzt kündigen“, Eingangsbestätigung mit Datum, Uhrzeit (Sekunden, Zeitzone), drucken/speichern | `billing-cancel` `preview` / `confirm` |
 | `/mitgliedschaft/widerrufen` | Mitglied | Widerrufsbutton: Schritt 1 Name, Vertragsnummer, E-Mail (vorausgefüllt) und Berechnung (bezahlt, Wertersatz, Erstattung), Schritt 2 „Widerruf bestätigen“, Eingangsbestätigung | `billing-withdraw` `preview` / `confirm` |
-| `/kuendigen` | alle (Fuß jeder Seite) | Kündigen ohne Anmeldung: Name, E-Mail, Vertragsnummer, Art, Grund → „Jetzt kündigen“ → gleiche Antwort für alle, Mail mit Link → Seite der Function mit „Kündigung bestätigen“. Angemeldet → `/mitgliedschaft/kuendigen` | `billing-cancel` `request`, Link `GET ?t=` + `confirm_link` |
+| `/kuendigen` | alle (Fuß jeder Seite) | Kündigen ohne Anmeldung: Name, E-Mail, Vertragsnummer, Art, Grund → „Jetzt kündigen“ → gleiche Antwort für alle, Mail mit Link. Angemeldet → `/mitgliedschaft/kuendigen` | `billing-cancel` `request` |
 | `/widerrufen` | alle (Fuß jeder Seite) | wie oben für den Widerruf | `billing-withdraw` `request` |
+| `/kuendigen/bestaetigen#t=<Schlüssel>`, `/widerrufen/bestaetigen#t=<Schlüssel>` | Link aus der Mail | Vertragsnummer und Eingang der Erklärung, Knopf „Kündigung bestätigen“ bzw. „Widerruf bestätigen“; danach Eingangsbestätigung mit Wirksamkeit. Öffnen allein führt nichts aus (Vorschau im Mailprogramm). `noindex`, `no-referrer` | `billing-cancel`/`billing-withdraw` `GET ?t=` (JSON) und `confirm_link` |
 | `/sicherheit` | Mitglied | Überblick: Melden, Abend teilen, Hilfe-Nummern, eigene Meldungen, Hinweise, Standards | `api.help_contacts()`, `api.my_reports()`, `api.my_sanctions()`, `api.my_trust_shares()` |
 | `/sicherheit/melden` (`?abend=<id>`) | Mitglied | Bereich, (optional) Abend, „betrifft mein Gegenüber / etwas anderes“, Art mit Erklärung zur Null-Toleranz, Beschreibung (freiwillig, Zähler), Rückfrage gewünscht, ruhige Bestätigung; Drossel und Beziehung erklärt | `api.report(...)`, `api.my_evenings()`, `api.evening_detail()` |
 | `/sicherheit/meldungen` | Mitglied | eigene Meldungen mit Stand und Frist | `api.my_reports()` |
@@ -65,8 +66,8 @@ Bildschirmfotos (mobil 390 px, Desktop 1440 px, hell und dunkel): [`docs/screens
 | `TierCards`, `orderHref()` | `components/mitgliedschaft/TierCards.tsx` | Stufen-Karten. Links zur Bestellung **immer als normalen Link** (`<a href={orderHref(t)}>`), nicht `next/link` – siehe CSP. |
 
 Meldungen zu einem Abend betreffen auf Wunsch das Gegenüber: Die Oberfläche kennt nur den Vornamen; die Server Action
-liest die Kennung des Gegenübers mit der Sitzung der meldenden Person aus `app.evenings` (RLS: nur eigene Abende) und
-gibt sie als `p_reported_user` an `api.report`. Nur so greift die vorläufige Sperre bei Null-Toleranz.
+schickt `p_about_counterpart: true`, und `api.report` trägt das Gegenüber selbst aus dem Abend ein. So greift die
+vorläufige Sperre bei Null-Toleranz, ohne dass die Web-App die Kennung lesen muss.
 
 ## Lokal ausprobieren
 
@@ -151,6 +152,9 @@ Abgedeckt (jede Seite mit axe WCAG 2.1 AA und Prüfung auf CSP-Verstöße):
 
 ## Verträge mit der Härtung
 
+> **Stand nach dem Zusammenführen:** Härtung und Oberfläche liegen jetzt auf demselben Zweig; alle Verträge unten
+> sind auf dem gemeinsamen Stand von der ganzen E2E-Suite abgedeckt. Die rechte Spalte beschreibt den Stand davor.
+
 **Gegen die Härtung geprüft:** Der Integrationszweig (`claude/dating-app-build-0uszhn`, Stand 03.10.2026 mit der
 zusammengeführten Härtung) wurde nur lesend nach `scratchpad/integ` ausgepackt (`git archive`), sein Stapel auf Slot 2
 gestartet (Datenbank und Functions der Härtung, Web-App aus diesem Zweig). Ergebnis: alle 16 eigenen E2E-Abläufe und
@@ -174,7 +178,7 @@ dieser Arbeitskopie) geprüft ist.
   Stripe kann weitere Ziele brauchen (z. B. `m.stripe.network`, wenn „advanced fraud signals“ an sind).
 - **Geräte:** `tel:`-Links und „Teilen …“ (Web Share) auf iPhone und Android, Kopieren in der installierten App,
   Check-in-Link aus der Mitteilung auf dem Sperrbildschirm.
-- **Lokal-Link** aus der echten Reservierungs-Mail, sobald `notify-dispatch` auf `/lokal/bestaetigen#t=` verlinkt.
+- **Lokal-Link** aus einer echten Reservierungs-Mail (`notify-dispatch` verlinkt auf `/lokal/bestaetigen#t=`) auf einem Handy öffnen.
 
 ## Für den Anwalt: Prüfpunkte
 
@@ -213,13 +217,13 @@ dieser Arbeitskopie) geprüft ist.
 
 | # | Punkt | Stand |
 |---|---|---|
-| 1 | Härtung (`start_request_text` wörtlich als Häkchen, `start_request: true`, `withdrawal_policy_url`, JSON von `trust-view` und `venue-confirm`, Rechtstexte in der Datenbank) | gegen den Integrationszweig geprüft (siehe oben); nach dem Zusammenführen die E2E einmal auf dem gemeinsamen Stand laufen lassen |
+| 1 | Härtung (`start_request_text` wörtlich als Häkchen, `start_request: true`, `withdrawal_policy_url`, JSON von `trust-view` und `venue-confirm`, Rechtstexte in der Datenbank) | **erledigt:** zusammengeführt, ganze E2E-Suite auf dem gemeinsamen Stand grün |
 | 2 | `site.app_url` ist ein Platzhalter (`app.fermata.example`) | vor dem Start setzen (Links in Mails); die Seite „Abend teilen“ hängt nicht davon ab |
-| 3 | Bestätigungslink für Kündigen/Widerrufen ohne Anmeldung zeigt auf die Seite der Function (schlichtes HTML) | Option: eigene Seite in der Web-App (`/kuendigen/bestaetigen#t=`), dann `contract.ts` anpassen |
+| 3 | Bestätigungslink für Kündigen/Widerrufen ohne Anmeldung | **erledigt:** eigene Seiten `/kuendigen/bestaetigen#t=` und `/widerrufen/bestaetigen#t=`; `contract.ts` verlinkt dorthin |
 | 4 | Apple Pay / Google Pay | `payment=()` in der Permissions-Policy, siehe oben |
 | 5 | `billing.contract_actions` wird direkt gelesen (RLS, eigene Zeilen), weil `api.billing_overview()` keinen Verlauf hat | nimmt `history` aus der Übersicht, sobald es das gibt |
-| 6 | Die Kennung des Gegenübers für Meldungen liest der Server aus `app.evenings` (RLS); wenn die Härtung das Leserecht entzieht, gehen Meldungen ohne gemeldete Person ein (keine automatische Sperre) | Vorschlag: `api.report` leitet das Gegenüber selbst aus `p_evening_id` ab (`p_about_counterpart boolean`) |
-| 7 | Alte Platzhalter-Texte `placeholders(f).mitgliedschaft` in `copy/member.ts` werden nicht mehr benutzt | beim Zusammenführen entfernen |
+| 6 | Gegenüber bei Meldungen | **erledigt:** `api.report(…, p_about_counterpart)` leitet es aus dem Abend ab (Test `715_report_counterpart`) |
+| 7 | Alte Platzhalter-Texte in `copy/member.ts` | **erledigt:** entfernt |
 
 ## Geänderte gemeinsame Dateien
 

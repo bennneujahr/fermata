@@ -298,7 +298,7 @@ $$;
 -- ---------------------------------------------------------------------------
 create or replace function api.report(
   p_context text, p_category text, p_reported_user uuid default null, p_evening_id uuid default null,
-  p_description text default null, p_wants_contact boolean default true)
+  p_description text default null, p_wants_contact boolean default true, p_about_counterpart boolean default false)
 returns jsonb
 language plpgsql
 security definer
@@ -334,6 +334,10 @@ begin
     select * into e from app.evenings where id = p_evening_id;
     if not found or uid not in (e.user_a, e.user_b) then
       raise exception 'Abend nicht gefunden' using errcode = 'P0002', hint = 'evening_not_found';
+    end if;
+    -- „Betrifft mein Gegenüber“: die Person ergibt sich aus dem Abend selbst; die Oberfläche kennt nur den Vornamen.
+    if p_about_counterpart and p_reported_user is null then
+      p_reported_user := case when e.user_a = uid then e.user_b else e.user_a end;
     end if;
     if p_reported_user is not null and p_reported_user not in (e.user_a, e.user_b) then
       raise exception 'Diese Person gehört nicht zu diesem Abend.' using errcode = '42501', hint = 'not_related';
@@ -377,7 +381,7 @@ begin
   return jsonb_build_object('report_id', rid, 'status', 'open', 'due_at', due, 'severity', sev);
 end;
 $$;
-grant execute on function api.report(text, text, uuid, uuid, text, boolean) to authenticated;
+grant execute on function api.report(text, text, uuid, uuid, text, boolean, boolean) to authenticated;
 
 create or replace function api.my_reports()
 returns table (id uuid, context text, category text, evening_id uuid, status text, created_at timestamptz, due_at timestamptz,

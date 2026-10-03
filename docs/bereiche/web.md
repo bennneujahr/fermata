@@ -28,7 +28,7 @@ Edge Functions `account-*`, `verification-*`, `admin-invite` und `_shared/didit`
 |---|---|---|
 | Anmeldung | `/anmelden`, `/anmelden/code`, `/anmelden/bestaetigen`, `/abgemeldet` | E-Mail mit 6-stelligem Code **und** Link (PLAN 2.5), nur eingeladene Adressen (`shouldCreateUser: false`) |
 | Onboarding | `/onboarding/einwilligungen` → `/angaben` → `/identitaet` → `/ausweis` (+ `/zurueck`, `/simulation`) | Schritte serverseitig gespeichert, jederzeit fortsetzbar (Stand aus `api.my_onboarding()`) |
-| Mitglieder | `/start`, `/gespraech`, `/abende`, `/mitgliedschaft`, `/konto`, `/konto/einwilligungen`, `/konto/daten`, `/konto/loeschen` | Start mit Stand und nächstem Schritt; Gespräch, Abende, Mitgliedschaft sind Platzhalter („folgt“) für M3–M6 |
+| Mitglieder | `/start`, `/gespraech`, `/abende`, `/mitgliedschaft`, `/konto`, `/konto/einwilligungen`, `/konto/daten`, `/konto/loeschen` | Start mit Stand und nächstem Schritt; Gespräch, Abende, Mitgliedschaft und Sicherheit sind gebaut (Welle 2, siehe [ui-gespraech-abende.md](ui-gespraech-abende.md) und [ui-mitgliedschaft-sicherheit.md](ui-mitgliedschaft-sicherheit.md)) |
 | Hilfe | `/hilfe` (immer über den Hilfe-Knopf oben rechts), `/installieren`, `/rechtliches`, `/offline` | Notruf 110 und Heimwegtelefon aus `api.public_settings()`; Anleitung „Zum Home-Bildschirm“ (PLAN 5.2) |
 | Admin | `/admin`, `/admin/konten`, `/admin/konten/[id]`, `/admin/einladen`, `/admin/pruefungen`, `/admin/hinweise`, `/admin/einstellungen`, `/admin/mfa/*` | nur für `app.admin_users` mit TOTP (aal2); serverseitig erzwungen (Proxy, Layout) und in der Datenbank (`app.is_admin()`) |
 | PWA | `/manifest.webmanifest`, `/sw.js` | Offline-Seite, Empfang von Web-Push und Klick auf Mitteilungen (Versand baut M5) |
@@ -271,9 +271,8 @@ Regeln für Welle 2:
 - Neue Seiten in die passende Gruppe legen; `requireMember()` liefert Überblick und Anrede.
 - Texte nur in `src/copy`, mit Anrede-Variante, wo die Person angesprochen wird.
 - Keine Inline-Styles (ESLint-Regel), keine fremden Skripte; die CSP erlaubt nur Nonce-Skripte.
-- Platzhalter ersetzen: `/gespraech` (M3, `fermata-atem` ist schon eingebunden), `/abende` (M5),
-  `/mitgliedschaft` (M6), Melden und „Abend teilen“ auf `/hilfe` (M7), Admin-Navigation erweitern in
-  `components/shell/Shells.tsx` (`adminNav`).
+- Erledigt in Welle 2: `/gespraech` (M3), `/abende` (M5), `/mitgliedschaft` (M6), Melden und „Abend teilen“ (M7),
+  Admin-Bereiche ([ui-admin.md](ui-admin.md)).
 
 ## Datenschutz und Sicherheit
 

@@ -63,7 +63,7 @@ $$;
 grant execute on function safety.is_suspended(uuid) to service_role, fermata_matcher;
 grant execute on function api.help_contacts() to anon, authenticated, service_role;
 grant execute on function
-  api.report(text, text, uuid, uuid, text, boolean), api.my_reports(), api.appeal(uuid, text), api.my_appeals(),
+  api.report(text, text, uuid, uuid, text, boolean, boolean), api.my_reports(), api.appeal(uuid, text), api.my_appeals(),
   api.checkin_respond(uuid, text), api.create_trust_share(uuid), api.revoke_trust_share(uuid), api.my_trust_shares(uuid),
   api.admin_reports(text), api.admin_report(uuid), api.admin_set_report_status(uuid, text),
   api.admin_decide_report(uuid, text, text, boolean), api.admin_impose_sanction(uuid, text, text, timestamptz, uuid, text),

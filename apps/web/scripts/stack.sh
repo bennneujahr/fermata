@@ -69,7 +69,6 @@ DIDIT_MODE=fake
 DIDIT_WEBHOOK_SECRET=fermata-fake-didit-secret
 MAILPIT_URL=http://localhost:$MAIL_HTTP_PORT
 APP_PORT=$APP_PORT
-SUPABASE_JWT_SECRET=$JWT_SECRET
 FERMATA_FUNCTIONS_URL=http://localhost:$GATEWAY_PORT/functions/v1
 STRIPE_SECRET_KEY=sk_test_fermatalocal
 STRIPE_PUBLISHABLE_KEY=pk_test_fermatalocal

@@ -28,23 +28,6 @@ async function rpc<T>(fn: string, args: Record<string, unknown>): Promise<Action
   return { ok: true, data: data as T };
 }
 
-/**
- * Die gemeldete Person bei einer Meldung zu einem Abend: das Gegenüber. Die Oberfläche kennt nur den Vornamen;
- * die ID liest der Server mit der Sitzung der meldenden Person (RLS: nur eigene Abende). Fehlt das Leserecht,
- * geht die Meldung ohne gemeldete Person ein (Benn sieht den Abend).
- */
-async function counterpartOf(eveningId: string): Promise<string | null> {
-  const supabase = await createClient();
-  const [{ data: claims }, { data }] = await Promise.all([
-    supabase.auth.getClaims(),
-    supabase.schema("app").from("evenings").select("user_a, user_b").eq("id", eveningId).maybeSingle(),
-  ]);
-  const me = (claims?.claims as { sub?: string } | undefined)?.sub;
-  const row = data as { user_a?: string; user_b?: string } | null;
-  if (!me || !row?.user_a || !row.user_b) return null;
-  return row.user_a === me ? row.user_b : row.user_a;
-}
-
 export interface ReportInput {
   context: ReportContext;
   category: ReportCategory;
@@ -61,14 +44,14 @@ export async function submitReport(input: ReportInput): Promise<ActionResult<Rep
   const description = (input.description ?? "").trim();
   if (description.length > 4000) return { ok: false, error: "description_too_long" };
   const eveningId = input.eveningId && UUID.test(input.eveningId) ? input.eveningId : null;
-  const reported = eveningId && input.aboutCounterpart ? await counterpartOf(eveningId) : null;
+  // Das Gegenüber trägt api.report selbst aus dem Abend ein; die Oberfläche kennt nur den Vornamen.
   const res = await rpc<ReportResult>("report", {
     p_context: input.context,
     p_category: input.category,
-    p_reported_user: reported,
     p_evening_id: eveningId,
     p_description: description || null,
     p_wants_contact: input.wantsContact,
+    p_about_counterpart: Boolean(eveningId && input.aboutCounterpart),
   });
   if (res.ok) revalidatePath("/sicherheit", "layout");
   return res;

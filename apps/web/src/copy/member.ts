@@ -27,36 +27,6 @@ export const start = (f: AddressForm) => ({
   installCta: "So geht es",
 });
 
-export const placeholders = (f: AddressForm) => ({
-  gespraech: {
-    title: "Gespräch",
-    eyebrow: "Viola",
-    lead: af(f, "Viola ist eine KI-Stimme ohne Gesicht. Sie fragt nach Ihrer Persönlichkeit, Ihren Werten, Wünschen und freien Zeiten – nicht nach Fotos.", "Viola ist eine KI-Stimme ohne Gesicht. Sie fragt nach deiner Persönlichkeit, deinen Werten, Wünschen und freien Zeiten – nicht nach Fotos."),
-    emptyTitle: "Das Gespräch folgt",
-    emptyText: af(f, "Wir bereiten Viola gerade vor. Sobald Sie mit ihr sprechen können, schreiben wir Ihnen.", "Wir bereiten Viola gerade vor. Sobald du mit ihr sprechen kannst, schreiben wir dir."),
-    facts: ["Ihre Stimme wird nirgends gespeichert.", "Gesprächstexte löschen wir nach 30 Tagen.", "Die Zusammenfassung lesen und bestätigen Sie selbst."],
-    aiNote: "Hinweis zu künstlicher Intelligenz",
-    atemLabel: "Viola ist bereit.",
-  },
-  abende: {
-    title: "Abende",
-    lead: af(f, "Hier erscheinen Ihre Vorschläge, die Terminabstimmung und Ihre Abende in Partner-Lokalen.", "Hier erscheinen deine Vorschläge, die Terminabstimmung und deine Abende in Partner-Lokalen."),
-    emptyTitle: "Noch keine Abende",
-    emptyText: af(f, "Nach dem Gespräch mit Viola schlagen wir Ihnen alle 14 Tage ein Gegenüber vor. Ein Mensch prüft jeden Vorschlag.", "Nach dem Gespräch mit Viola schlagen wir dir alle 14 Tage ein Gegenüber vor. Ein Mensch prüft jeden Vorschlag."),
-  },
-  mitgliedschaft: {
-    title: "Mitgliedschaft",
-    lead: "Bis einschließlich zum ersten Abend ist Fermata kostenlos und ohne Karte. Danach wählen Sie eine Stufe – bewusst und mit eigenem Knopf.",
-    current: "Aktuell",
-    statusLabels: { free: "Gratisphase", pending: "Bestellung läuft", active: "aktiv", cancelled: "gekündigt", ended: "beendet", past_due: "Zahlung offen", withdrawn: "widerrufen" } as Record<string, string>,
-    available: "Verfügbare Abende",
-    tiersTitle: "Stufen",
-    tiersText: "Die Stufen und der Bestellknopf folgen. Kündigen und Widerrufen gehen dann ebenso mit einem Knopf.",
-    perPeriod: "je 4 Wochen",
-    evenings: (n: number) => (n === 1 ? "1 Abend" : `${n} Abende`),
-  },
-});
-
 export const konto = (f: AddressForm) => ({
   title: "Konto",
   lead: af(f, "Ihre Angaben, Einwilligungen und Einstellungen – und alles, um Ihre Daten mitzunehmen oder zu löschen.", "Deine Angaben, Einwilligungen und Einstellungen – und alles, um deine Daten mitzunehmen oder zu löschen."),
