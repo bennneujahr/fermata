@@ -49,11 +49,15 @@ export function subscriptionPeriodEnd(sub: Obj): string | null {
   return ts(sub.current_period_end ?? sub.items?.data?.[0]?.current_period_end);
 }
 
-// Datensparsamkeit: Diese Felder speichern wir nie (Kartendetails, Anschriften, Telefonnummern, Namen).
-const DROP_KEYS = new Set([
+// Datensparsamkeit: Diese Felder speichern wir nie (Kartendetails, Anschriften, Telefonnummern, Namen, E-Mail-Adressen,
+// Rechnungslinks). Dieselbe Liste wendet die Datenbank noch einmal an (billing.stripe_strip_personal,
+// 20261003000905_retention.sql); nach retention.stripe_events_months wird das Ereignis gelöscht.
+export const DROP_KEYS = new Set([
   "payment_method_details", "card", "billing_details", "customer_address", "customer_shipping", "customer_phone",
-  "customer_name", "shipping", "shipping_details", "address", "phone", "sources", "payment_method", "default_payment_method",
-  "customer_tax_ids", "account_tax_ids",
+  "customer_name", "customer_email", "customer_details", "customer_tax_ids", "account_tax_ids", "shipping",
+  "shipping_details", "address", "phone", "email", "name", "receipt_email", "receipt_url", "receipt_number",
+  "hosted_invoice_url", "invoice_pdf", "sources", "payment_method", "default_payment_method", "ip", "ip_address",
+  "client_ip", "billing_address", "fingerprint",
 ]);
 
 /** Kopie des Ereignisses ohne Karten- und Adressdaten, wie sie in billing.stripe_events gespeichert wird. */

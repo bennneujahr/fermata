@@ -135,12 +135,16 @@ Deno.test({ name: "stripe-webhook: gespeichertes Ereignis enthält keine Karten-
     const event = {
       id: `evt_c_${tag}`, type: "charge.succeeded",
       data: { object: { id: `ch_${tag}`, amount: 4900, billing_details: { name: "Mara L", address: { line1: "Weg 1" } },
-        payment_method_details: { card: { last4: "4242", brand: "visa" } }, customer_address: { city: "Schwerin" } } },
+        payment_method_details: { card: { last4: "4242", brand: "visa" } }, customer_address: { city: "Schwerin" },
+        receipt_email: "mara@example.test", receipt_url: "https://pay.stripe.com/receipts/x",
+        customer_details: { email: "mara@example.test" }, metadata: { fermata_user_id: "u-1" } } },
     };
     assert.equal((await post(event)).status, 200);
     const [row] = await sql`select payload::text as p from billing.stripe_events where id = ${event.id}`;
-    assert.ok(row!.p.includes(`ch_${tag}`) && row!.p.includes("4900"));
-    for (const s of ["4242", "visa", "Mara L", "Weg 1", "Schwerin"]) assert.ok(!row!.p.includes(s), `gespeichert: ${s}`);
+    assert.ok(row!.p.includes(`ch_${tag}`) && row!.p.includes("4900") && row!.p.includes("u-1"));
+    for (const s of ["4242", "visa", "Mara L", "Weg 1", "Schwerin", "mara@example.test", "pay.stripe.com"]) {
+      assert.ok(!row!.p.includes(s), `gespeichert: ${s}`);
+    }
   } finally {
     await sql`delete from billing.stripe_events where id = ${`evt_c_${tag}`}`;
     await sql.end();
