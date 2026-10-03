@@ -395,7 +395,7 @@ select key, value from ops.app_settings where key in ('internal.functions_base_u
 
 | Anbieter | Folge | Was tun |
 |---|---|---|
-| Brevo | Mails scheitern; Wiederholung bis 5 Versuche (10, 20, 30 … min), dann `failed`; Anmeldecodes kommen nicht | Status von Brevo prüfen; nach Behebung gescheiterte Nachrichten neu einreihen (`update ops.notification_queue set failed_at = null, attempts = 0, not_before = now() where failed_at > …` – mit Bedacht); laufende Fristen ggf. verlängern (8.4) |
+| Brevo | Mails scheitern; Wiederholung bis 5 Versuche (10, 20, 30 … min), dann `failed`; Anmeldecodes kommen nicht | Status von Brevo prüfen; danach gescheiterte Nachrichten mit Frist ansehen (`select id, user_id, template from ops.notification_queue where failed_at > now() - interval '1 day' and has_deadline;`) und Betroffene direkt informieren bzw. Fristen verlängern (8.4). Ein Werkzeug zum erneuten Einreihen fehlt [[Technik]] |
 | Stripe | Bestellung antwortet `payment_provider_error`; Webhooks stellt Stripe später zu | abwarten; Kündigung/Widerruf gelten trotzdem (gespeichert vor Ausführung), Hinweis an dich |
 | Didit | Ausweisprüfung nicht möglich | Hinweis in der App; abwarten; Plan B Veriff |
 | Bedrock | Viola antwortet nicht, Auswertung scheitert; Auswahl nimmt „nur Regeln“ | Gespräche später fortsetzen lassen; Lauf ggf. neu starten |
