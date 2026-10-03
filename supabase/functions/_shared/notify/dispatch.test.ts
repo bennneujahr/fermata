@@ -512,9 +512,16 @@ Deno.test("Handler venue-confirm: GET zeigt, erst POST bestätigt; falscher Link
     const jbad = await venueConfirm(new Request("http://localhost/functions/v1/venue-confirm?t=kaputt", { headers: accept }));
     assertEquals(jbad.status, 400);
     assertEquals(await jbad.json(), { error: "invalid_link" });
-    const pre = await venueConfirm(new Request(url, { method: "OPTIONS", headers: { origin: "http://localhost:3000" } }));
-    assertEquals(pre.status, 204);
-    assertEquals(pre.headers.get("access-control-allow-origin"), "http://localhost:3000");
+    const before = Deno.env.get("FERMATA_ALLOWED_ORIGINS");
+    Deno.env.set("FERMATA_ALLOWED_ORIGINS", "https://app.fermata.example");
+    try {
+      const pre = await venueConfirm(new Request(url, { method: "OPTIONS", headers: { origin: "https://app.fermata.example" } }));
+      assertEquals(pre.status, 204);
+      assertEquals(pre.headers.get("access-control-allow-origin"), "https://app.fermata.example");
+    } finally {
+      if (before === undefined) Deno.env.delete("FERMATA_ALLOWED_ORIGINS");
+      else Deno.env.set("FERMATA_ALLOWED_ORIGINS", before);
+    }
     setVenueStore({ summary: () => Promise.resolve(null), confirm: () => Promise.resolve(null) });
     const gone = await venueConfirm(new Request(url, { headers: accept }));
     assertEquals(gone.status, 404);

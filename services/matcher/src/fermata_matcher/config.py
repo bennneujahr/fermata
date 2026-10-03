@@ -143,6 +143,7 @@ class RuntimeConfig:
     aws_region: str = "eu-central-1"
     llm_model_override: str | None = None
     fake_art9_rate: float = 0.0
+    env: str | None = None  # FERMATA_ENV (production, staging, local, test, ci); None = nur die Datenbank entscheidet
 
     @classmethod
     def from_env(cls, env: dict[str, str] | None = None) -> RuntimeConfig:
@@ -156,4 +157,40 @@ class RuntimeConfig:
             aws_region=e.get("FERMATA_AWS_REGION") or e.get("AWS_REGION") or cls.aws_region,
             llm_model_override=e.get("FERMATA_LLM_MODEL_ID") or None,
             fake_art9_rate=float(e.get("FERMATA_FAKE_ART9_RATE", "0") or 0),
+            env=(e.get("FERMATA_ENV") or "").strip().lower() or None,
         )
+
+
+class ProductionGuardError(RuntimeError):
+    """In Produktion darf der Auswahl-Job nicht mit Attrappen rechnen (DSFA M-3)."""
+
+
+def production_problems(llm_backend: str, embedding_backend: str, env: str | None, db_env: str | None) -> list[str]:
+    """Liefert die Gründe, warum der Lauf so nicht starten darf (leer = in Ordnung).
+
+    Produktion ist, wenn FERMATA_ENV=production gesetzt ist oder die Datenbank (ops.environment()) production meldet.
+    Kann die Datenbank ihre Umgebung nicht nennen, gilt das wie Produktion (auf Nummer sicher).
+    Attrappen („fake“) sind dort verboten; „none“ (nur Regeln, ohne Sprachmodell bzw. Embeddings) bleibt erlaubt.
+    """
+    production = env == "production" or db_env == "production" or db_env is None
+    if not production:
+        return []
+    where = (
+        "FERMATA_ENV=production"
+        if env == "production"
+        else ("Datenbank meldet production" if db_env == "production" else "Umgebung der Datenbank unbekannt")
+    )
+    problems: list[str] = []
+    if llm_backend == "fake":
+        problems.append(
+            f"FERMATA_LLM_BACKEND=fake ist in Produktion verboten ({where}); bedrock, bedrock-mantle oder none setzen"
+        )
+    if embedding_backend == "fake":
+        problems.append(f"FERMATA_EMBEDDING_BACKEND=fake ist in Produktion verboten ({where}); titan oder none setzen")
+    return problems
+
+
+def ensure_production_safe(llm_backend: str, embedding_backend: str, env: str | None, db_env: str | None) -> None:
+    problems = production_problems(llm_backend, embedding_backend, env, db_env)
+    if problems:
+        raise ProductionGuardError("Auswahl-Job verweigert den Lauf: " + "; ".join(problems))

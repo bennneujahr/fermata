@@ -21,11 +21,11 @@ from . import __version__
 from .art9 import SanitizeStats, address_mode, check_reasons, sanitize_text
 from .assignment import AssignmentResult, assign
 from .availability import BERLIN
-from .config import MatchSettings
-from .db import db_now, load_settings
-from .embeddings import Embedder, EmbeddingStats, compute_embeddings, plan_embeddings, vector_literal
+from .config import MatchSettings, ensure_production_safe
+from .db import db_now, environment_or_none, load_settings
+from .embeddings import Embedder, EmbeddingStats, FakeEmbedder, compute_embeddings, plan_embeddings, vector_literal
 from .filters import REASON_ORDER, hard_filter, pair_limit_km
-from .llm.client import LLMClient
+from .llm.client import FakeLLM, LLMClient
 from .llm.evaluate import LLMStats, PairEvaluation, evaluate_pairs, input_hash, pair_payload, person_input
 from .llm.prompts import REVIEW_VERSION, RUBRIC_VERSION
 from .llm.review import ReviewInput, review_pairings
@@ -55,6 +55,7 @@ class RunOptions:
     max_venue_rounds: int = 3
     llm_backend_name: str = "fake"
     embedding_backend_name: str = "fake"
+    env: str | None = None  # FERMATA_ENV; Produktionssperre gegen Attrappen (zusätzlich zu ops.environment())
 
 
 @dataclass
@@ -140,7 +141,18 @@ class Runner:
             return new_id, period_id
 
     # ------------------------------------------------------------------ Hauptablauf
+    def ensure_production_safe(self) -> None:
+        """In Produktion keine Attrappen (FakeLLM, FakeEmbedder) – auch nicht, wenn der Name des Backends etwas anderes sagt."""
+        llm = "fake" if isinstance(self.opt.llm, FakeLLM) else self.opt.llm_backend_name
+        emb = "fake" if isinstance(self.opt.embedder, FakeEmbedder) else self.opt.embedding_backend_name
+        if self.opt.llm is None and llm == "fake":
+            llm = "none"
+        if self.opt.embedder is None and emb == "fake":
+            emb = "none"
+        ensure_production_safe(llm, emb, self.opt.env, environment_or_none(self.conn))
+
     def run(self, *, period_id: str | None = None, next_due: bool = False, run_id: str | None = None) -> RunOutcome:
+        self.ensure_production_safe()
         settings = load_settings(self.conn)
         rid, pid = self.resolve_run(period_id=period_id, next_due=next_due, run_id=run_id, settings=settings)
         try:

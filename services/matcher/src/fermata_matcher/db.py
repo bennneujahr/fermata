@@ -61,5 +61,15 @@ def load_settings(conn: psycopg.Connection) -> MatchSettings:
 
 
 def environment(conn: psycopg.Connection) -> str:
-    """Umgebung laut ops.deployment (nur als Superuser/postgres lesbar; der Job braucht das nicht)."""
+    """Umgebung laut ops.deployment (fermata_matcher darf ops.environment() seit 20261003000907 aufrufen)."""
     return conn.execute("select ops.environment()").fetchone()[0]
+
+
+def environment_or_none(conn: psycopg.Connection) -> str | None:
+    """Wie environment(), aber None, wenn die Datenbank es nicht verrät (z. B. fehlendes Recht)."""
+    try:
+        with conn.transaction():
+            row = conn.execute("select ops.environment()").fetchone()
+    except psycopg.Error:
+        return None
+    return None if row is None else row[0]

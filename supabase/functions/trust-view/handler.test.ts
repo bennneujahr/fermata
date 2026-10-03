@@ -85,11 +85,23 @@ Deno.test({ name: "trust-view: falscher oder fehlender Schlüssel → 404, nur G
     assert.equal(bad.status, 404);
     assert.deepEqual(await bad.json(), { error: "not_found" });
     assert.equal((await handler(new Request("https://fn.fermata.test/functions/v1/trust-view", { method: "PUT" }))).status, 405);
-    const pre = await handler(new Request("https://fn.fermata.test/functions/v1/trust-view", {
-      method: "OPTIONS", headers: { origin: "http://localhost:3000" },
-    }));
-    assert.equal(pre.status, 204);
-    assert.equal(pre.headers.get("access-control-allow-origin"), "http://localhost:3000");
+    // Die Seite /teilen der Web-App fragt von ihrer Herkunft aus an (CORS nur für erlaubte Herkünfte)
+    const before = Deno.env.get("FERMATA_ALLOWED_ORIGINS");
+    Deno.env.set("FERMATA_ALLOWED_ORIGINS", "https://app.fermata.test");
+    try {
+      const pre = await handler(new Request("https://fn.fermata.test/functions/v1/trust-view", {
+        method: "OPTIONS", headers: { origin: "https://app.fermata.test" },
+      }));
+      assert.equal(pre.status, 204);
+      assert.equal(pre.headers.get("access-control-allow-origin"), "https://app.fermata.test");
+      const other = await handler(new Request("https://fn.fermata.test/functions/v1/trust-view", {
+        method: "OPTIONS", headers: { origin: "https://boese.example" },
+      }));
+      assert.equal(other.headers.get("access-control-allow-origin"), null);
+    } finally {
+      if (before === undefined) Deno.env.delete("FERMATA_ALLOWED_ORIGINS");
+      else Deno.env.set("FERMATA_ALLOWED_ORIGINS", before);
+    }
   } finally {
     await sql.end();
   }
