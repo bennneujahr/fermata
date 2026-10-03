@@ -7,7 +7,7 @@ Alle rechtlichen Abläufe und Texte sind **ENTWURF** und brauchen die Prüfung d
 > **Kurz für Benn:** Mitgliedschaft (Stufen, Bestellübersicht mit Pflicht-Häkchen und Stripe Payment Element,
 > Kündigungsknopf und Widerrufsbutton – angemeldet und ohne Anmeldung), Sicherheit (Melden überall, eigene Meldungen,
 > Hinweise mit Widerspruch, Abend teilen), Check-in, Hilfe-Seite mit allen Nummern, die öffentlichen Seiten für
-> Vertrauensperson und Lokal und die Rechtstexte mit ENTWURF-Hinweis sind fertig und getestet (15 neue E2E-Abläufe,
+> Vertrauensperson und Lokal und die Rechtstexte mit ENTWURF-Hinweis sind fertig und getestet (16 neue E2E-Abläufe,
 > 15 neue Unit-Tests, 74 Bildschirmfotos). Echte Zahlungen mit Stripe (Testmodus) und echte Geräte stehen noch aus,
 > siehe [Was noch echt geprüft werden muss](#was-noch-echt-geprüft-werden-muss).
 
@@ -105,7 +105,7 @@ Aufräumen: `STACK_SLOT=2 bash apps/web/scripts/stack.sh down`.
 | Was | Befehl | Stand 03.10.2026 |
 |---|---|---|
 | Unit (Vitest) | `pnpm --filter @fermata/web test` | 39 Tests grün (neu: `lib/ui-b.test.ts` 12, `lib/markdown-extra.test.tsx` 3) |
-| E2E (Playwright, axe, CSP) | Stapel + `serve-e2e.sh`, dann `pnpm --filter @fermata/web test:e2e -- tests/e2e/mitgliedschaft.spec.ts tests/e2e/sicherheit.spec.ts tests/e2e/public-pages.spec.ts` | 15 neue Abläufe grün; ganze Suite 30 grün |
+| E2E (Playwright, axe, CSP) | Stapel + `serve-e2e.sh`, dann `pnpm --filter @fermata/web test:e2e -- tests/e2e/mitgliedschaft.spec.ts tests/e2e/sicherheit.spec.ts tests/e2e/public-pages.spec.ts` | 16 neue Abläufe grün; ganze Suite 31 grün (eigener Stapel und Härtung) |
 | Bildschirmfotos | `pnpm --filter @fermata/web exec playwright test --project=screenshots tests/e2e/sicherheit-screenshots.spec.ts` | 74 Bilder in `docs/screenshots/web/ui-b/` |
 | Typen, Lint, Build, Tonalität, Kontraste | `pnpm --filter @fermata/web typecheck`, `… lint`, `… build`, `pnpm checks` | grün |
 
@@ -125,7 +125,8 @@ Abgedeckt (jede Seite mit axe WCAG 2.1 AA und Prüfung auf CSP-Verstöße):
   ohne Rückfrage) und Drossel nach 5 Meldungen; Widerspruch (zu kurz, eingegangen, nur einmal), `/konto/sicherheit`;
   Abend teilen (Link mit `#t=`, Kopieren, öffentliche Seite ohne Gegenüber und Nachnamen, `noindex`, `no-referrer`,
   Zurückziehen → ungültig); Check-in „Hilfe“ (110 groß und fokussiert, 112, Heimwegtelefon, Hinweis „akut“ in der
-  Datenbank, `check-in`-Weiterleitung, fremder Abend); Hilfe-Seite mit allen Nummern.
+  Datenbank, `check-in`-Weiterleitung, fremder Abend); Hilfe-Seite mit allen Nummern; Melden mit festem Bereich
+  (`?bereich=gespraech`).
 - **Öffentlich:** Rechtstexte mit ENTWURF, Widerrufsbelehrung, Verträge in Fuß und Übersicht, 404; Lokal-Bestätigung
   (Öffnen bestätigt nichts, Knopf bestätigt, Datenbank, ungültiger und fehlender Link); `/teilen` ohne gültigen Link,
   strenge CSP ohne Rahmen.
