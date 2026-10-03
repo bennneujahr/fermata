@@ -393,6 +393,7 @@ begin
       stripe_subscription_id = case when new_status = 'free' then null else stripe_subscription_id end
     where user_id = m.user_id;
     perform billing.expire_period_grants(m.user_id, 'Mitgliedschaft beendet');
+    update app.accounts set tier_view = 'auftakt' where user_id = m.user_id;
   elsif p_status in ('past_due', 'unpaid') then
     new_status := 'past_due';
     update billing.memberships set status = new_status where user_id = m.user_id;

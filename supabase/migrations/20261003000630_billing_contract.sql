@@ -226,6 +226,7 @@ begin
   returning id into action_id;
   update billing.memberships set status = 'withdrawn', withdrawn_at = app.now(), cancel_at = app.now()
   where user_id = p_user;
+  update app.accounts set tier_view = 'auftakt' where user_id = p_user;
   -- Erst offene Abende absagen (Rückgaben), dann die übrigen Zuteilungen verfallen lassen.
   if to_regprocedure('safety.cancel_open_evenings(uuid,text)') is not null then
     execute 'select safety.cancel_open_evenings($1, $2)' into cancelled using p_user, 'widerruf';
