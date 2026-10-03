@@ -512,6 +512,7 @@ begin
       'prices', ops.setting('voice.prices'),
       'tier_depth', ops.setting('interview.tier_depth') -> s.tier_depth,
       'redact_art9_in_transcripts', ops.setting_bool('interview.redact_art9_in_transcripts'),
+      'transcript_retention_days', ops.setting_int('interview.transcript_retention_days'),
       'ai_notice_version', ops.setting_text('interview.ai_notice_version'),
       'crisis_lines', ops.setting('safety.crisis_lines')));
   return result;
@@ -786,6 +787,7 @@ begin
   if exists (select 1 from jsonb_each(c) e
              where e.key in ('minutes', 'stt_seconds', 'llm_input_tokens', 'llm_output_tokens', 'llm_cache_read_tokens',
                              'llm_cache_write_tokens', 'tts_characters', 'media_minutes', 'amount_eur', 'latency_ms_p50', 'latency_ms_p90')
+               and jsonb_typeof(e.value) <> 'null'
                and (jsonb_typeof(e.value) <> 'number' or (e.value #>> '{}')::numeric < 0)) then
     raise exception 'invalid_costs' using errcode = '22023';
   end if;
