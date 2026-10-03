@@ -193,6 +193,10 @@ class Conversation:
         values.setdefault("notruf", str(self.settings.crisis_lines.get("notruf", "112")))
         return prompts.notice(n.key, self.form, **values)
 
+    async def flush(self) -> None:
+        """Wartet, bis alle Beiträge und Hinweise gespeichert sind."""
+        await self._writer.flush()
+
     def take_events(self) -> list[EngineEvent]:
         out, self.events = self.events, []
         return out
@@ -300,8 +304,13 @@ class Conversation:
     async def respond(self, person_text: str) -> AsyncIterator[str]:
         """Antwort auf einen Beitrag der Person, Satz für Satz."""
         async with self._lock:
-            async for sentence in self._respond(person_text):
-                yield sentence
+            inner = self._respond(person_text)
+            try:
+                async for sentence in inner:
+                    yield sentence
+            finally:
+                # Bei Unterbrechung sofort aufräumen (nicht erst bei der Speicherbereinigung).
+                await inner.aclose()
 
     async def _respond(self, person_text: str) -> AsyncIterator[str]:
         if self.ended:

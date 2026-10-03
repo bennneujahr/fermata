@@ -52,8 +52,8 @@ RULES: tuple[_Rule, ...] = (
           _r(r"\b(ritze mich|mich ritzen|selbstverletz\w*|verletze mich selbst|schneide mich)\b")),
     # Minderjährig
     _Rule("alter_unter_18", SafetyKind.MINDERJAEHRIG, Severity.HOCH,
-          _r(rf"\bich bin (erst |gerade |noch )?(1[0-7]|{_AGE_WORDS})( jahre)?( alt)?\b"
-             r"(?!\s*(jahre (verheiratet|zusammen|dabei)|monate))")),
+          _r(rf"\bich bin (erst |gerade |noch )?(1[0-7]|{_AGE_WORDS})"
+             r"(?!\s+(jahre?\s+(verheiratet|zusammen|dabei|lang|her|getrennt)|monate|kilo|uhr|minuten|km))( jahre)?( alt)?\b")),
     _Rule("minderjaehrig_wort", SafetyKind.MINDERJAEHRIG, Severity.HOCH,
           _r(r"\b(noch minderjährig|nicht volljährig|bin minderjährig|noch keine 18|noch nicht 18|werde erst 18)\b")),
     _Rule("schulklasse", SafetyKind.MINDERJAEHRIG, Severity.MITTEL,
