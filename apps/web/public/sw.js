@@ -88,8 +88,11 @@ self.addEventListener("notificationclick", (event) => {
       const all = await self.clients.matchAll({ type: "window", includeUncontrolled: true });
       for (const c of all) {
         if (new URL(c.url).origin === self.location.origin && "focus" in c) {
-          await c.navigate(url).catch(() => undefined);
-          return c.focus();
+          // navigate() geht nur bei Fenstern, die dieser Service Worker steuert; sonst neues Fenster mit der Adresse.
+          const moved = await c.navigate(url).catch(() => null);
+          if (moved) return moved.focus();
+          if (new URL(c.url).href === url) return c.focus();
+          break;
         }
       }
       return self.clients.openWindow(url);
