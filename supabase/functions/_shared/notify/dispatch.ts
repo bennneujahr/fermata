@@ -21,7 +21,7 @@ export interface DispatchDeps {
   sendMail: (msg: MailMessage, userId?: string) => Promise<{ id: string }>;
   push: PushSender | null;
   appUrl: string;
-  /** Basis für Links auf Edge Functions, z. B. https://<projekt>.supabase.co/functions/v1 */
+  /** Basis für Links auf Edge Functions, z. B. https://<projekt>.supabase.co/functions/v1 (heute ungenutzt). */
   functionsUrl?: string | null;
   venueLinkSecret?: string | null;
 }
@@ -40,12 +40,20 @@ function emptyStats(): DispatchStats {
   return { claimed: 0, email_sent: 0, email_failed: 0, push_sent: 0, push_failed: 0, push_removed: 0, skipped: 0 };
 }
 
+/**
+ * Bestätigungslink für das Lokal (Vertrag 3): Seite der Web-App <App>/lokal/bestaetigen, Schlüssel im URL-Fragment
+ * (landet nie in Server-Protokollen). Die Seite spricht die Edge Function venue-confirm mit Accept: application/json an.
+ */
+export function venueConfirmLink(appUrl: string, token: string): string {
+  return `${appUrl.replace(/\/$/, "")}/lokal/bestaetigen#t=${encodeURIComponent(token)}`;
+}
+
 async function venueConfirmUrl(deps: DispatchDeps, n: ClaimedNotification): Promise<string | null> {
   const r = n.context.reservation;
   if (n.template !== "venue.reservation" || !r || n.context.recipient.kind !== "venue") return null;
-  if (!deps.venueLinkSecret || !deps.functionsUrl) return null;
+  if (!deps.venueLinkSecret || !deps.appUrl) return null;
   const token = await signVenueToken(deps.venueLinkSecret, r.id, new Date(r.token_expires_at));
-  return `${deps.functionsUrl.replace(/\/$/, "")}/venue-confirm?t=${encodeURIComponent(token)}`;
+  return venueConfirmLink(deps.appUrl, token);
 }
 
 /** Eine Nachricht verschicken und das Ergebnis melden. Fehler bleiben in der Zeile (last_error), ohne Adressen. */

@@ -1,9 +1,13 @@
 // Bestellung einer Mitgliedschaft (PLAN 2.3 Nr. 7). Ablauf in der Web-App:
 //   1. POST {action:"summary", tier}  → Bestellübersicht (Preis, USt, Laufzeit, Kündigung, Widerruf, Knopftext) + summaryHash
 //   2. Stripe Payment Element im Modus „Abo“ ohne Client-Geheimnis zeigen (deferred intent)
-//   3. Klick auf „Mitgliedschaft zahlungspflichtig abschließen“ → POST {action:"order", tier, summaryHash, requestId}
-//      → Kunde anlegen/wiederverwenden, Abo mit payment_behavior=default_incomplete anlegen, Bestellung speichern,
-//        Eingangsbestätigung per Mail → Antwort mit clientSecret
+//   3. Klick auf „Mitgliedschaft zahlungspflichtig abschließen“ → POST {action:"order", tier, summaryHash, requestId,
+//      start_request: true}
+//      → ohne start_request: true (ausdrückliches Verlangen des Leistungsbeginns, Satz summary.start_request_text)
+//        422 {error:"start_request_required"}, bevor Stripe gefragt wird
+//      → Kunde anlegen/wiederverwenden, Abo mit payment_behavior=default_incomplete anlegen, Bestellung speichern
+//        (mit Satz und Fassung der Erklärung), Eingangsbestätigung per Mail mit vollständiger Widerrufsbelehrung und
+//        Muster-Formular (dauerhafter Datenträger) → Antwort mit clientSecret
 //   4. Web-App ruft stripe.confirmPayment({clientSecret}) auf; den Rest erledigt stripe-webhook.
 import { db } from "../_shared/db.ts";
 import { optionalEnv } from "../_shared/env.ts";
@@ -41,14 +45,15 @@ export default handler(["POST"], async (req) => {
   }
 
   // --- Bestellung (Klick auf den Bestellknopf) ---
+  // § 356 Abs. 4, § 357a Abs. 2 BGB: ohne ausdrückliches Verlangen des Leistungsbeginns keine Bestellung.
+  if (body.start_request !== true) {
+    throw new HttpError(422, "start_request_required", "Bitte bestätigen Sie, dass wir vor Ende der Widerrufsfrist beginnen sollen.");
+  }
   if (body.summaryHash !== summaryHash) {
     throw new HttpError(409, "summary_changed", "Die Bestellübersicht hat sich geändert. Bitte laden Sie die Seite neu.");
   }
   await rpc(sql`select billing.order_precheck(${member.id}::uuid)`);
-  const [m] = await sql`
-    select u.email::text as email, m.stripe_customer_id, m.stripe_subscription_id, m.status,
-           ops.setting_text('landing.vat_mode') as vat_mode
-    from auth.users u left join billing.memberships m on m.user_id = u.id where u.id = ${member.id}::uuid`;
+  const [m] = await sql`select (billing.checkout_context(${member.id}::uuid)).*`;
   if (!m?.email) throw new HttpError(404, "user_not_found", "Konto nicht gefunden.");
   const requestId = typeof body.requestId === "string" && /^[0-9a-f-]{36}$/i.test(body.requestId) ? body.requestId : crypto.randomUUID();
   const client = stripe();
@@ -90,7 +95,8 @@ export default handler(["POST"], async (req) => {
   let order: Obj;
   try {
     const [o] = await rpc(sql`
-      select billing.record_order(${member.id}::uuid, ${tier}, ${sql.json(summary as any)}::jsonb, ${customerId}, ${subscription.id}, 'web') as r`);
+      select billing.record_order(${member.id}::uuid, ${tier}, ${sql.json(summary as any)}::jsonb, ${customerId}, ${subscription.id},
+                                  'web', true) as r`);
     order = o!.r as Obj;
   } catch (err) {
     await client.request("DELETE", `/v1/subscriptions/${subscription.id}`).catch(() => undefined);
@@ -99,9 +105,16 @@ export default handler(["POST"], async (req) => {
 
   let confirmationSent = false;
   try {
+    const [policy] = await sql`select d.title, d.version, d.body_markdown from api.legal_document('widerruf') d`;
+    if (!policy) {
+      // Ohne Belehrung geht die Mail trotzdem raus; Benn sieht den Fehler im Audit (Text in ops.legal_documents fehlt).
+      console.error(JSON.stringify({ level: "error", msg: "Widerrufsbelehrung fehlt in ops.legal_documents" }));
+      await sql`select ops.audit('billing.withdrawal_policy_missing', 'billing.contract_actions', ${String(order.contract_action_id)}, '{}'::jsonb)`;
+    }
     const msg = orderReceived({
       contractNumber: order.contract_number, orderedAt: order.ordered_at, withdrawalUntil: order.withdrawal_until,
-      summary: summary as any, manageUrl: manageUrl(),
+      summary: summary as any, manageUrl: manageUrl(), startRequest: order.start_request ?? null,
+      withdrawalPolicy: policy ? { title: String(policy.title), version: String(policy.version), body_markdown: String(policy.body_markdown) } : null,
     });
     const sent = await sendMail({ to: m.email, ...msg }, member.id);
     await sql`select billing.mark_confirmation_sent(${order.contract_action_id}::uuid, ${sent.id})`;

@@ -54,42 +54,62 @@ Hilfsangebote.“ [[Benn: Länge der Begrüßung gegen Klarheit abwägen]]
 
 ## 4. Schriftlicher Hinweis (Rechtliches, `ops.legal_documents` Art `ki_hinweis`)
 
-**Heute (M2, Entwurf):**
+**Frühere Fassung (M2, jetzt `2026-10-03-m2`, Status `abgeloest`):** endete mit „Besonders geschützte Angaben wie
+Geschlecht oder Religion gehen nie an ein Sprachmodell.“ Das stimmte nur für die Formularangaben: Was jemand Viola
+von sich aus erzählt, verarbeiten Spracherkennung und Sprachmodell live (gespeichert wird es nicht).
 
-> Bei Fermata arbeitet künstliche Intelligenz mit (Art. 50 KI-Verordnung):
-> - **Viola** ist eine KI-Stimme. Sie spricht mit Ihnen, ist aber kein Mensch.
-> - **Die Auswahl** nutzt ein Sprachmodell, um zu bewerten, wer zusammenpassen könnte. Jeden Vorschlag prüft und gibt
->   ein Mensch frei.
-> - **Besonders geschützte Angaben** wie Geschlecht oder Religion gehen nie an ein Sprachmodell.
+**Heute (Fassung `2026-10-03-entwurf`, Migration `20261003000900_legal_documents.sql`):** Der Text zwischen den
+Markierungen steht wortgleich (in App-Markdown umgewandelt) in der Datenbank; ein Deno-Test prüft das.
 
-**Problem:** Der dritte Punkt stimmt für die Formularangaben (verschlüsselt, Auswahl nur Ja/Nein), aber nicht für das
-Gespräch: Was jemand Viola von sich aus erzählt, verarbeitet das Sprachmodell live (gespeichert wird es nicht).
+<!-- db kind="ki_hinweis" version="2026-10-03-entwurf" title="Hinweis: künstliche Intelligenz" -->
+Bei Fermata arbeitet künstliche Intelligenz an drei Stellen mit (Art. 50 KI-Verordnung). Hier steht, wo, welche
+Dienste beteiligt sind und was gespeichert wird.
 
-**Vorschlag M8 (Fassung `ki-hinweis-2026-10-03-m8-entwurf`):**
+## 1. Viola, die Stimme im Gespräch
 
-> **Künstliche Intelligenz bei Fermata**
->
-> Bei Fermata arbeitet künstliche Intelligenz an drei Stellen mit. Wir sagen Ihnen jeweils, wo.
->
-> **1. Viola** ist eine künstliche Intelligenz, kein Mensch. Sie sagt das zu Beginn jedes Gesprächs. Was Sie sagen,
-> wandelt eine Spracherkennung (Deepgram) in Text um; ein Sprachmodell (Claude von Anthropic, betrieben über Amazon
-> Bedrock in der EU) formuliert Violas Antworten; eine künstliche Stimme (Amazon Polly) spricht sie. Ihre Stimme wird
-> nicht aufgezeichnet.
->
-> **2. Die Auswertung** nach dem Gespräch macht dasselbe Sprachmodell: Es schlägt eine Zusammenfassung vor und prüft
-> auf Hinweise zu einer Krise oder Gefahr. Die Zusammenfassung gilt erst, wenn Sie sie bestätigt oder korrigiert
-> haben.
->
-> **3. Die Auswahl** nutzt das Sprachmodell, um zu bewerten, wer zusammenpassen könnte, und um den kurzen Text „Warum
-> Sie beide“ zu entwerfen. Das Sprachmodell erhält dafür Ihre bestätigte Zusammenfassung ohne Namen und ohne Ihre
-> Angaben zu Geschlecht, Orientierung, Religion oder Gesundheit. **Jeden Vorschlag prüft und gibt ein Mensch frei.**
->
-> Ihre Angaben zu Geschlecht, gesuchtem Geschlecht, Orientierung und Religion aus dem Formular gehen nie an ein
-> Sprachmodell. Erzählen Sie Viola von sich aus etwas aus diesen Bereichen, wird es im Gespräch verarbeitet, aber
-> nicht gespeichert.
->
-> Das Sprachmodell lernt nicht aus Ihren Daten [[im AV-Vertrag mit AWS bestätigen]]. Mehr dazu in der
-> Datenschutzerklärung.
+- **Viola ist eine künstliche Intelligenz, kein Mensch.** Sie sagt das zu Beginn jedes Gesprächs, und die App zeigt
+  es vor dem Verbinden an.
+- Während Sie sprechen, wandelt die Spracherkennung **Deepgram** Ihre Stimme auf Servern in der EU in Text um. Ein
+  Sprachmodell, **Claude von Anthropic**, betrieben über **Amazon Bedrock** in der EU, formuliert Violas Antworten.
+  Eine künstliche Stimme, **Amazon Polly** in Frankfurt, spricht sie. [[Frage B4: Stimme nach dem Blindtest
+  eintragen]]
+- Amazon Bedrock verteilt die Anfragen über ein EU-Profil auf mehrere Rechenzentren. Dazu können auch Rechenzentren
+  in London und Zürich gehören; für das Vereinigte Königreich und die Schweiz gibt es einen Angemessenheitsbeschluss
+  der EU-Kommission. [[Bedrock-Weg festlegen: EU-Profil oder nur Frankfurt]]
+- **Fermata zeichnet Ihre Stimme nicht auf.** Die Dienste verarbeiten sie nur, während Sie sprechen
+  [[Aufbewahrung bei Deepgram und AWS in den Auftragsverarbeitungsverträgen bestätigen]]. Gespeichert wird nur der
+  Text des Gesprächs, und zwar **30 Tage** lang; danach löschen wir ihn automatisch.
+
+## 2. Die Auswertung nach dem Gespräch
+
+- Dasselbe Sprachmodell liest den Gesprächstext und schlägt eine Zusammenfassung vor. Sie gilt erst, wenn Sie sie
+  bestätigt oder korrigiert haben.
+- Das Gespräch wird außerdem **automatisch** auf Hinweise zu einer Krise, auf Minderjährigkeit, Gewalt oder
+  Belästigung geprüft. Bei einem Treffer erhält Fermata einen Hinweis ohne Zitat. Den Gesprächstext liest ein Mensch
+  bei Fermata nur in einem solchen Sicherheitsfall; jede Einsicht wird mit Grund protokolliert.
+
+## 3. Die Auswahl
+
+- Ein Programm nutzt das Sprachmodell, um zu bewerten, wer zusammenpassen könnte, und um den kurzen Text „Warum Sie
+  beide“ zu entwerfen. Es erhält dafür Ihre bestätigte Zusammenfassung ohne Namen und ohne Ihre Angaben zu
+  Geschlecht, Orientierung und Religion.
+- **Jeden Vorschlag prüft und gibt ein Mensch frei.** Ohne diese Freigabe erhält niemand einen Vorschlag.
+
+## Besonders geschützte Angaben
+
+- Ihre Angaben zu Geschlecht, gesuchtem Geschlecht, Orientierung und Religion aus dem Formular gehen nie an ein
+  Sprachmodell. Die Auswahl erhält dazu nur „passt“ oder „passt nicht“.
+- Viola fragt nicht nach Gesundheit, Religion, Herkunft, Sexualität oder anderen besonders geschützten Themen.
+  Erzählen Sie davon von sich aus, verarbeiten Spracherkennung und Sprachmodell es **während des Gesprächs** wie alles
+  andere Gesagte. **Vor dem Speichern filtern wir solche Sätze heraus:** Sie kommen nicht in den gespeicherten Text,
+  nicht in die Zusammenfassung und nicht in Ihr Profil. Ausnahme: Sätze, die auf eine Gefahr hinweisen, bleiben im
+  Text, damit wir helfen können; auch sie werden nach 30 Tagen gelöscht.
+
+Die Anbieter dürfen Ihre Daten laut Vertrag nicht nutzen, um ihre Modelle zu trainieren [[in den
+Auftragsverarbeitungsverträgen mit AWS und Deepgram bestätigen]]. Mehr dazu in der Datenschutzerklärung.
+
+*Entwurf vom 03.10.2026. Der verbindliche Text folgt nach rechtlicher Prüfung.*
+<!-- /db -->
 
 ## 5. Weitere Pflichten, die geprüft werden müssen
 
@@ -105,7 +125,7 @@ Gespräch: Was jemand Viola von sich aus erzählt, verarbeitet das Sprachmodell 
 
 ## Offene Punkte für Benn/Anwalt
 
-1. Schriftlichen Hinweis (Abschnitt 4) freigeben und in `ops.legal_documents` als neue Fassung anlegen.
+1. Schriftlichen Hinweis (Abschnitt 4, seit der Härtung in `ops.legal_documents`) prüfen und freigeben.
 2. Art. 50 Abs. 2 (Kennzeichnung synthetischer Audioausgaben) prüfen und ggf. Technik beauftragen.
 3. Rolle Fermatas nach der KI-Verordnung bestätigen.
 4. Ob die Begrüßung um einen Satz zur Sicherheitsprüfung ergänzt wird.

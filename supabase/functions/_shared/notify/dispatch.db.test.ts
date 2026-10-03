@@ -99,7 +99,7 @@ Deno.test({
           e2!.id
         }`;
         assertStringIncludes(venue[0]!.text, `Tisch-Code: ${res!.table_code}`);
-        assertMatch(venue[0]!.text, /venue-confirm\?t=/);
+        assertMatch(venue[0]!.text, /https:\/\/app\.fermata\.example\/lokal\/bestaetigen#t=/);
         assert(!/Cem|Emil|Celik|Eckert|example\.test/.test(venue[0]!.text), "Lokal erfährt keine Mitgliederdaten");
         assert(res!.venue_notified_at, "Reservierung als verschickt markiert");
 

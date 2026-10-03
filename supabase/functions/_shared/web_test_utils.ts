@@ -4,7 +4,7 @@
 import postgres from "postgres";
 import { encodeBase64Url } from "@std/encoding";
 import { setAuthFetch } from "./auth.ts";
-import { setDb, type Sql } from "./db.ts";
+import { connect, dbRole, setDb, type Sql } from "./db.ts";
 import { FakeDiditClient, setDidit } from "./didit/mod.ts";
 import { MemoryMailer, setMailer } from "./mail/mod.ts";
 
@@ -38,7 +38,8 @@ export interface TestEnv {
 
 export function setupWebTests(): TestEnv {
   const sql = (DB_URL ? postgres(DB_URL, { max: 2, onnotice: () => {}, prepare: false }) : undefined) as Sql;
-  if (sql) setDb(sql);
+  // Testdaten als postgres; die Functions selbst laufen wie in Produktion (FERMATA_DB_ROLE=service_role → enge Rolle).
+  if (sql) setDb(dbRole() ? connect(DB_URL, { max: 2, applicationName: "fermata-edge-test" }) : sql);
   const mailer = new MemoryMailer();
   setMailer(mailer);
   const fake = new FakeDiditClient("http://localhost:3041");

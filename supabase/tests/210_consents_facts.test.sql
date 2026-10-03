@@ -7,7 +7,8 @@ select tests.create_user('ohnekonto@example.test', 'f0000000-0000-0000-0000-0000
 select app.on_account_created('a0000000-0000-0000-0000-00000000000a');
 
 -- Texte liegen als Entwurf vor
-select is((select count(*)::int from ops.legal_documents where version = '2026-10-03-entwurf' and status = 'entwurf'
+-- Seit der Härtung (20261003000900) haben mehrere Texte eine neue Fassung; je Art ist genau eine aktuell.
+select is((select count(distinct kind)::int from ops.legal_documents where status = 'entwurf'
            and kind in ('agb', 'datenschutz_kenntnis', 'art9_profile', 'art9_religion', 'biometrie', 'gespraech', 'push', 'kontakttausch', 'ki_hinweis')),
   9, 'Neun Einwilligungs- und Hinweistexte als Entwurf');
 select is((select version from api.legal_document('agb')), '2026-10-03-entwurf', 'api.legal_document liefert die aktuelle Fassung');
@@ -35,12 +36,12 @@ select throws_ok($$ select api.save_facts('Anna', 'Albers', date '1990-05-17', '
 select lives_ok($$ select api.give_consent('agb', '2026-10-03-entwurf') $$, 'AGB erteilt');
 select lives_ok($$ select api.give_consent('agb', '2026-10-03-entwurf') $$, 'Doppelte Erteilung ist harmlos');
 select is((select count(*)::int from app.consents where kind = 'agb'), 1, 'Doppelte Erteilung erzeugt keine zweite Zeile');
-select lives_ok($$ select api.give_consent('datenschutz_kenntnis', '2026-10-03-entwurf') $$, 'Datenschutzhinweise zur Kenntnis');
+select lives_ok($$ select api.give_consent('datenschutz_kenntnis', (select d.version from api.legal_document('datenschutz_kenntnis') d)) $$, 'Datenschutzhinweise zur Kenntnis');
 select throws_ok($$ select api.save_facts('Anna', 'Albers', date '1990-05-17', '19053') $$, '42501', null, 'Ohne art9_profile kein Formular');
-select lives_ok($$ select api.give_consent('art9_profile', '2026-10-03-entwurf') $$, 'art9_profile erteilt');
+select lives_ok($$ select api.give_consent('art9_profile', (select d.version from api.legal_document('art9_profile') d)) $$, 'art9_profile erteilt');
 select is(api.my_onboarding() ->> 'next_step', 'angaben', 'Danach: Angaben');
 select is((select count(*)::int from api.my_consents() where required and granted), 3, 'my_consents zeigt drei erteilte Pflicht-Einwilligungen');
-select is((select count(*)::int from api.my_consents()), 9, 'my_consents listet alle Arten');
+select is((select count(*)::int from api.my_consents()), 8, 'my_consents listet alle angebotenen Arten (ohne art9_health, Härtung)');
 
 -- Formular: Prüfungen
 select throws_ok($$ select api.save_facts('Anna', 'Albers', null, '19053') $$, '22023', 'Ungültiges Geburtsdatum', 'Geburtsdatum Pflicht');
@@ -93,7 +94,7 @@ select throws_ok($$ select api.save_address_form('ihr') $$, '22023', null, 'Nur 
 
 -- Widerruf: neue Zeile, Daten sofort gelöscht
 select throws_ok($$ select api.revoke_consent('agb') $$, '42501', null, 'AGB nur über Kontolöschung beenden');
-select lives_ok($$ select api.give_consent('art9_religion', '2026-10-03-entwurf') $$, 'Religion-Einwilligung erteilt');
+select lives_ok($$ select api.give_consent('art9_religion', (select d.version from api.legal_document('art9_religion') d)) $$, 'Religion-Einwilligung erteilt');
 select lives_ok($$ select api.save_religion('christlich', 'wichtig', true) $$, 'Religion gespeichert');
 select lives_ok($$ select api.revoke_consent('art9_religion') $$, 'Religion-Einwilligung widerrufen');
 select tests.reset_role();
@@ -114,7 +115,7 @@ select tests.reset_role();
 -- Push-Abo nur mit Einwilligung
 select tests.act_as('a0000000-0000-0000-0000-00000000000a');
 select throws_ok($$ select api.save_push_subscription('https://push.example/x', 'k', 'a', 'android') $$, '42501', null, 'Push-Abo nur mit Einwilligung push');
-select lives_ok($$ select api.give_consent('push', '2026-10-03-entwurf') $$, 'Push-Einwilligung');
+select lives_ok($$ select api.give_consent('push', (select d.version from api.legal_document('push') d)) $$, 'Push-Einwilligung');
 -- Echte Form eines Abos (seit M5 geprüft: Schlüssel 87 Zeichen, auth 22 Zeichen, base64url).
 select lives_ok($$ select api.save_push_subscription('https://fcm.googleapis.com/fcm/send/test-abo', 'BAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA', 'ZZZZZZZZZZZZZZZZZZZZZZ', 'android') $$, 'Push-Abo gespeichert');
 select is((select count(*)::int from app.push_subscriptions), 1, 'Eigenes Abo sichtbar');

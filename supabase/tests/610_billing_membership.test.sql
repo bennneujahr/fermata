@@ -31,13 +31,13 @@ update ops.app_settings set value = 'false' where key = 'billing.loge_in_test_ph
 select throws_ok($$ select billing.order_summary('platin') $$, '22023', null, 'Unbekannte Stufe');
 
 select throws_ok($$ select billing.record_order('00000000-0000-0000-0000-000000000611', 'andante',
-    billing.order_summary('auftakt'), 'cus_611', 'sub_611') $$,
+    billing.order_summary('auftakt'), 'cus_611', 'sub_611', 'web', true) $$,
   'P0001', 'Die Bestellübersicht hat sich geändert. Bitte laden Sie die Seite neu.', 'Abweichende Übersicht wird abgelehnt');
 
 create temp table r (k text primary key, v jsonb);
 grant select on r to public;
 insert into r values ('order611', billing.record_order('00000000-0000-0000-0000-000000000611', 'andante',
-  billing.order_summary('andante'), 'cus_611', 'sub_611'));
+  billing.order_summary('andante'), 'cus_611', 'sub_611', 'web', true));
 select matches((select v ->> 'contract_number' from r where k = 'order611'), '^FM-[A-Z2-9]{4}-[A-Z2-9]{4}$', 'Vertragsnummer im Format FM-XXXX-XXXX');
 select is((select status from billing.memberships where user_id = '00000000-0000-0000-0000-000000000611'), 'pending', 'Nach der Bestellung: pending');
 select is((select details -> 'summary' ->> 'button_label' from billing.contract_actions
@@ -126,7 +126,7 @@ select is(billing.available_evenings('00000000-0000-0000-0000-000000000611'), 0,
 -- Widerrufsbutton (§ 356a BGB) mit Wertersatz
 -- ---------------------------------------------------------------------------
 insert into r values ('order612', billing.record_order('00000000-0000-0000-0000-000000000612', 'andante',
-  billing.order_summary('andante'), 'cus_612', 'sub_612'));
+  billing.order_summary('andante'), 'cus_612', 'sub_612', 'web', true));
 select billing.apply_invoice_paid('sub_612', 'cus_612', 'in_612', app.now(), app.now() + interval '28 days', 14900, 'pi_612');
 -- Ein Abend mit 613 findet statt, ein weiterer mit 613 ist bestätigt und steht noch an.
 insert into app.match_runs (id, scheduled_for, status) values ('61000000-0000-0000-0000-000000000001', now(), 'approved');
@@ -165,7 +165,7 @@ select ops.sim_clock_reset();
 -- Ohne Anmeldung: Formular → Link → Ausführung
 -- ---------------------------------------------------------------------------
 insert into r values ('order613', billing.record_order('00000000-0000-0000-0000-000000000613', 'auftakt',
-  billing.order_summary('auftakt'), 'cus_613', 'sub_613'));
+  billing.order_summary('auftakt'), 'cus_613', 'sub_613', 'web', true));
 select is(billing.create_contract_request('cancel', 'falsch@example.test', (select v ->> 'contract_number' from r where k = 'order613'), '{}'),
   null, 'Falsche E-Mail: kein Link (Antwort nach außen bleibt gleich)');
 insert into r values ('req613', billing.create_contract_request('cancel', 'M613@example.test ',

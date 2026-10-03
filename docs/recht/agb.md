@@ -3,11 +3,14 @@
 > **ENTWURF – nicht rechtsverbindlich, Prüfung durch Anwalt/Datenschutzbeauftragten ausstehend.**
 > Stand: 03.10.2026 · Fassung `agb-2026-10-03-entwurf` · Platzhalter in `[[doppelten eckigen Klammern]]`.
 > Alle Zahlen stammen aus den Einstellungen (`ops.app_settings`) und dem Code der Meilensteine M5–M7; der jeweilige
-> Schlüssel steht in den Fußnoten für Benn. Der kurze Text, den die Web-App heute zeigt (`ops.legal_documents`,
-> Art `agb`, Fassung `2026-10-03-entwurf`, M2), ist eine Kurzfassung und wird durch diesen Text ersetzt.
+> Schlüssel steht in den Fußnoten für Benn. Der Teil zwischen `<!-- db … -->` und `<!-- /db -->` steht (in
+> App-Markdown umgewandelt, ohne Fußnoten) in `ops.legal_documents` (Art `agb`, Fassung `2026-10-03-entwurf`,
+> Migration `20261003000900_legal_documents.sql`) und ersetzt die frühere Kurzfassung aus M2 (dort jetzt Fassung
+> `2026-10-03-m2`, Status `abgeloest`). Ein Deno-Test prüft die Übereinstimmung.
 
 ---
 
+<!-- db kind="agb" version="2026-10-03-entwurf" title="Nutzungsbedingungen" -->
 ## § 1 Worum es geht, wer Vertragspartner ist
 
 1. Fermata verabredet Abende zwischen zwei Menschen in Partner-Lokalen, zunächst in Westmecklenburg. Es gibt kein
@@ -167,17 +170,20 @@
 ## § 12 Widerrufsrecht
 
 Verbraucherinnen und Verbraucher haben ein Widerrufsrecht. Einzelheiten stehen in der
-[Widerrufsbelehrung](widerrufsbelehrung.md). Der Widerruf ist über die Schaltfläche **„Vertrag widerrufen“** und
-danach **„Widerruf bestätigen“** möglich (§ 356a BGB). Haben Sie verlangt, dass wir vor Ablauf der Widerrufsfrist
-beginnen, und Abende genutzt, zahlen Sie für die genutzten Abende Wertersatz: [[Frage B13: 49,00 € (Auftakt),
+[Widerrufsbelehrung](widerrufsbelehrung.md) (in der App unter „Rechtliches“; wir schicken sie Ihnen außerdem mit der
+Bestellbestätigung per E-Mail). Der Widerruf ist über die Schaltfläche **„Vertrag widerrufen“** und danach
+**„Widerruf bestätigen“** möglich (§ 356a BGB). Bei der Bestellung verlangen Sie ausdrücklich, dass wir vor Ablauf der
+Widerrufsfrist beginnen; ohne diese Erklärung ist keine Bestellung möglich. Widerrufen Sie danach und haben Sie
+Abende genutzt, zahlen Sie für die genutzten Abende Wertersatz: [[Frage B13: 49,00 € (Auftakt),
 74,50 € (Andante), 74,75 € (Loge) je genutztem Abend, höchstens der gezahlte Betrag]]. Den Rest erstatten wir.
 
 ## § 13 Konto löschen
 
-Sie können Ihr Konto jederzeit in der App löschen („Konto → Konto löschen“). Eine laufende Mitgliedschaft
-[[Anwalt/Benn: endet mit der Löschung, ohne Erstattung für den laufenden Zeitraum – oder: Löschung erst nach
-Kündigung möglich? Heute prüft die Löschung die Mitgliedschaft nicht]]. Was wir aus gesetzlichen Gründen aufbewahren,
-steht in der Datenschutzerklärung.
+Sie können Ihr Konto jederzeit in der App löschen („Konto → Konto löschen“). Eine laufende Mitgliedschaft endet mit
+der Löschung sofort; danach buchen wir nichts mehr ab. [[Anwalt/Benn: anteilige Erstattung für den bezahlten,
+noch laufenden Zeitraum vorsehen?]] Bereits verabredete oder in Abstimmung befindliche Abende sagen wir ab; Ihr
+Gegenüber erhält eine neutrale Nachricht und seinen Abend zurück. Was wir aus gesetzlichen Gründen aufbewahren
+(zum Beispiel den Nachweis über das Ende des Vertrags), steht in der Datenschutzerklärung.
 
 ## § 14 Haftung
 
@@ -209,7 +215,8 @@ Verbraucherschlichtungsstelle teilzunehmen.“ – oder Name der Stelle. Gleiche
 2. Vertragssprache ist Deutsch.
 3. Sind einzelne Bestimmungen unwirksam, bleibt der Vertrag im Übrigen wirksam (§ 306 BGB).
 
-*Entwurf vom 03.10.2026.*
+*Entwurf vom 03.10.2026. Der verbindliche Text folgt nach rechtlicher Prüfung.*
+<!-- /db -->
 
 ---
 
@@ -239,18 +246,17 @@ Verbraucherschlichtungsstelle teilzunehmen.“ – oder Name der Stelle. Gleiche
 
 ## Offene Punkte für Benn/Anwalt
 
-1. **Wertersatz ohne „ausdrückliches Verlangen“:** Wertersatz für Dienstleistungen nach Widerruf setzt voraus, dass
-   die Person ausdrücklich verlangt hat, dass die Leistung vor Ablauf der Widerrufsfrist beginnt, und darüber
-   belehrt wurde (§ 357a Abs. 2 BGB). **Die Bestellung im Code fragt dieses Verlangen nicht ab** (Bestellübersicht in
-   `billing.order_summary`, `20261003000620_billing_membership.sql`). Ohne diese Erklärung ist der Wertersatz
-   (B13) vermutlich nicht durchsetzbar. Vorschlag: Häkchen oder Satz in der Bestellübersicht, Speicherung in
-   `contract_actions.details`.
+1. **Wertersatz und „ausdrückliches Verlangen“** (§ 357a Abs. 2 BGB): seit der Härtung gebaut. Die
+   Bestellübersicht zeigt den Satz aus `billing.start_request_text` (ENTWURF), die Bestellung verlangt
+   `start_request: true` und speichert Satz und Fassung in `billing.contract_actions.details`
+   (`20261003000901_billing_start_request.sql`). Offen: Wortlaut des Satzes bestätigen.
 2. **§ 656 BGB / § 627 BGB:** Prüfen, ob Fermata als Partnervermittlung gilt (Folgen für Durchsetzbarkeit der
    Vergütung und jederzeitige Kündbarkeit).
 3. **Verfall nicht genutzter Abende** am Ende des Zeitraums (AGB-Kontrolle, § 307 BGB).
 4. **Zeitpunkt des Vertragsschlusses** (Klick oder Eingangsbestätigung) und Übereinstimmung mit dem Stripe-Ablauf
    (Abo entsteht beim Klick, Zahlung danach).
-5. **Kontolöschung bei laufender Mitgliedschaft** regeln (heute nicht verknüpft).
+5. **Kontolöschung bei laufender Mitgliedschaft:** Seit der Härtung beendet die Löschung das Stripe-Abo sofort
+   (§ 13). Offen: anteilige Erstattung des laufenden, bezahlten Zeitraums?
 6. Kündigungsweg ohne Anmeldung mit Bestätigungslink: zulässig nach § 312k BGB?
 7. B6, B9, B10, B11, B12, B13, B14, A5, C1 entscheiden.
 8. Abgleich der 15 Standards mit dem Auftrag (liegt nicht im Repository).

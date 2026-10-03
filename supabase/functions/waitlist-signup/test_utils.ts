@@ -1,7 +1,7 @@
 // Testhilfen für die Wartelisten-Functions. Tests laufen gegen die Test-Datenbank aus scripts/db.sh
 // (DATABASE_URL oder DB_PORT, Standard wie scripts/db.sh: Port 54322; siehe docs/bereiche/landing.md).
 import postgres from "postgres";
-import { setDb, type Sql } from "../_shared/db.ts";
+import { connect, dbRole, setDb, type Sql } from "../_shared/db.ts";
 import { type MailMessage, MemoryMailer, setMailer } from "../_shared/mail/mod.ts";
 
 export const DB_URL = Deno.env.get("DATABASE_URL") ??
@@ -19,7 +19,8 @@ export function setup(): { sql: Sql; mailer: MemoryMailer } {
   Deno.env.set("FERMATA_ALLOWED_ORIGINS", SITE);
   Deno.env.delete("LINK_HIT_SECRET");
   const sql = postgres(DB_URL, { max: 2, onnotice: () => {}, prepare: false });
-  setDb(sql);
+  // Testdaten als postgres; die Functions selbst laufen wie in Produktion (FERMATA_DB_ROLE=service_role → enge Rolle).
+  setDb(dbRole() ? connect(DB_URL, { max: 2, applicationName: "fermata-edge-test" }) : sql);
   const mailer = new MemoryMailer();
   setMailer(mailer);
   return { sql, mailer };

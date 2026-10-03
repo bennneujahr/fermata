@@ -345,8 +345,8 @@ Deno.test("notify-dispatch: E-Mail und Push zustellen, 410 meldet ungültiges Ab
     assertStringIncludes(store.completed[2]!.error ?? "", "503");
     assertEquals(store.logs.map((l) => l.status), ["sent", "failed"]);
 
-    // Bestätigungslink in der Mail ans Lokal ist gültig signiert
-    const link = /https:\/\/projekt\.supabase\.example\/functions\/v1\/venue-confirm\?t=(\S+)/.exec(
+    // Bestätigungslink in der Mail ans Lokal: Seite der Web-App, Schlüssel im Fragment, gültig signiert (Vertrag 3)
+    const link = /https:\/\/app\.fermata\.example\/lokal\/bestaetigen#t=(\S+)/.exec(
       mailer.sent[1]!.text,
     );
     assert(link, mailer.sent[1]!.text);
@@ -482,6 +482,43 @@ Deno.test("Handler venue-confirm: GET zeigt, erst POST bestätigt; falscher Link
     const expired = await signVenueToken("venue-geheim", RES_ID, new Date(Date.now() - 1000));
     assertEquals((await venueConfirm(new Request(`http://localhost/x?t=${encodeURIComponent(expired)}`))).status, 400);
     assertEquals((await venueConfirm(new Request(url, { method: "DELETE" }))).status, 405);
+
+    // Vertrag 3: JSON-Modus für die Seite /lokal/bestaetigen der Web-App
+    confirmed = 0;
+    const accept = { accept: "application/json" };
+    const jget = await venueConfirm(new Request(url, { headers: accept }));
+    assertEquals(jget.status, 200);
+    assertMatch(jget.headers.get("content-type") ?? "", /application\/json/);
+    const jbody = await jget.json();
+    assertEquals(jbody, {
+      venue_name: "Café am See", starts_at: "2026-10-09T17:30:00Z", table_code: "K7QX", reservation_name: "Fermata",
+      persons: 2, status: "reserved", venue_confirmed_at: null, confirmed: false, cancelled: false,
+    });
+    assertEquals(confirmed, 0, "GET mit JSON bestätigt nicht");
+    const jpost = await venueConfirm(
+      new Request("http://localhost/functions/v1/venue-confirm", {
+        method: "POST",
+        headers: { ...accept, "content-type": "application/json" },
+        body: JSON.stringify({ t: token }),
+      }),
+    );
+    assertEquals(jpost.status, 200);
+    const jp = await jpost.json();
+    assertEquals(jp.confirmed, true);
+    assertEquals(jp.venue_confirmed_at, "2026-10-08T10:00:00Z");
+    assertEquals(confirmed, 1);
+    const jq = await venueConfirm(new Request(url, { method: "POST", headers: accept }));
+    assertEquals(jq.status, 200, "Schlüssel auch als ?t= beim POST");
+    const jbad = await venueConfirm(new Request("http://localhost/functions/v1/venue-confirm?t=kaputt", { headers: accept }));
+    assertEquals(jbad.status, 400);
+    assertEquals(await jbad.json(), { error: "invalid_link" });
+    const pre = await venueConfirm(new Request(url, { method: "OPTIONS", headers: { origin: "http://localhost:3000" } }));
+    assertEquals(pre.status, 204);
+    assertEquals(pre.headers.get("access-control-allow-origin"), "http://localhost:3000");
+    setVenueStore({ summary: () => Promise.resolve(null), confirm: () => Promise.resolve(null) });
+    const gone = await venueConfirm(new Request(url, { headers: accept }));
+    assertEquals(gone.status, 404);
+    assertEquals(await gone.json(), { error: "not_found" });
   } finally {
     setVenueStore();
     Deno.env.delete("VENUE_LINK_SECRET");

@@ -29,7 +29,7 @@ export default handler(["POST"], async (req) => {
   if (!parsed.success) throw new HttpError(422, "invalid_email");
   const { email, waitlist_id } = parsed.data;
 
-  const [existing] = await sql`select id from auth.users where lower(email) = ${email} limit 1`;
+  const [existing] = await sql`select ops.auth_user_id_by_email(${email}) as id`;
   let userId = existing?.id as string | undefined;
   const created = !userId;
   if (!userId) userId = await adminCreateUser(email);

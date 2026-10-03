@@ -1,9 +1,14 @@
 // Öffentliche Seite „Abend teilen“: Eine Vertrauensperson sieht Lokal, Adresse, Datum und Uhrzeit,
 // den Vornamen des Mitglieds und das Heimwegtelefon. Nie Daten des Gegenübers.
-// Aufruf: GET /functions/v1/trust-view?t=<Schlüssel>  (Accept: application/json liefert JSON)
+//
+// Vertrag 3 (Härtung): Der Link, den das Mitglied weitergibt, zeigt auf die Web-App (<App>/teilen#t=<Schlüssel>,
+// Einstellung safety.trust_view_base_url). Die Seite liest den Schlüssel aus dem URL-Fragment und fragt hier an:
+//   GET  /functions/v1/trust-view?t=<Schlüssel>        mit Accept: application/json → 200 {…} oder 404 {error:"not_found"}
+//   POST /functions/v1/trust-view  Body {"t":"<Schlüssel>"} (Accept: application/json) → dasselbe
+// Ohne Accept: application/json antwortet die Function wie bisher mit einer kleinen HTML-Seite (Rückfall für alte Links).
 // Der Link läuft safety.trust_share_hours nach Beginn ab oder wenn das Mitglied ihn zurückzieht.
 import { db } from "../_shared/db.ts";
-import { handler, json } from "../_shared/http.ts";
+import { handler, json, readJson } from "../_shared/http.ts";
 import { formatDateTime } from "../_shared/mail/templates/billing-format.ts";
 import { escapeHtml, htmlHeaders, page, PAGE_STYLE } from "../_shared/stripe/support.ts";
 
@@ -43,8 +48,16 @@ export function renderInvalid(): string {
   );
 }
 
-export default handler(["GET"], async (req) => {
-  const token = new URL(req.url).searchParams.get("t") ?? "";
+async function tokenFrom(req: Request): Promise<string> {
+  const fromQuery = new URL(req.url).searchParams.get("t") ?? "";
+  if (req.method !== "POST") return fromQuery;
+  const body = await readJson<{ t?: unknown; token?: unknown }>(req, 2048).catch(() => ({} as { t?: unknown }));
+  const t = typeof body?.t === "string" ? body.t : typeof (body as { token?: unknown })?.token === "string" ? String((body as { token?: unknown }).token) : "";
+  return t || fromQuery;
+}
+
+export default handler(["GET", "POST"], async (req) => {
+  const token = await tokenFrom(req);
   const wantsJson = (req.headers.get("accept") ?? "").includes("application/json");
   let view: View | null = null;
   if (/^[A-Za-z0-9_=-]{16,128}$/.test(token)) {

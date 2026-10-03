@@ -41,7 +41,8 @@ insert into x (k, id) values ('e_open', pg_temp.evening(pg_temp.u(721), pg_temp.
 select tests.act_as(pg_temp.u(721));
 insert into x (k, j) values ('share', api.create_trust_share((select id from x where k = 'e1')));
 select ok((select j ->> 'token' from x where k = 'share') ~ '^[A-Za-z0-9_=-]{32}$', 'Zufälliger Link-Schlüssel');
-select ok((select j ->> 'url' from x where k = 'share') like '%trust-view?t=%', 'Link auf die öffentliche Seite');
+select ok((select j ->> 'url' from x where k = 'share') = 'https://app.fermata.example/teilen#t=' || (select j ->> 'token' from x where k = 'share'),
+  'Link auf die Seite „Abend teilen“ der Web-App, Schlüssel im URL-Fragment (Härtung, Vertrag 3)');
 select is((select (j ->> 'expires_at')::timestamptz from x where k = 'share'),
   (select starts_at + interval '24 hours' from app.evenings where id = (select id from x where k = 'e1')),
   'Läuft safety.trust_share_hours (24 h) nach Beginn ab');

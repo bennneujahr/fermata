@@ -40,25 +40,56 @@ Deno.test({ name: "trust-view: zeigt Lokal, Zeit, eigenen Vornamen und Heimwegte
     assert.equal(body.first_name, "Frieda");
     assert.equal(body.venue.name, "Bistro Lindenhof");
     assert.deepEqual(Object.keys(body).sort(), ["emergency_number", "expires_at", "first_name", "heimwegtelefon", "starts_at", "venue"]);
+    assert.match(j.headers.get("content-type") ?? "", /application\/json/);
+
+    // Vertrag 3: Schlüssel im JSON-Body (die Seite /teilen liest ihn aus dem URL-Fragment)
+    const p = await handler(new Request("https://fn.fermata.test/functions/v1/trust-view", {
+      method: "POST", headers: { accept: "application/json", "content-type": "application/json" }, body: JSON.stringify({ t: token }),
+    }));
+    assert.equal(p.status, 200);
+    assert.equal((await p.json()).first_name, "Frieda");
+    // Link aus api.create_trust_share zeigt auf die Web-App, Schlüssel im Fragment
+    const [link] = await sql.begin(async (tx) => {
+      await tx`select set_config('request.jwt.claims', ${JSON.stringify({ sub: a.id, role: "authenticated" })}, true)`;
+      await tx`set local role authenticated`;
+      return await tx`select api.create_trust_share(${evening}::uuid) ->> 'url' as url`;
+    });
+    assert.match(String(link!.url), /^https:\/\/app\.fermata\.example\/teilen#t=[A-Za-z0-9_-]{32}$/);
 
     // Zurückgezogen → nicht mehr gültig
     await sql`update app.trust_shares set revoked_at = now() where evening_id = ${evening}::uuid`;
     const gone = await handler(new Request(`https://fn.fermata.test/functions/v1/trust-view?t=${token}`));
     assert.equal(gone.status, 404);
     assert.ok((await gone.text()).includes("nicht mehr gültig"));
+    const goneJson = await handler(new Request("https://fn.fermata.test/functions/v1/trust-view", {
+      method: "POST", headers: { accept: "application/json", "content-type": "application/json" }, body: JSON.stringify({ t: token }),
+    }));
+    assert.equal(goneJson.status, 404);
+    assert.deepEqual(await goneJson.json(), { error: "not_found" });
   } finally {
     await cleanupEvenings(sql, [a.id, b.id]);
     await sql.end();
   }
 } });
 
-Deno.test({ name: "trust-view: falscher oder fehlender Schlüssel → 404, nur GET", ...opts, fn: async () => {
+Deno.test({ name: "trust-view: falscher oder fehlender Schlüssel → 404, nur GET und POST", ...opts, fn: async () => {
   const sql = testSql();
   try {
     assert.equal((await handler(new Request("https://fn.fermata.test/functions/v1/trust-view"))).status, 404);
     assert.equal((await handler(new Request("https://fn.fermata.test/functions/v1/trust-view?t=abcdefghijklmnopqrstuvwxyz012345"))).status, 404);
     assert.equal((await handler(new Request("https://fn.fermata.test/functions/v1/trust-view?t=<script>"))).status, 404);
-    assert.equal((await handler(new Request("https://fn.fermata.test/functions/v1/trust-view", { method: "POST" }))).status, 405);
+    assert.equal((await handler(new Request("https://fn.fermata.test/functions/v1/trust-view", { method: "POST" }))).status, 404);
+    const bad = await handler(new Request("https://fn.fermata.test/functions/v1/trust-view", {
+      method: "POST", headers: { accept: "application/json" }, body: "kein json",
+    }));
+    assert.equal(bad.status, 404);
+    assert.deepEqual(await bad.json(), { error: "not_found" });
+    assert.equal((await handler(new Request("https://fn.fermata.test/functions/v1/trust-view", { method: "PUT" }))).status, 405);
+    const pre = await handler(new Request("https://fn.fermata.test/functions/v1/trust-view", {
+      method: "OPTIONS", headers: { origin: "http://localhost:3000" },
+    }));
+    assert.equal(pre.status, 204);
+    assert.equal(pre.headers.get("access-control-allow-origin"), "http://localhost:3000");
   } finally {
     await sql.end();
   }

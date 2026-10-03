@@ -1,5 +1,6 @@
 // Mails zur Mitgliedschaft: Bestellung, Zahlung, Kündigung, Widerruf, Verlängerung.
 // Ton: ruhig, „Sie“, keine Ausrufezeichen. Eingangsbestätigungen nennen Datum und Uhrzeit (dauerhafter Datenträger).
+import { markdownToMailParagraphs } from "../../legal/markdown.ts";
 import { renderMail } from "../layout.ts";
 import { formatDate, formatDateTime, formatEur, formatReceipt, LEGAL_DRAFT_NOTE, type RenderedMail } from "./billing-format.ts";
 
@@ -27,15 +28,32 @@ export interface OrderSummary {
   button_label: string;
 }
 
+/** Widerrufsbelehrung samt Muster-Formular aus ops.legal_documents (Art widerruf). */
+export interface WithdrawalPolicy {
+  title: string;
+  version: string;
+  body_markdown: string;
+}
+
 export function orderReceived(d: {
   contractNumber: string;
   orderedAt: string | Date;
   withdrawalUntil: string | Date;
   summary: OrderSummary;
   manageUrl: string;
+  /** Ausdrückliches Verlangen des Leistungsbeginns (Wortlaut, Fassung, Zeitpunkt) – § 356 Abs. 4 BGB. */
+  startRequest?: { text: string; version: string; at: string | Date } | null;
+  /** Vollständige Belehrung und Formular (dauerhafter Datenträger, § 312f Abs. 2 BGB). */
+  withdrawalPolicy?: WithdrawalPolicy | null;
 }): RenderedMail {
   const s = d.summary;
   const evenings = s.evenings_per_period === 1 ? "1 Abend" : `${s.evenings_per_period} Abende`;
+  const policy = d.withdrawalPolicy
+    ? [
+      `${d.withdrawalPolicy.title.toUpperCase()} (Fassung ${d.withdrawalPolicy.version})`,
+      ...markdownToMailParagraphs(d.withdrawalPolicy.body_markdown),
+    ]
+    : [];
   return mail("billing.order_received", "vertrag_bestellung", `Ihre Bestellung bei Fermata (Vertrag ${d.contractNumber})`, {
     preheader: `Eingang Ihrer Bestellung: ${formatReceipt(d.orderedAt)}`,
     greeting: "Guten Tag,",
@@ -47,11 +65,15 @@ export function orderReceived(d: {
       s.renewal,
       s.cancellation_terms,
       `${s.withdrawal_note} Die Widerrufsfrist endet am ${formatDateTime(d.withdrawalUntil)}.`,
+      ...(d.startRequest
+        ? [`Bei der Bestellung haben Sie am ${formatReceipt(d.startRequest.at)} erklärt: „${d.startRequest.text}“ (Fassung ${d.startRequest.version}).`]
+        : []),
       ...(s.extension_rule ? [s.extension_rule] : []),
       "Die Mitgliedschaft beginnt, sobald Stripe uns die Zahlung bestätigt. Darüber schreiben wir Ihnen gesondert.",
+      ...(policy.length ? ["Die vollständige Widerrufsbelehrung und das Muster-Widerrufsformular finden Sie unten in dieser Mail."] : []),
     ],
     button: { label: "Mitgliedschaft ansehen", url: d.manageUrl },
-    after: [LEGAL_DRAFT_NOTE],
+    after: [...policy, LEGAL_DRAFT_NOTE],
   });
 }
 
