@@ -1,0 +1,17 @@
+---
+import Fermate from "../components/Fermate.astro";
+import { abgelaufen as t } from "../content/pages";
+import Base from "../layouts/Base.astro";
+---
+<Base title={t.title} noindex>
+  <section class="page">
+    <div class="wrap page-center">
+      <Fermate class="page-mark" />
+      <h1 class="page-title">{t.heading}</h1>
+      <p class="page-lead">{t.text}</p>
+      <div class="page-actions">
+        <a class="btn btn-primary" href={t.cta.href}>{t.cta.label}</a>
+      </div>
+    </div>
+  </section>
+</Base>

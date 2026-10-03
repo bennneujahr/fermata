@@ -1,0 +1,118 @@
+/* Automatisch erzeugt aus packages/tokens/tokens.json – nicht von Hand ändern. */
+:root {
+  color-scheme: light dark;
+  --color-paper: #F6F1E7;
+  --color-paper-raised: #FBF8F2;
+  --color-paper-sunk: #EDE5D6;
+  --color-ink: #1E1A2B;
+  --color-ink-soft: #4A4458;
+  --color-ink-muted: #625B70;
+  --color-line: #D8CDB9;
+  --color-line-strong: #B9AC94;
+  --color-wine: #7A2638;
+  --color-wine-hover: #621D2D;
+  --color-on-wine: #FBF8F2;
+  --color-brass: #7A5A24;
+  --color-brass-decor: #B08A4E;
+  --color-night: #1C1E33;
+  --color-night-raised: #26294A;
+  --color-on-night: #F1EADC;
+  --color-on-night-muted: #C9C0D6;
+  --color-focus: #1F4FA3;
+  --color-success: #2E6A4C;
+  --color-danger: #A12E28;
+  --color-warning: #7A5200;
+  --font-display: "Fraunces Variable", "Fraunces", Georgia, "Times New Roman", serif;
+  --font-body: "Source Sans 3 Variable", "Source Sans 3", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  --text-xs: 0.8125rem;
+  --text-sm: 0.9375rem;
+  --text-md: 1.0625rem;
+  --text-lg: 1.25rem;
+  --text-xl: 1.5rem;
+  --text-2xl: clamp(1.75rem, 1.4rem + 1.4vw, 2.25rem);
+  --text-3xl: clamp(2.125rem, 1.6rem + 2.4vw, 3.25rem);
+  --text-4xl: clamp(2.625rem, 1.8rem + 3.8vw, 4.75rem);
+  --leading-tight: 1.12;
+  --leading-snug: 1.3;
+  --leading-body: 1.6;
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.5rem;
+  --space-6: 2rem;
+  --space-7: 3rem;
+  --space-8: 4rem;
+  --space-9: 6rem;
+  --space-10: 8rem;
+  --radius-sm: 6px;
+  --radius-md: 12px;
+  --radius-lg: 20px;
+  --radius-pill: 999px;
+  --shadow-soft: 0 1px 2px rgb(30 26 43 / 0.06), 0 8px 24px rgb(30 26 43 / 0.06);
+  --shadow-lift: 0 2px 4px rgb(30 26 43 / 0.08), 0 16px 40px rgb(30 26 43 / 0.10);
+  --motion-fast: 140ms;
+  --motion-base: 240ms;
+  --motion-slow: 480ms;
+  --motion-atem: 6400ms;
+  --motion-ease: cubic-bezier(0.33, 0, 0.2, 1);
+  --motion-ease-atem: cubic-bezier(0.45, 0, 0.55, 1);
+  --layout-content: 42rem;
+  --layout-wide: 72rem;
+  --layout-gutter: clamp(1rem, 0.6rem + 2vw, 2rem);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --color-paper: #15172A;
+    --color-paper-raised: #1E2139;
+    --color-paper-sunk: #101222;
+    --color-ink: #F1EADC;
+    --color-ink-soft: #D9D0E2;
+    --color-ink-muted: #B4ABC4;
+    --color-line: #363A5C;
+    --color-line-strong: #4C5179;
+    --color-wine: #E7A3AF;
+    --color-wine-hover: #F1BCC5;
+    --color-on-wine: #1A0E14;
+    --color-brass: #D8B57A;
+    --color-brass-decor: #B08A4E;
+    --color-night: #0E1020;
+    --color-night-raised: #1A1D36;
+    --color-on-night: #F1EADC;
+    --color-on-night-muted: #C9C0D6;
+    --color-focus: #9DBAF5;
+    --color-success: #8FD1AE;
+    --color-danger: #F2A39D;
+    --color-warning: #F0C674;
+  }
+}
+
+:root[data-theme="dark"] {
+  --color-paper: #15172A;
+  --color-paper-raised: #1E2139;
+  --color-paper-sunk: #101222;
+  --color-ink: #F1EADC;
+  --color-ink-soft: #D9D0E2;
+  --color-ink-muted: #B4ABC4;
+  --color-line: #363A5C;
+  --color-line-strong: #4C5179;
+  --color-wine: #E7A3AF;
+  --color-wine-hover: #F1BCC5;
+  --color-on-wine: #1A0E14;
+  --color-brass: #D8B57A;
+  --color-brass-decor: #B08A4E;
+  --color-night: #0E1020;
+  --color-night-raised: #1A1D36;
+  --color-on-night: #F1EADC;
+  --color-on-night-muted: #C9C0D6;
+  --color-focus: #9DBAF5;
+  --color-success: #8FD1AE;
+  --color-danger: #F2A39D;
+  --color-warning: #F0C674;
+}
+
+:root[data-theme="light"] {
+  color-scheme: light;
+}

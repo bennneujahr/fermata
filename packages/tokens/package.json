@@ -1,0 +1,16 @@
+{
+  "name": "@fermata/tokens",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Design-Tokens für Fermata (CSS-Variablen, JSON, TypeScript).",
+  "exports": {
+    ".": "./src/index.ts",
+    "./tokens.css": "./generated/tokens.css",
+    "./tokens.json": "./generated/tokens.json"
+  },
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "check": "node scripts/build.mjs --check"
+  }
+}

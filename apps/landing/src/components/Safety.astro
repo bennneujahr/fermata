@@ -1,0 +1,37 @@
+---
+import { safety } from "../content/home";
+import { telHref } from "../content/site";
+import Icon from "./Icon.astro";
+const h = safety.heimweg;
+---
+<section class="section" id={safety.id} aria-labelledby="sicherheit-title">
+  <div class="wrap">
+    <header class="section-head">
+      <div>
+        <p class="eyebrow">{safety.eyebrow}</p>
+        <h2 class="section-title" id="sicherheit-title">{safety.title}</h2>
+      </div>
+      <p class="section-intro">{safety.intro}</p>
+    </header>
+    <ul class="safety-grid">
+      {safety.items.map((item) => (
+        <li class="safety-item">
+          <Icon name={item.icon as "ausweis"} />
+          <h3>{item.title}</h3>
+          <p>{item.text}</p>
+        </li>
+      ))}
+    </ul>
+    <div class="heimweg">
+      <div>
+        <h3>{h.title}</h3>
+        <p>{h.text}</p>
+      </div>
+      <div class="heimweg-call">
+        <a class="heimweg-number" href={telHref(h.number)}><Icon name="telefon" /><span><span class="visually-hidden">Heimwegtelefon anrufen: </span>{h.number}</span></a>
+        <p class="heimweg-hours">{h.hours}</p>
+        <p class="heimweg-emergency">{h.emergency}</p>
+      </div>
+    </div>
+  </div>
+</section>

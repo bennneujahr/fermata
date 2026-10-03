@@ -1,0 +1,12 @@
+<!doctype html>
+<html lang="de">
+  <body style="margin:0;padding:24px;background:#F6F1E7;color:#1E1A2B;font-family:Georgia,'Times New Roman',serif;">
+    <div style="max-width:520px;margin:0 auto;">
+      <p style="font-size:18px;margin:0 0 16px;">Guten Tag,</p>
+      <p style="font-size:16px;line-height:1.6;margin:0 0 16px;">hier ist Ihr Anmeldecode für Fermata:</p>
+      <p style="font-size:32px;letter-spacing:6px;font-family:Menlo,Consolas,monospace;margin:0 0 24px;">{{ .Token }}</p>
+      <p style="font-size:16px;line-height:1.6;margin:0 0 16px;">Geben Sie ihn in der App ein. Alternativ melden Sie sich über diesen Link an:<br /><a href="{{ .SiteURL }}/anmelden/bestaetigen?token_hash={{ .TokenHash }}&amp;type=email" style="color:#7A2638;">Bei Fermata anmelden</a></p>
+      <p style="font-size:14px;line-height:1.6;color:#625B70;margin:24px 0 0;">Der Code gilt 15 Minuten. Wenn Sie sich nicht anmelden wollten, können Sie diese Mail ignorieren.</p>
+    </div>
+  </body>
+</html>

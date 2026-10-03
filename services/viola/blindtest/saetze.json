@@ -1,0 +1,16 @@
+{
+  "$description": "Zehn typische Sätze von Viola für den Stimmen-Blindtest (PLAN M3, Frage B4). Sie-Form, ruhiger Ton, mit Zahlen und Telefonnummern, damit auch die Aussprache geprüft wird.",
+  "version": 1,
+  "saetze": [
+    "Guten Tag. Ich bin Viola, eine künstliche Intelligenz von Fermata, kein Mensch.",
+    "Ich möchte Sie ein wenig kennenlernen, damit Fermata einen passenden Abend für Sie suchen kann.",
+    "Wie würden gute Freunde Sie in drei Worten beschreiben?",
+    "Lassen Sie sich ruhig Zeit. Wir können auch mit etwas Leichterem anfangen.",
+    "Was ist Ihnen in einer Beziehung besonders wichtig?",
+    "Wie weit würden Sie für einen schönen Abend fahren, etwa vierzig Minuten, oder lieber weniger?",
+    "Passt Ihnen eher ein Abend unter der Woche, oder lieber das Wochenende?",
+    "Ich fasse kurz zusammen: Sie sind ruhig, neugierig und wandern gern an der Ostsee. Stimmt das so?",
+    "Die Telefonseelsorge ist kostenlos und rund um die Uhr erreichbar, unter 0800 111 0 111.",
+    "Danke für das Gespräch. Die Zusammenfassung finden Sie gleich in der App. Bis bald."
+  ]
+}

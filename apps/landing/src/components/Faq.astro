@@ -1,0 +1,28 @@
+---
+import { faq } from "../content/home";
+const half = Math.ceil(faq.items.length / 2);
+const columns = [faq.items.slice(0, half), faq.items.slice(half)];
+---
+<section class="section" id={faq.id} aria-labelledby="fragen-title">
+  <div class="wrap">
+    <header class="section-head">
+      <div>
+        <p class="eyebrow">{faq.eyebrow}</p>
+        <h2 class="section-title" id="fragen-title">{faq.title}</h2>
+      </div>
+      <p class="section-intro">{faq.intro} <a href={`mailto:${faq.contact}`}>{faq.contact}</a></p>
+    </header>
+    <div class="faq">
+      {columns.map((col) => (
+        <div class="faq-col">
+          {col.map((item) => (
+            <details>
+              <summary>{item.q}</summary>
+              <p class="answer">{item.a}</p>
+            </details>
+          ))}
+        </div>
+      ))}
+    </div>
+  </div>
+</section>

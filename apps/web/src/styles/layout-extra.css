@@ -1,0 +1,23 @@
+/* Kleine Layout-Hilfen für Mitgliedschaft und Sicherheit (ergänzt base.css, nur Tokens). */
+
+/* Abstand in verschachtelten Abschnitten (sonst erbt .stack den großen Abstand von .stack-lg) */
+.stack-md {
+  --stack-gap: var(--space-5);
+}
+
+/* Karten im Raster nicht auf gleiche Höhe ziehen */
+.grid-start {
+  align-items: start;
+}
+
+/* Symbol vor einem Text, der umbrechen darf */
+.inline-icon {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+}
+
+.inline-icon > svg {
+  flex: none;
+  margin-top: 0.2em;
+}

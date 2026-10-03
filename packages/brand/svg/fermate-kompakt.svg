@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" role="img" aria-labelledby="t">
+  <title id="t">Fermate</title>
+  <!-- Kompakte Fassung für kleine Größen (Favicon, App-Symbol): gleichmäßig kräftiger Bogen, größerer Punkt. -->
+  <path fill="none" stroke="currentColor" stroke-width="3.6" stroke-linecap="round" d="M5 24.5C5 14.6 9.9 8.2 16 8.2S27 14.6 27 24.5"/>
+  <circle fill="currentColor" cx="16" cy="21.6" r="3.4"/>
+</svg>

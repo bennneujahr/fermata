@@ -1,0 +1,45 @@
+# Abhängigkeiten
+node_modules/
+.pnpm-store/
+
+# Builds
+dist/
+.next/
+out/
+.astro/
+.vercel/
+.turbo/
+*.tsbuildinfo
+next-env.d.ts
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+
+# Tests und Berichte
+coverage/
+playwright-report/
+test-results/
+.lighthouseci/
+
+# Geheimnisse – niemals einchecken
+.env
+.env.*
+!.env.example
+supabase/.env
+supabase/.temp/
+supabase/.branches/
+
+# Editor und System
+.DS_Store
+.idea/
+.vscode/*
+!.vscode/extensions.json
+
+# Arbeitskopien der Bau-Agenten
+.claude/worktrees/
+dist-preview/

@@ -1,0 +1,42 @@
+---
+import { prices } from "../content/home";
+const showTiers = prices.mode !== "aus";
+---
+<section class="section" id={prices.id} aria-labelledby="preise-title">
+  <div class="wrap">
+    <header class="section-head">
+      <div>
+        <p class="eyebrow">{prices.eyebrow}</p>
+        <h2 class="section-title" id="preise-title">{prices.title}</h2>
+      </div>
+      <div>
+        <p class="section-intro">{prices.intro}</p>
+        {showTiers && prices.badge && <p class="badge">{prices.badge}</p>}
+      </div>
+    </header>
+    {showTiers ? (
+      <>
+        <ul class="tiers">
+          {prices.tiers.map((t) => (
+            <li class="tier">
+              <h3 class="tier-name">{t.tier.name}</h3>
+              <p class="tier-motto">{t.motto}</p>
+              <p class="tier-price"><strong>{t.price}</strong> <span>{prices.period}</span></p>
+              <p class="tier-evenings">{t.evenings}</p>
+              <p class="tier-text">{t.text}</p>
+            </li>
+          ))}
+        </ul>
+        <ul class="prices-notes">
+          <li>{prices.cancel}</li>
+          <li>{prices.vat}</li>
+          {prices.plannedNote && <li>{prices.plannedNote}</li>}
+        </ul>
+      </>
+    ) : (
+      <ul class="prices-notes">
+        <li>{prices.offText}</li>
+      </ul>
+    )}
+  </div>
+</section>

@@ -1,0 +1,16 @@
+packages:
+  - "apps/*"
+  - "packages/*"
+
+onlyBuiltDependencies:
+  - esbuild
+  - sharp
+  - "@tailwindcss/oxide"
+  - unrs-resolver
+
+# @napi-rs/wasm-runtime lädt @emnapi/* ohne sie als Abhängigkeit zu nennen (nötig für astro check).
+packageExtensions:
+  "@napi-rs/wasm-runtime":
+    dependencies:
+      "@emnapi/runtime": "^1.11.3"
+      "@emnapi/core": "^1.11.3"
