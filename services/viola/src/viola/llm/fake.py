@@ -61,21 +61,97 @@ def system_text(request: ChatRequest) -> str:
     return "\n".join(str(b.get("text", "")) for b in request.system)
 
 
+def latest_notice(request: ChatRequest) -> str:
+    """Letzter Hinweis der Steuerung (system-Nachricht oder gekennzeichneter Text) nach dem letzten Beitrag."""
+    for msg in reversed(request.messages):
+        if msg.get("role") == "system":
+            return str(msg.get("content", ""))
+        if msg.get("role") == "user":
+            text = _flatten(msg.get("content"))
+            return text.split('<hinweis von="fermata">', 1)[1] if '<hinweis von="fermata">' in text else ""
+    return ""
+
+
 def local_fallback(request: ChatRequest) -> FakeReply:
-    """Antwort für lokale Läufe ohne Sprachmodell: kurz, ruhig, mit einer Frage."""
+    """Antwort für lokale Läufe ohne Sprachmodell: kurz, ruhig, folgt den Hinweisen der Steuerung."""
     du = "Anrede im Gespräch: Du" in system_text(request)
+
+    def a(sie: str, du_text: str) -> str:
+        return du_text if du else sie
+
     said = last_person_text(request)
+    hint = latest_notice(request)
+    if "jünger als 18" in hint:
+        return FakeReply(
+            "Fermata ist erst ab 18 Jahren, deshalb beende ich unser Gespräch jetzt.",
+            [("flag_safety", {"kind": "minderjaehrig", "severity": "hoch"}), ("end_conversation", {"reason": "minderjaehrig"})],
+        )
+    if "Krisen-Leitfaden" in hint:
+        return FakeReply(
+            a("Das klingt sehr schwer, und ich nehme es ernst.", "Das klingt sehr schwer, und ich nehme es ernst."),
+            [("flag_safety", {"kind": "krise", "severity": "hoch"}), ("end_conversation", {"reason": "krise"})],
+        )
+    if "erneut beleidigend" in hint:
+        return FakeReply("Ich beende das Gespräch jetzt.", [("end_conversation", {"reason": "missbrauch"})])
+    if "beleidigend oder übergriffig" in hint:
+        return FakeReply(
+            a(
+                "So möchte ich nicht angesprochen werden. Wollen wir respektvoll weitermachen?",
+                "So möchte ich nicht angesprochen werden. Wollen wir respektvoll weitermachen?",
+            )
+        )
+    if "Die Zeit dieser Sitzung ist um" in hint:
+        return FakeReply(
+            a("Unsere Zeit ist um, danke Ihnen.", "Unsere Zeit ist um, danke dir."),
+            [("end_conversation", {"reason": "zeitlimit"})],
+        )
+    if "auf die Zusammenfassung geantwortet" in hint or "auf die vorläufige Zusammenfassung" in hint:
+        reason = "zeitlimit" if "vorläufige" in hint else "fertig"
+        return FakeReply(
+            a(
+                "Danke. Die Zusammenfassung finden Sie gleich in der App.",
+                "Danke. Die Zusammenfassung findest du gleich in der App.",
+            ),
+            [("end_conversation", {"reason": reason})],
+        )
+    if "propose_summary" in hint:
+        summary = a(
+            "Sie haben mir von sich, Ihren Werten und Ihren Wünschen erzählt.",
+            "Du hast mir von dir, deinen Werten und deinen Wünschen erzählt.",
+        )
+        return FakeReply(
+            a(
+                "Ich fasse kurz zusammen, was ich verstanden habe. Stimmt das so?",
+                "Ich fasse kurz zusammen, was ich verstanden habe. Stimmt das so?",
+            ),
+            [
+                (
+                    "propose_summary",
+                    {"summary": summary, "is_partial": "is_partial auf true" in hint and "Offene Themen: keine" not in hint},
+                )
+            ],
+        )
     if re.search(r"\b(tschüss|auf wiedersehen|ende|beenden)\b", said, re.IGNORECASE):
         return FakeReply(
-            text="Danke für das Gespräch. Ich wünsche dir einen guten Abend."
-            if du
-            else "Danke für das Gespräch. Ich wünsche Ihnen einen guten Abend.",
-            tool_calls=[("end_conversation", {"reason": "person_beendet"})],
+            a(
+                "Danke für das Gespräch. Ich wünsche Ihnen einen guten Abend.",
+                "Danke für das Gespräch. Ich wünsche dir einen guten Abend.",
+            ),
+            [("end_conversation", {"reason": "person_beendet"})],
+        )
+    if "Themenblock" in hint:
+        topic = hint.rsplit(":", 1)[-1].strip().rstrip(".")
+        return FakeReply(
+            a(
+                f"Danke. Lassen Sie uns über {topic} sprechen. Was fällt Ihnen dazu ein?",
+                f"Danke. Lass uns über {topic} sprechen. Was fällt dir dazu ein?",
+            )
         )
     return FakeReply(
-        text="Danke, das hilft mir weiter. Magst du mir noch etwas mehr dazu erzählen?"
-        if du
-        else "Danke, das hilft mir weiter. Mögen Sie mir noch etwas mehr dazu erzählen?"
+        a(
+            "Danke, das hilft mir weiter. Mögen Sie mir noch etwas mehr dazu erzählen?",
+            "Danke, das hilft mir weiter. Magst du mir noch etwas mehr dazu erzählen?",
+        )
     )
 
 

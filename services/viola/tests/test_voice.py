@@ -136,7 +136,7 @@ def test_deepgram_stt_uses_eu_endpoint_german_and_mip_opt_out() -> None:
 
     cfg = Config.from_env({"DEEPGRAM_API_KEY": "dg-test"})
     stt = build_stt(cfg, SessionSettings())
-    opts = stt._opts  # noqa: SLF001
+    opts = stt._opts
     assert opts.model == "nova-3" and opts.language == "de"
     assert opts.mip_opt_out is True
     assert "api.eu.deepgram.com" in opts.endpoint_url
