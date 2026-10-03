@@ -1679,9 +1679,9 @@ strong {
 }
 .card h2 {
   font-size: var(--text-2xl);
+  margin-bottom: var(--space-3);
 }
-.card > p {
-  margin-top: var(--space-3);
+.card p {
   color: var(--color-ink-soft);
 }
 .copy-row {
@@ -1708,7 +1708,7 @@ strong {
 .next-list {
   display: grid;
   gap: var(--space-3);
-  margin-top: var(--space-4);
+  margin-top: var(--space-2);
   padding-left: var(--space-5);
   list-style: disc;
   color: var(--color-ink-soft);
@@ -1732,6 +1732,7 @@ strong {
 /* Fließtext-Seiten (Gründungsmitglied, Rechtliches) */
 .prose {
   max-width: 42rem;
+  margin-top: var(--space-8);
 }
 .prose h2 {
   margin-top: var(--space-8);
@@ -1795,4 +1796,10 @@ mark.ph {
     font-size: 15px;
     letter-spacing: 0.12em;
   }
+}
+
+/* Seiten, deren Inhalt erst per Skript erscheint: Platz reservieren (keine Layoutverschiebung). */
+[data-welcome],
+[data-unsubscribe] {
+  min-height: 78vh;
 }

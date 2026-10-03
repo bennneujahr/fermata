@@ -5,3 +5,4 @@ public/favicon.svg
 public/apple-touch-icon.png
 # Optional beim Build aus Supabase geladen (scripts/pull-settings.mjs)
 src/generated/
+lighthouse-ergebnis.json
