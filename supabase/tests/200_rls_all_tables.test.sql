@@ -231,7 +231,27 @@ select is(
      and not exists (select 1 from pg_depend d where d.classid = 'pg_proc'::regclass and d.objid = p.oid and d.deptype = 'e')
      and has_function_privilege('public', p.oid, 'EXECUTE')),
   '{}'::text[], 'Keine Fermata-Funktion ist für PUBLIC ausführbar');
+select is(
+  (select coalesce(array_agg(n.nspname || '.' || p.proname order by n.nspname, p.proname), '{}')
+   from pg_proc p join pg_namespace n on n.oid = p.pronamespace
+   where n.nspname in ('app', 'billing', 'private', 'sensitive', 'safety', 'ops', 'api')
+     and has_function_privilege('anon', p.oid, 'EXECUTE')
+     and (n.nspname || '.' || p.proname) <> all (array['app.now', 'api.public_settings', 'api.legal_document'])
+     and p.proname not like 'waitlist%'),
+  '{}'::text[], 'anon führt keine internen Funktionen aus (nur app.now, api.public_settings, api.legal_document)');
+select is(
+  (select coalesce(array_agg(n.nspname || '.' || p.proname order by n.nspname, p.proname), '{}')
+   from pg_proc p join pg_namespace n on n.oid = p.pronamespace
+   where n.nspname in ('ops', 'private', 'sensitive', 'safety')
+     and has_function_privilege('authenticated', p.oid, 'EXECUTE')),
+  '{}'::text[], 'authenticated führt keine Funktionen in ops, private, sensitive, safety aus');
+select tests.act_as_anon();
+select throws_ok($$ select api.my_export() $$, '42501', null, 'anon ruft keine Mitgliederfunktion auf');
+select throws_ok($$ select api.admin_overview() $$, '42501', null, 'anon ruft keine Admin-Funktion auf');
+select tests.reset_role();
 select tests.act_as('a0000000-0000-0000-0000-00000000000a');
+select throws_ok($$ select app.on_account_created('a0000000-0000-0000-0000-00000000000a') $$, '42501', null,
+  'Mitglieder legen keine Konten (Gratis-Abend) an');
 select throws_ok($$ select app.evening_transition('e0000000-0000-0000-0000-00000000e0bd', 'decline', 'b0000000-0000-0000-0000-00000000000b') $$,
   '42501', null, 'Mitglieder können keinen Abendwechsel im Namen anderer auslösen');
 select throws_ok($$ select app.has_consent('b0000000-0000-0000-0000-00000000000b', 'art9_religion') $$,

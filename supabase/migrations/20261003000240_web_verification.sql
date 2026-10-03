@@ -5,60 +5,89 @@
 -- Aufrufe nur über die Edge Functions verification-start und verification-webhook (service_role).
 
 -- ---------------------------------------------------------------------------
--- Sperrlisten-Hashes je Prüfung: nötig, damit Benn eine Person später ausschließen kann
--- (M7 kopiert sie dann nach safety.blocklist). Nur service_role und Admin über Funktionen.
+-- Sperrlisten-Hashes (PLAN 2.2 „Sperrlisten-Hash“, 3.2 Nr. 7). ALLES an EINER Stelle:
+-- app.verification_record_hashes() rechnet die Hashes, speichert sie und gleicht mit safety.blocklist ab.
+--
+-- INTEGRATION (M7, Migration 20261003000710_safety_core.sql / 0720_safety_admin.sql):
+-- * Tabelle safety.verification_hashes und die Funktionen safety.blocklist_doc_hash/-name_hash stammen
+--   aus M7. Damit M2 allein lauffähig und testbar ist, legt dieser Block sie in GLEICHER Form an.
+--   Beim Zusammenführen den Block „create table safety.verification_hashes …“ hier entfernen
+--   (0710 legt die Tabelle ohne „if not exists“ an); die Funktionen sind wortgleich (create or replace).
+-- * Nur app.verification_record_hashes() greift darauf zu; bei anderer Form genügt es, diese Funktion anzupassen.
 -- ---------------------------------------------------------------------------
-create table safety.verification_hashes (
-  verification_id uuid primary key references app.verifications (id) on delete cascade,
-  user_id uuid not null references auth.users (id) on delete cascade,
+create table if not exists safety.verification_hashes (
+  user_id uuid primary key references auth.users (id) on delete cascade,
   doc_hash text,
   name_hash text,
   created_at timestamptz not null default now()
 );
 comment on table safety.verification_hashes is
-  'HMAC aus Ausweisnummer + Geburtsdatum und aus normalisiertem Namen + Geburtsdatum je Prüfung (PLAN 2.2 „Sperrlisten-Hash“). Für einen späteren Ausschluss.';
-create index verification_hashes_user_idx on safety.verification_hashes (user_id);
+  'HMAC(Ausweisnummer + Geburtsdatum) und HMAC(Name + Geburtsdatum) aus der Ausweisprüfung, nur für einen späteren Ausschluss. Wird mit dem Konto gelöscht.';
 alter table safety.verification_hashes enable row level security;
 grant select, insert, update, delete on safety.verification_hashes to service_role;
 
--- Normalisierung für Sperrliste und Abgleich an einer Stelle.
-create or replace function safety.normalize_document_number(p text)
-returns text
-language sql
-immutable
-set search_path = ''
-as $$
-  select nullif(upper(regexp_replace(coalesce(p, ''), '[^A-Za-z0-9]', '', 'g')), '');
-$$;
-
-create or replace function safety.doc_hash(p_document_number text, p_birth_date date)
+-- Wortgleich mit M7 (0720_safety_admin.sql): einheitliche Sperrlisten-Schlüssel.
+create or replace function safety.blocklist_name_hash(p_first_name text, p_last_name text, p_birth_date date)
 returns text
 language sql
 stable
 security definer
 set search_path = ''
 as $$
-  select case when safety.normalize_document_number(p_document_number) is null or p_birth_date is null then null
-    else safety.blocklist_hash(safety.normalize_document_number(p_document_number) || to_char(p_birth_date, 'YYYY-MM-DD')) end;
+  select case when p_birth_date is null then null else
+    safety.blocklist_hash('name:' || safety.normalize_name(coalesce(p_first_name, '') || coalesce(p_last_name, '')) || ':' || p_birth_date::text)
+  end;
 $$;
-comment on function safety.doc_hash(text, date) is 'Sperrlisten-Hash: HMAC(normalisierte Ausweisnummer || Geburtsdatum). Sperrt automatisch.';
-
-create or replace function safety.name_hash(p_first_name text, p_last_name text, p_birth_date date)
+create or replace function safety.blocklist_doc_hash(p_document_number text, p_birth_date date)
 returns text
 language sql
 stable
 security definer
 set search_path = ''
 as $$
-  select case when nullif(safety.normalize_name(coalesce(p_first_name, '') || coalesce(p_last_name, '')), '') is null
-              or p_birth_date is null then null
-    else safety.blocklist_hash(safety.normalize_name(coalesce(p_first_name, '') || coalesce(p_last_name, ''))
-                               || to_char(p_birth_date, 'YYYY-MM-DD')) end;
+  select case when p_document_number is null or p_birth_date is null then null else
+    safety.blocklist_hash('doc:' || upper(regexp_replace(p_document_number, '[^0-9A-Za-z]', '', 'g')) || ':' || p_birth_date::text)
+  end;
 $$;
-comment on function safety.name_hash(text, text, date) is 'Sperrlisten-Hash: HMAC(normalisierter voller Name || Geburtsdatum). Meldet nur einen Verdachtsfall.';
-revoke execute on function safety.doc_hash(text, date), safety.name_hash(text, text, date) from public, anon, authenticated;
-grant execute on function safety.doc_hash(text, date), safety.name_hash(text, text, date),
-  safety.normalize_document_number(text) to service_role;
+revoke execute on function safety.blocklist_name_hash(text, text, date), safety.blocklist_doc_hash(text, date) from public, anon, authenticated;
+grant execute on function safety.blocklist_name_hash(text, text, date), safety.blocklist_doc_hash(text, date) to service_role;
+
+-- Die EINE Stelle für Sperrlisten-Hashes bei der Ausweisprüfung: rechnen, speichern (je Person, neueste Prüfung),
+-- abgleichen. doc_hit sperrt (Aufrufer), name_hit meldet nur einen Verdacht. Ausweisnummer und Name werden nie gespeichert.
+create or replace function app.verification_record_hashes(
+  p_user uuid,
+  p_document_number text,
+  p_first_name text,
+  p_last_name text,
+  p_birth_date date
+)
+returns table (doc_hit boolean, name_hit boolean)
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  v_doc text := safety.blocklist_doc_hash(nullif(btrim(coalesce(p_document_number, '')), ''), p_birth_date);
+  v_name text := case when nullif(btrim(coalesce(p_first_name, '') || coalesce(p_last_name, '')), '') is null then null
+                      else safety.blocklist_name_hash(p_first_name, p_last_name, p_birth_date) end;
+begin
+  if v_doc is not null or v_name is not null then
+    insert into safety.verification_hashes (user_id, doc_hash, name_hash, created_at)
+    values (p_user, v_doc, v_name, now())
+    on conflict (user_id) do update set
+      doc_hash = coalesce(excluded.doc_hash, safety.verification_hashes.doc_hash),
+      name_hash = coalesce(excluded.name_hash, safety.verification_hashes.name_hash),
+      created_at = now();
+  end if;
+  doc_hit := v_doc is not null and exists (select 1 from safety.blocklist b where b.doc_hash = v_doc);
+  name_hit := v_name is not null and exists (select 1 from safety.blocklist b where b.name_hash = v_name);
+  return next;
+end;
+$$;
+comment on function app.verification_record_hashes(uuid, text, text, text, date) is
+  'Einzige Stelle für Sperrlisten-Hashes der Ausweisprüfung (M2↔M7): rechnen, in safety.verification_hashes speichern, mit safety.blocklist abgleichen.';
+revoke execute on function app.verification_record_hashes(uuid, text, text, text, date) from public, anon, authenticated;
+grant execute on function app.verification_record_hashes(uuid, text, text, text, date) to service_role;
 
 -- Namensabgleich: Nachname gleich (normalisiert); Vorname gleich oder einer der Vornamen aus dem Ausweis.
 create or replace function app.names_match(p_fact_first text, p_fact_last text, p_doc_first text, p_doc_last text)
@@ -166,8 +195,6 @@ declare
   v_adult boolean;
   v_name boolean;
   v_birth boolean;
-  v_doc_hash text;
-  v_name_hash text;
   v_doc_hit boolean := false;
   v_name_hit boolean := false;
   v_status text;
@@ -196,14 +223,8 @@ begin
   v_adult := app.is_of_age(p_birth_date);
   v_birth := f.user_id is not null and p_birth_date is not null and f.birth_date = p_birth_date;
   v_name := f.user_id is not null and app.names_match(f.first_name, f.last_name, p_first_name, p_last_name);
-  v_doc_hash := safety.doc_hash(p_document_number, p_birth_date);
-  v_name_hash := safety.name_hash(p_first_name, p_last_name, p_birth_date);
-  if v_doc_hash is not null then
-    v_doc_hit := exists (select 1 from safety.blocklist b where b.doc_hash = v_doc_hash);
-  end if;
-  if v_name_hash is not null then
-    v_name_hit := exists (select 1 from safety.blocklist b where b.name_hash = v_name_hash);
-  end if;
+  select h.doc_hit, h.name_hit into v_doc_hit, v_name_hit
+  from app.verification_record_hashes(v.user_id, p_document_number, p_first_name, p_last_name, p_birth_date) h;
 
   v_status := case
     when v_doc_hit then 'blocked'
@@ -221,12 +242,6 @@ begin
     blocklist_hit = v_doc_hit,
     completed_at = app.now()
   where id = v.id;
-
-  if v_doc_hash is not null or v_name_hash is not null then
-    insert into safety.verification_hashes (verification_id, user_id, doc_hash, name_hash)
-    values (v.id, v.user_id, v_doc_hash, v_name_hash)
-    on conflict (verification_id) do update set doc_hash = excluded.doc_hash, name_hash = excluded.name_hash;
-  end if;
 
   if v_doc_hit then
     -- Automatische Sperre (Ausweis steht auf der Sperrliste) und Hinweis für Benn.

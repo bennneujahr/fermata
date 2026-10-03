@@ -2,7 +2,7 @@
 # Lokaler Supabase-Ersatz für Entwicklung, E2E-Tests und Bildschirmfotos der Web-App:
 # Postgres (scripts/db.sh) + GoTrue + PostgREST + Mailpit + Edge Functions (Deno) + Gateway.
 # Befehle: up | down | status | env
-# Ports (Bereich web): DB 54342, Functions 54341, GoTrue 54343, PostgREST 54344, Gateway 54345,
+# Ports (Bereich web): Stapel-DB 54348 (Test-DB 54342 bleibt für scripts/db.sh test), Functions 54341, GoTrue 54343, PostgREST 54344, Gateway 54345,
 #                      Mailpit SMTP 54346 / HTTP 54347, Next.js 3041.
 set -euo pipefail
 APP_DIR="$(cd "$(dirname "$0")/.." && pwd)"
@@ -10,7 +10,8 @@ ROOT="$(cd "$APP_DIR/../.." && pwd)"
 STATE="$APP_DIR/.stack"
 mkdir -p "$STATE"
 
-export DB_PORT="${DB_PORT:-54342}" DB_CONTAINER="${DB_CONTAINER:-fermata-db-web}"
+# Eigene Datenbank für den Stapel (54348), damit `scripts/db.sh test` (54342) ihn nicht zurücksetzt.
+export DB_PORT="${STACK_DB_PORT:-54348}" DB_CONTAINER="${STACK_DB_CONTAINER:-fermata-db-web-stack}"
 FUNCTIONS_PORT=54341
 AUTH_PORT=54343
 REST_PORT=54344

@@ -116,8 +116,8 @@ select is(ops.verification_complete('sess_3', 'approved', 'BEN ELIAS', 'BRANDT-�
   'Mehrere Vornamen und Großschreibung passen');
 select ok(app.is_verified('b0000000-0000-0000-0000-00000000000b'), 'Ben ist geprüft');
 select is((select status from app.accounts where user_id = 'b0000000-0000-0000-0000-00000000000b'), 'active', 'Onboarding fertig → Konto aktiv');
-select ok((select doc_hash = safety.doc_hash('T22000129', date '1991-02-03') from safety.verification_hashes h
-           join app.verifications v on v.id = h.verification_id where v.provider_session_id = 'sess_3'),
+select ok((select doc_hash = safety.blocklist_doc_hash('T22000129', date '1991-02-03') from safety.verification_hashes h
+           where h.user_id = 'b0000000-0000-0000-0000-00000000000b'),
   'Sperrlisten-Hash aus normalisierter Ausweisnummer gespeichert');
 select lives_ok($$ select ops.verification_session_deleted('sess_3') $$, 'Löschung bei Didit wird vermerkt');
 select ok((select provider_session_deleted_at is not null from app.verifications where provider_session_id = 'sess_3'), 'provider_session_deleted_at gesetzt');
@@ -141,8 +141,8 @@ select app.on_account_created('a1000000-0000-0000-0000-000000000001');
 select pg_temp.onboard('e0000000-0000-0000-0000-00000000000e', 'Eva', 'Ernst', date '1985-01-01');
 select pg_temp.onboard('f1000000-0000-0000-0000-00000000000f', 'Finn', 'Fuchs', date '1988-08-08');
 select pg_temp.onboard('a1000000-0000-0000-0000-000000000001', 'Mia', 'Mohr', date '1999-09-09');
-insert into safety.blocklist (doc_hash, reason_code) values (safety.doc_hash('X1234567', date '1985-01-01'), 'null_toleranz');
-insert into safety.blocklist (name_hash, reason_code) values (safety.name_hash('Finn', 'Fuchs', date '1988-08-08'), 'wiederholte_verstoesse');
+insert into safety.blocklist (doc_hash, reason_code) values (safety.blocklist_doc_hash('X1234567', date '1985-01-01'), 'null_toleranz');
+insert into safety.blocklist (name_hash, reason_code) values (safety.blocklist_name_hash('Finn', 'Fuchs', date '1988-08-08'), 'wiederholte_verstoesse');
 
 select ops.verification_begin('e0000000-0000-0000-0000-00000000000e');
 select ops.verification_attach_session((select id from app.verifications where user_id = 'e0000000-0000-0000-0000-00000000000e'), 'sess_eva');

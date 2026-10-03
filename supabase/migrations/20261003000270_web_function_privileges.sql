@@ -60,3 +60,6 @@ $$;
 -- Prüffunktionen mit beliebiger Personen-ID: nicht für Mitglieder (Gegenüber kennen die ID aus dem Abend).
 revoke execute on function app.has_consent(uuid, text) from authenticated;
 revoke execute on function app.is_verified(uuid) from authenticated;
+
+-- Abschluss wie in der Integration vereinbart (gleiche Wirkung wie der Block oben, ausdrücklich).
+revoke execute on all functions in schema app, api, ops, private, sensitive, safety, billing from public;

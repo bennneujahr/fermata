@@ -157,8 +157,8 @@ select is((select count(*)::int from app.accounts where user_id = 'b0000000-0000
 -- Löschen während einer offenen Meldung: Hashes bleiben für Benn
 select ops.verification_begin('b0000000-0000-0000-0000-00000000000b') where false;
 insert into app.verifications (id, user_id, status, provider_session_id) values ('e0000000-0000-0000-0000-0000000000f1', 'b0000000-0000-0000-0000-00000000000b', 'approved', 'sess_b');
-insert into safety.verification_hashes (verification_id, user_id, doc_hash, name_hash)
-  values ('e0000000-0000-0000-0000-0000000000f1', 'b0000000-0000-0000-0000-00000000000b', 'dochash-b', 'namehash-b');
+insert into safety.verification_hashes (user_id, doc_hash, name_hash)
+  values ('b0000000-0000-0000-0000-00000000000b', 'dochash-b', 'namehash-b');
 insert into safety.reports (reporter, reported, context, category) values (null, 'b0000000-0000-0000-0000-00000000000b', 'abend', 'bedrohung');
 select ops.account_deletion_prepare('b0000000-0000-0000-0000-00000000000b');
 select ok(exists (select 1 from safety.safety_flags f where f.kind = 'konto_geloescht_waehrend_pruefung' and f.details::text like '%dochash-b%'),

@@ -113,7 +113,7 @@ dbTest("Webhook: bestätigt → approved, nur erlaubte Felder, Sitzung gelöscht
 dbTest("Webhook: Sperrliste (Ausweis) sperrt, Name meldet nur; unbekannte Sitzung wird quittiert", async () => {
   await cleanup(env, DOMAIN);
   await env
-    .sql`insert into safety.blocklist (doc_hash, reason_code) values (safety.doc_hash('B10CK', '1980-02-02'), 'null_toleranz')`;
+    .sql`insert into safety.blocklist (doc_hash, reason_code) values (safety.blocklist_doc_hash('B10CK', '1980-02-02'), 'null_toleranz')`;
   const s = await startFor(`block@${DOMAIN}`, { first: "Bert", last: "Block", birth: "1980-02-02" });
   const res = await webhook(
     await signed(
@@ -132,7 +132,7 @@ dbTest("Webhook: Sperrliste (Ausweis) sperrt, Name meldet nur; unbekannte Sitzun
   assertEquals(flags.map((f) => f.kind), ["sperrliste_ausweis"]);
 
   await env
-    .sql`insert into safety.blocklist (name_hash, reason_code) values (safety.name_hash('Nora', 'Name', '1970-07-07'), 'sonstiges')`;
+    .sql`insert into safety.blocklist (name_hash, reason_code) values (safety.blocklist_name_hash('Nora', 'Name', '1970-07-07'), 'sonstiges')`;
   const n = await startFor(`name@${DOMAIN}`, { first: "Nora", last: "Name", birth: "1970-07-07" });
   const r2 = await webhook(
     await signed(
