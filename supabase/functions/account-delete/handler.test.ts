@@ -21,16 +21,29 @@ dbTest("account-delete: löscht alles, behält gesetzliche Reste ohne Personenbe
   await cleanup(env, DOMAIN);
   const m = await createMember(env, `weg@${DOMAIN}`);
   await onboard(env, m.id, { first: "Wera", last: "Weg", birth: "1990-01-01" });
-  await env.sql`select api.save_address_form('du') from (select set_config('request.jwt.claims', ${JSON.stringify({ sub: m.id, role: "authenticated" })}, true)) x`;
-  await env.sql`insert into billing.contract_actions (user_id, kind, details) values (${m.id}::uuid, 'order', '{"probe": "delete-test"}')`;
+  await env.sql`select api.save_address_form('du') from (select set_config('request.jwt.claims', ${
+    JSON.stringify({ sub: m.id, role: "authenticated" })
+  }, true)) x`;
+  await env
+    .sql`insert into billing.contract_actions (user_id, kind, details) values (${m.id}::uuid, 'order', '{"probe": "delete-test"}')`;
   const res = await handler(req("account-delete", { token: m.token, body: { confirm: true } }));
   assertEquals(res.status, 200);
   assertEquals(await res.json(), { deleted: true, mail_sent: true });
-  for (const t of ["app.accounts", "private.account_facts", "app.consents", "app.geo", "billing.memberships", "billing.evening_ledger"]) {
+  for (
+    const t of [
+      "app.accounts",
+      "private.account_facts",
+      "app.consents",
+      "app.geo",
+      "billing.memberships",
+      "billing.evening_ledger",
+    ]
+  ) {
     const [r] = await env.sql.unsafe(`select count(*)::int as n from ${t} where user_id = $1::uuid`, [m.id]);
     assertEquals(r!.n, 0, `${t} geleert`);
   }
-  const [ca] = await env.sql`select count(*)::int as n from billing.contract_actions where user_id is null and details->>'probe' = 'delete-test'`;
+  const [ca] = await env
+    .sql`select count(*)::int as n from billing.contract_actions where user_id is null and details->>'probe' = 'delete-test'`;
   assertEquals(ca!.n, 1, "Vertragshandlung bleibt ohne Personenbezug");
   await env.sql`delete from billing.contract_actions where details->>'probe' = 'delete-test'`;
   const mail = env.mailer.sent.at(-1)!;
@@ -38,8 +51,12 @@ dbTest("account-delete: löscht alles, behält gesetzliche Reste ohne Personenbe
   assertEquals(mail.template, "account.deleted");
   assertEquals(mail.subject, "Dein Konto ist gelöscht");
   assert(mail.text.includes("Hallo Wera"));
-  const audit = await env.sql`select action from ops.audit_log where target_id = ${m.id} and action like 'account.%' order by id`;
-  assertEquals(audit.map((a) => a.action).filter((a) => a.startsWith("account.delet")), ["account.deletion_requested", "account.deleted"]);
+  const audit = await env
+    .sql`select action from ops.audit_log where target_id = ${m.id} and action like 'account.%' order by id`;
+  assertEquals(audit.map((a) => a.action).filter((a) => a.startsWith("account.delet")), [
+    "account.deletion_requested",
+    "account.deleted",
+  ]);
   assert(env.authCalls.some((c) => c.method === "DELETE" && c.path === `/auth/v1/admin/users/${m.id}`));
   await cleanup(env, DOMAIN);
 });

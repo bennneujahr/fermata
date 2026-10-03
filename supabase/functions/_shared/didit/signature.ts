@@ -28,7 +28,11 @@ export async function verifyDiditSignature(
 }
 
 /** Signiert einen Body wie Didit (für den Fake-Modus und Tests). */
-export async function signDiditBody(rawBody: string, secret: string, nowSeconds = Math.floor(Date.now() / 1000)): Promise<Record<string, string>> {
+export async function signDiditBody(
+  rawBody: string,
+  secret: string,
+  nowSeconds = Math.floor(Date.now() / 1000),
+): Promise<Record<string, string>> {
   return {
     "content-type": "application/json",
     [SIGNATURE_HEADER]: await hmacSha256Hex(secret, rawBody),

@@ -37,7 +37,9 @@ export default handler(["POST"], async (req) => {
   let result: { invitation_id: string; expires_at: string; is_founding_member: boolean; waitlist_linked: boolean };
   try {
     const [row] = await sql`
-      select ops.create_invited_account(${email}, ${userId}::uuid, ${admin.id}::uuid, ${waitlist_id ?? null}::uuid) as r`;
+      select ops.create_invited_account(${email}, ${userId}::uuid, ${admin.id}::uuid, ${
+      waitlist_id ?? null
+    }::uuid) as r`;
     result = row!.r as typeof result;
   } catch (err) {
     if (created) await adminDeleteUser(userId).catch(() => {});
@@ -46,12 +48,15 @@ export default handler(["POST"], async (req) => {
 
   let mailSent = true;
   try {
-    await sendMail(inviteMail({
-      to: email,
-      appUrl: appUrl(),
-      expiresAt: new Date(result.expires_at),
-      contactEmail: optionalEnv("FERMATA_CONTACT_EMAIL"),
-    }), userId);
+    await sendMail(
+      inviteMail({
+        to: email,
+        appUrl: appUrl(),
+        expiresAt: new Date(result.expires_at),
+        contactEmail: optionalEnv("FERMATA_CONTACT_EMAIL"),
+      }),
+      userId,
+    );
   } catch (err) {
     mailSent = false;
     console.error(JSON.stringify({ level: "error", msg: "invite_mail_failed", err: String(err) }));

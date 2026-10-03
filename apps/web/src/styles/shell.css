@@ -1,0 +1,476 @@
+/* Fermata Web-App – Rahmen: Kopf, Navigation (Desktop oben, mobil unten), Hilfe-Knopf, Fuß. */
+
+.shell {
+  min-block-size: 100dvh;
+  display: flex;
+  flex-direction: column;
+}
+
+.shell__header {
+  position: sticky;
+  inset-block-start: 0;
+  z-index: 20;
+  background: color-mix(in srgb, var(--color-paper) 88%, transparent);
+  backdrop-filter: saturate(1.4) blur(10px);
+  -webkit-backdrop-filter: saturate(1.4) blur(10px);
+  border-bottom: 1px solid color-mix(in srgb, var(--color-line) 70%, transparent);
+}
+
+.shell__bar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  max-inline-size: var(--layout-wide);
+  margin-inline: auto;
+  padding: var(--space-3) var(--layout-gutter);
+  min-block-size: 4rem;
+}
+
+.wordmark {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  color: var(--color-ink);
+  text-decoration: none;
+  font-family: var(--font-display);
+  font-size: 1.35rem;
+  letter-spacing: 0.04em;
+  font-weight: 450;
+  font-variation-settings: "opsz" 144, "SOFT" 50;
+}
+
+.wordmark:hover {
+  color: var(--color-ink);
+}
+
+.wordmark__mark {
+  inline-size: 1.9rem;
+  color: var(--color-wine);
+  transform: translateY(-2px);
+}
+
+.wordmark__tag {
+  font-family: var(--font-body);
+  font-size: var(--text-xs);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  font-weight: 650;
+  color: var(--color-brass);
+  border: 1px solid currentColor;
+  border-radius: var(--radius-pill);
+  padding: 0.05rem 0.5rem;
+  transform: translateY(1px);
+}
+
+.shell__spacer {
+  flex: 1;
+}
+
+/* Hilfe-Knopf: immer sichtbar */
+.help-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  min-block-size: 2.75rem;
+  padding: 0.4rem 0.95rem 0.4rem 0.75rem;
+  border-radius: var(--radius-pill);
+  border: 1.5px solid var(--color-wine);
+  color: var(--color-wine);
+  background: var(--color-paper-raised);
+  text-decoration: none;
+  font-weight: 650;
+  font-size: var(--text-sm);
+  white-space: nowrap;
+}
+
+.help-button:hover {
+  background: var(--color-wine);
+  color: var(--color-on-wine);
+}
+
+/* Desktop-Navigation */
+.topnav {
+  display: none;
+}
+
+.topnav__list {
+  display: flex;
+  gap: var(--space-1);
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.topnav__list li + li {
+  margin-top: 0;
+}
+
+.topnav__link {
+  display: inline-flex;
+  align-items: center;
+  min-block-size: 2.75rem;
+  padding: 0.4rem 0.9rem;
+  border-radius: var(--radius-pill);
+  color: var(--color-ink-soft);
+  text-decoration: none;
+  font-weight: 550;
+}
+
+.topnav__link:hover {
+  color: var(--color-ink);
+  background: var(--color-paper-sunk);
+}
+
+.topnav__link[aria-current="page"] {
+  color: var(--color-ink);
+  background: var(--color-paper-sunk);
+  box-shadow: inset 0 -2px 0 var(--color-wine);
+}
+
+/* Mobile Navigation unten */
+.tabbar {
+  position: fixed;
+  inset-inline: 0;
+  inset-block-end: 0;
+  z-index: 20;
+  background: color-mix(in srgb, var(--color-paper-raised) 94%, transparent);
+  backdrop-filter: saturate(1.4) blur(10px);
+  -webkit-backdrop-filter: saturate(1.4) blur(10px);
+  border-top: 1px solid var(--color-line);
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+.tabbar__list {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  list-style: none;
+  margin: 0 auto;
+  padding: 0;
+  max-inline-size: 36rem;
+}
+
+.tabbar__list li + li {
+  margin-top: 0;
+}
+
+.tabbar__link {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.15rem;
+  padding: 0.55rem 0.2rem 0.5rem;
+  min-block-size: 3.5rem;
+  color: var(--color-ink-muted);
+  text-decoration: none;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+
+.tabbar__link:hover {
+  color: var(--color-ink);
+}
+
+.tabbar__link[aria-current="page"] {
+  color: var(--color-wine);
+}
+
+.tabbar__icon {
+  inline-size: 1.5rem;
+  block-size: 1.5rem;
+}
+
+.shell__main {
+  flex: 1;
+  inline-size: 100%;
+  max-inline-size: var(--layout-wide);
+  margin-inline: auto;
+  padding: var(--space-4) var(--layout-gutter) calc(var(--space-9) + env(safe-area-inset-bottom));
+}
+
+.shell__main--narrow {
+  max-inline-size: calc(var(--layout-content) + 2 * var(--layout-gutter));
+}
+
+.shell__main:focus {
+  outline: none;
+}
+
+.shell__footer {
+  border-top: 1px solid var(--color-line);
+  padding: var(--space-6) var(--layout-gutter) calc(var(--space-9) + env(safe-area-inset-bottom));
+  color: var(--color-ink-muted);
+  font-size: var(--text-sm);
+}
+
+.shell__footer-inner {
+  max-inline-size: var(--layout-wide);
+  margin-inline: auto;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3) var(--space-5);
+  align-items: center;
+}
+
+.shell__footer a {
+  color: var(--color-ink-soft);
+}
+
+.shell__footer-note {
+  flex-basis: 100%;
+}
+
+.shell--public .shell__footer,
+.shell--focus .shell__footer {
+  padding-bottom: var(--space-6);
+}
+
+.shell--public .shell__main,
+.shell--focus .shell__main {
+  padding-bottom: var(--space-8);
+}
+
+@media (min-width: 56rem) {
+  .topnav {
+    display: block;
+  }
+
+  .tabbar {
+    display: none;
+  }
+
+  .shell__main {
+    padding-bottom: var(--space-9);
+  }
+
+  .shell__footer {
+    padding-bottom: var(--space-6);
+  }
+}
+
+/* Konto-Menü-Knopf (Abmelden im Kopf, nur Desktop) */
+.header-link {
+  color: var(--color-ink-soft);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  text-decoration: none;
+  display: none;
+  min-block-size: 2.75rem;
+  align-items: center;
+  padding-inline: var(--space-2);
+  background: none;
+  border: none;
+  font-family: inherit;
+  cursor: pointer;
+}
+
+.header-link:hover {
+  color: var(--color-ink);
+  text-decoration: underline;
+}
+
+@media (min-width: 56rem) {
+  .header-link {
+    display: inline-flex;
+  }
+}
+
+/* Fokussierter Rahmen (Onboarding, Anmeldung): ruhiger Hintergrund mit Fermate */
+.shell--focus,
+.shell--public {
+  background:
+    radial-gradient(60rem 30rem at 85% -10%, color-mix(in srgb, var(--color-brass-decor) 14%, transparent), transparent 70%),
+    radial-gradient(40rem 24rem at -10% 110%, color-mix(in srgb, var(--color-wine) 8%, transparent), transparent 70%),
+    var(--color-paper);
+}
+
+.focus-card {
+  max-inline-size: 34rem;
+  margin: var(--space-6) auto 0;
+}
+
+.onboarding-head {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  padding-top: var(--space-4);
+}
+
+.onboarding-head__meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: var(--space-3);
+  font-size: var(--text-sm);
+  color: var(--color-ink-muted);
+}
+
+/* Fermate als Ornament */
+.ornament {
+  color: var(--color-brass-decor);
+  inline-size: 3.25rem;
+  margin-inline: auto;
+  opacity: 0.85;
+}
+
+.hero-mark {
+  inline-size: clamp(3.5rem, 3rem + 3vw, 5rem);
+  color: var(--color-wine);
+}
+
+/* Admin */
+.shell--admin .shell__header {
+  background: var(--color-night);
+  border-bottom-color: transparent;
+}
+
+.shell--admin .wordmark,
+.shell--admin .wordmark:hover {
+  color: var(--color-on-night);
+}
+
+.shell--admin .wordmark__mark {
+  color: var(--color-brass-decor);
+}
+
+.shell--admin .wordmark__tag {
+  color: var(--color-brass-decor);
+}
+
+.shell--admin .header-link {
+  color: var(--color-on-night-muted);
+  display: inline-flex;
+}
+
+.shell--admin .header-link:hover {
+  color: var(--color-on-night);
+}
+
+.admin-layout {
+  display: grid;
+  gap: var(--space-6);
+}
+
+.admin-nav__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  gap: var(--space-1);
+  overflow-x: auto;
+  scrollbar-width: thin;
+}
+
+.admin-nav__list li + li {
+  margin-top: 0;
+}
+
+.admin-nav__link {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-block-size: 2.75rem;
+  padding: 0.45rem 0.85rem;
+  border-radius: var(--radius-md);
+  color: var(--color-ink-soft);
+  text-decoration: none;
+  font-weight: 550;
+  white-space: nowrap;
+}
+
+.admin-nav__link:hover {
+  background: var(--color-paper-sunk);
+  color: var(--color-ink);
+}
+
+.admin-nav__link[aria-current="page"] {
+  background: var(--color-paper-sunk);
+  color: var(--color-ink);
+  box-shadow: inset 3px 0 0 var(--color-wine);
+}
+
+@media (min-width: 60rem) {
+  .admin-layout {
+    grid-template-columns: 15rem minmax(0, 1fr);
+    align-items: start;
+  }
+
+  .admin-nav {
+    position: sticky;
+    inset-block-start: 5.5rem;
+  }
+
+  .admin-nav__list {
+    flex-direction: column;
+    overflow: visible;
+  }
+}
+
+/* Tabellen (Admin) */
+.table-wrap {
+  overflow-x: auto;
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius-md);
+  background: var(--color-paper-raised);
+}
+
+.table {
+  inline-size: 100%;
+  border-collapse: collapse;
+  font-size: var(--text-sm);
+}
+
+.table caption {
+  text-align: start;
+  padding: var(--space-3) var(--space-4);
+  color: var(--color-ink-muted);
+}
+
+.table th,
+.table td {
+  padding: 0.7rem var(--space-4);
+  text-align: start;
+  vertical-align: top;
+  border-bottom: 1px solid var(--color-line);
+}
+
+.table thead th {
+  font-weight: 650;
+  color: var(--color-ink-soft);
+  background: var(--color-paper-sunk);
+  white-space: nowrap;
+}
+
+.table tbody tr:last-child td,
+.table tbody tr:last-child th {
+  border-bottom: none;
+}
+
+.table tbody tr:hover {
+  background: color-mix(in srgb, var(--color-paper-sunk) 60%, transparent);
+}
+
+.setting {
+  display: grid;
+  gap: var(--space-3);
+  padding: var(--space-4) 0;
+  border-bottom: 1px solid var(--color-line);
+}
+
+.setting:last-child {
+  border-bottom: none;
+}
+
+.setting__key {
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+@media (min-width: 60rem) {
+  .setting {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr);
+    align-items: start;
+  }
+}

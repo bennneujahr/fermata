@@ -27,7 +27,11 @@ export function didit(): DiditClient {
     if (environment() === "production") throw new Error("DIDIT_MODE=fake ist in production gesperrt");
     return new FakeDiditClient(appUrl());
   }
-  return new LiveDiditClient(env("DIDIT_API_KEY"), env("DIDIT_WORKFLOW_ID"), optionalEnv("DIDIT_API_BASE") ?? "https://verification.didit.me");
+  return new LiveDiditClient(
+    env("DIDIT_API_KEY"),
+    env("DIDIT_WORKFLOW_ID"),
+    optionalEnv("DIDIT_API_BASE") ?? "https://verification.didit.me",
+  );
 }
 
 /** Webhook-Geheimnis. Im Fake-Modus gibt es einen festen Ersatz für lokal (nie in production). */

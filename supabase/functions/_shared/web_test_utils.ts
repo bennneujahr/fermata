@@ -5,7 +5,7 @@ import postgres from "postgres";
 import { encodeBase64Url } from "@std/encoding";
 import { setAuthFetch } from "./auth.ts";
 import { setDb, type Sql } from "./db.ts";
-import { setDidit, FakeDiditClient } from "./didit/mod.ts";
+import { FakeDiditClient, setDidit } from "./didit/mod.ts";
 import { MemoryMailer, setMailer } from "./mail/mod.ts";
 
 export const DB_URL = Deno.env.get("SUPABASE_DB_URL") ?? Deno.env.get("TEST_DB_URL") ?? "";
@@ -22,7 +22,9 @@ if (DB_URL) Deno.env.set("SUPABASE_DB_URL", DB_URL);
 /** Unsigniertes JWT (die Attrappe von Supabase Auth prüft es; die Functions lesen danach nur die Claims). */
 export function fakeJwt(sub: string, aal: "aal1" | "aal2" = "aal1"): string {
   const enc = (o: unknown) => encodeBase64Url(new TextEncoder().encode(JSON.stringify(o)));
-  return `${enc({ alg: "none", typ: "JWT" })}.${enc({ sub, aal, role: "authenticated", exp: Math.floor(Date.now() / 1000) + 3600 })}.x`;
+  return `${enc({ alg: "none", typ: "JWT" })}.${
+    enc({ sub, aal, role: "authenticated", exp: Math.floor(Date.now() / 1000) + 3600 })
+  }.x`;
 }
 
 export interface TestEnv {
@@ -75,7 +77,11 @@ export function dbTest(name: string, fn: () => Promise<void>): void {
 }
 
 /** Legt eine Person mit Konto an und liefert ID und Token. */
-export async function createMember(env: TestEnv, email: string, aal: "aal1" | "aal2" = "aal1"): Promise<{ id: string; token: string }> {
+export async function createMember(
+  env: TestEnv,
+  email: string,
+  aal: "aal1" | "aal2" = "aal1",
+): Promise<{ id: string; token: string }> {
   const [row] = await env.sql`
     insert into auth.users (id, email, aud, role, created_at, updated_at, raw_app_meta_data, raw_user_meta_data)
     values (gen_random_uuid(), ${email}, 'authenticated', 'authenticated', now(), now(), '{}', '{}') returning id`;
@@ -87,10 +93,16 @@ export async function createMember(env: TestEnv, email: string, aal: "aal1" | "a
 }
 
 /** Einwilligungen, Formular und Identität wie in der Web-App (als die Person). */
-export async function onboard(env: TestEnv, id: string, facts: { first: string; last: string; birth: string; plz?: string },
-  kinds = ["agb", "datenschutz_kenntnis", "art9_profile", "biometrie"]): Promise<void> {
+export async function onboard(
+  env: TestEnv,
+  id: string,
+  facts: { first: string; last: string; birth: string; plz?: string },
+  kinds = ["agb", "datenschutz_kenntnis", "art9_profile", "biometrie"],
+): Promise<void> {
   await env.sql.begin(async (tx) => {
-    await tx`select set_config('request.jwt.claims', ${JSON.stringify({ sub: id, role: "authenticated", aal: "aal1" })}, true)`;
+    await tx`select set_config('request.jwt.claims', ${
+      JSON.stringify({ sub: id, role: "authenticated", aal: "aal1" })
+    }, true)`;
     await tx`set local role authenticated`;
     for (const k of kinds) await tx`select api.give_consent(${k}, (select d.version from api.legal_document(${k}) d))`;
     await tx`select api.save_facts(${facts.first}, ${facts.last}, ${facts.birth}::date, ${facts.plz ?? "19053"})`;
@@ -107,7 +119,10 @@ export async function cleanup(env: TestEnv, domain: string): Promise<void> {
   env.didit.failDelete = false;
 }
 
-export function req(path: string, init: { method?: string; token?: string; body?: unknown; headers?: Record<string, string> } = {}): Request {
+export function req(
+  path: string,
+  init: { method?: string; token?: string; body?: unknown; headers?: Record<string, string> } = {},
+): Request {
   const headers = new Headers(init.headers ?? {});
   if (init.token) headers.set("authorization", `Bearer ${init.token}`);
   if (init.body !== undefined && !headers.has("content-type")) headers.set("content-type", "application/json");

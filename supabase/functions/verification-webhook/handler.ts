@@ -64,14 +64,19 @@ export default handler(["POST"], async (req) => {
     }
     throw err;
   } finally {
-    first = last = birth = doc = null;
+    first =
+      last =
+      birth =
+      doc =
+        null;
   }
 
   let deleted = false;
   if (result.final) deleted = await purge(sql, client, sessionId);
 
   // Nachholen: frühere Sitzungen, deren Löschung fehlgeschlagen ist.
-  const pending = await sql`select provider_session_id from ops.verifications_pending_deletion(5) where provider = 'didit'`;
+  const pending =
+    await sql`select provider_session_id from ops.verifications_pending_deletion(5) where provider = 'didit'`;
   for (const p of pending) {
     if (p.provider_session_id !== sessionId) await purge(sql, client, p.provider_session_id as string);
   }

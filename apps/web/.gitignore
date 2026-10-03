@@ -1,0 +1,7 @@
+# Kopierte Marken-Dateien (scripts/copy-brand.mjs)
+public/brand/
+# Lokale Umgebung und Testberichte
+.env.local
+.stack/
+playwright-report/
+test-results/

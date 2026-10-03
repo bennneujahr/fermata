@@ -748,3 +748,20 @@ as $$
   );
 $$;
 grant execute on function api.my_admin_status() to authenticated;
+
+-- Einstellungen, die das Formular kennen muss (ohne ops freizugeben).
+create or replace function api.onboarding_settings()
+returns jsonb
+language sql
+stable
+security definer
+set search_path = ''
+as $$
+  select jsonb_build_object(
+    'collect_street', ops.setting_bool('account.collect_street'),
+    'min_age', ops.setting_int('account.min_age'),
+    'required_consents', to_jsonb(app.required_consents()),
+    'verification_alternative_enabled', ops.setting_bool('verification.alternative_enabled')
+  ) where auth.uid() is not null;
+$$;
+grant execute on function api.onboarding_settings() to authenticated;

@@ -3,7 +3,12 @@
 import { renderMail } from "../layout.ts";
 import type { MailMessage } from "../types.ts";
 
-const dateFmt = new Intl.DateTimeFormat("de-DE", { day: "numeric", month: "long", year: "numeric", timeZone: "Europe/Berlin" });
+const dateFmt = new Intl.DateTimeFormat("de-DE", {
+  day: "numeric",
+  month: "long",
+  year: "numeric",
+  timeZone: "Europe/Berlin",
+});
 
 export function inviteMail(input: { to: string; appUrl: string; expiresAt: Date; contactEmail?: string }): MailMessage {
   const login = `${input.appUrl.replace(/\/$/, "")}/anmelden`;
@@ -25,12 +30,25 @@ export function inviteMail(input: { to: string; appUrl: string; expiresAt: Date;
       ...(input.contactEmail ? [`Fragen: ${input.contactEmail}`] : []),
     ],
   });
-  return { to: input.to, subject: "Ihre Einladung zu Fermata", html, text, template: "account.invite", purpose: "einladung" };
+  return {
+    to: input.to,
+    subject: "Ihre Einladung zu Fermata",
+    html,
+    text,
+    template: "account.invite",
+    purpose: "einladung",
+  };
 }
 
-export function accountDeletedMail(input: { to: string; firstName?: string | null; addressForm?: "sie" | "du"; contactEmail?: string }): MailMessage {
+export function accountDeletedMail(
+  input: { to: string; firstName?: string | null; addressForm?: "sie" | "du"; contactEmail?: string },
+): MailMessage {
   const du = input.addressForm === "du";
-  const greeting = input.firstName ? (du ? `Hallo ${input.firstName},` : `Guten Tag ${input.firstName},`) : du ? "Hallo," : "Guten Tag,";
+  const greeting = input.firstName
+    ? (du ? `Hallo ${input.firstName},` : `Guten Tag ${input.firstName},`)
+    : du
+    ? "Hallo,"
+    : "Guten Tag,";
   const { html, text } = renderMail({
     preheader: du ? "Dein Konto ist gelöscht" : "Ihr Konto ist gelöscht",
     greeting,
@@ -48,5 +66,12 @@ export function accountDeletedMail(input: { to: string; firstName?: string | nul
       ...(input.contactEmail ? [`Fragen: ${input.contactEmail}`] : []),
     ],
   });
-  return { to: input.to, subject: du ? "Dein Konto ist gelöscht" : "Ihr Konto ist gelöscht", html, text, template: "account.deleted", purpose: "loeschung" };
+  return {
+    to: input.to,
+    subject: du ? "Dein Konto ist gelöscht" : "Ihr Konto ist gelöscht",
+    html,
+    text,
+    template: "account.deleted",
+    purpose: "loeschung",
+  };
 }

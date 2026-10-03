@@ -53,7 +53,8 @@ dbTest("admin-invite: legt Konto, Mitgliedschaft und Gratis-Abend an und schickt
   const again = await handler(req("admin-invite", { token: a.token, body: { email: `neu@${DOMAIN}` } }));
   assertEquals(again.status, 200);
   assertEquals((await again.json()).user_id, body.user_id);
-  const [inv] = await env.sql`select count(*)::int as n from app.account_invitations where email = ${`neu@${DOMAIN}`} and revoked_at is null`;
+  const [inv] = await env
+    .sql`select count(*)::int as n from app.account_invitations where email = ${`neu@${DOMAIN}`} and revoked_at is null`;
   assertEquals(inv!.n, 1);
 
   // Schon Mitglied (Einladung angenommen) → 409

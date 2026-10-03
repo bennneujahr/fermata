@@ -22,7 +22,10 @@ dbTest("account-export: eigene Daten als Datei, nichts über andere", async () =
   await onboard(env, ben.id, { first: "Bernhard", last: "Brandtmeier", birth: "1988-01-01" });
   const res = await handler(req("account-export", { method: "GET", token: anna.token }));
   assertEquals(res.status, 200);
-  assertMatch(res.headers.get("content-disposition") ?? "", /^attachment; filename="fermata-datenexport-\d{4}-\d{2}-\d{2}\.json"$/);
+  assertMatch(
+    res.headers.get("content-disposition") ?? "",
+    /^attachment; filename="fermata-datenexport-\d{4}-\d{2}-\d{2}\.json"$/,
+  );
   assertEquals(res.headers.get("cache-control"), "no-store");
   const data = await res.json();
   assertEquals(data.export.format, "fermata-datenexport");
@@ -32,7 +35,8 @@ dbTest("account-export: eigene Daten als Datei, nichts über andere", async () =
   assert(data.einwilligungen.length >= 4);
   const text = JSON.stringify(data);
   assert(!text.includes(ben.id) && !text.includes("Bernhard") && !text.includes(`ben@${DOMAIN}`), "nichts über Ben");
-  const [audit] = await env.sql`select count(*)::int as n from ops.audit_log where action = 'account.exported' and actor = ${anna.id}::uuid`;
+  const [audit] = await env
+    .sql`select count(*)::int as n from ops.audit_log where action = 'account.exported' and actor = ${anna.id}::uuid`;
   assertEquals(audit!.n, 1);
   await cleanup(env, DOMAIN);
 });

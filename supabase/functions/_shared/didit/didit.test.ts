@@ -1,6 +1,13 @@
 import { assert, assertEquals, assertRejects } from "@std/assert";
 import { hmacSha256Hex } from "../crypto.ts";
-import { FakeDiditClient, LiveDiditClient, mapStatus, parseDecision, signDiditBody, verifyDiditSignature } from "./mod.ts";
+import {
+  FakeDiditClient,
+  LiveDiditClient,
+  mapStatus,
+  parseDecision,
+  signDiditBody,
+  verifyDiditSignature,
+} from "./mod.ts";
 
 Deno.test("Status von Didit → Fermata", () => {
   assertEquals(mapStatus("Approved"), "approved");
@@ -18,14 +25,34 @@ Deno.test("Entscheidung lesen: id_verification, id_verifications[] und kyc", () 
   const v2 = parseDecision({
     session_id: "s1",
     status: "Approved",
-    id_verification: { first_name: "Anna Maria", last_name: "Albers", date_of_birth: "1990-05-17", document_number: "L01X00T47", portrait_image: "https://x" },
+    id_verification: {
+      first_name: "Anna Maria",
+      last_name: "Albers",
+      date_of_birth: "1990-05-17",
+      document_number: "L01X00T47",
+      portrait_image: "https://x",
+    },
   });
-  assertEquals(v2, { sessionId: "s1", outcome: "approved", firstName: "Anna Maria", lastName: "Albers", birthDate: "1990-05-17", documentNumber: "L01X00T47" });
-  const v3 = parseDecision({ session_id: "s2", status: "Declined", id_verifications: [{ full_name: "Ben Elias Brandt", date_of_birth: "1991-02-03" }] });
+  assertEquals(v2, {
+    sessionId: "s1",
+    outcome: "approved",
+    firstName: "Anna Maria",
+    lastName: "Albers",
+    birthDate: "1990-05-17",
+    documentNumber: "L01X00T47",
+  });
+  const v3 = parseDecision({
+    session_id: "s2",
+    status: "Declined",
+    id_verifications: [{ full_name: "Ben Elias Brandt", date_of_birth: "1991-02-03" }],
+  });
   assertEquals(v3.firstName, "Ben Elias");
   assertEquals(v3.lastName, "Brandt");
   assertEquals(v3.outcome, "declined");
-  const v1 = parseDecision({ status: "Approved", kyc: { first_name: "Eva", last_name: "Ernst", date_of_birth: "1985-13-01" } }, "s3");
+  const v1 = parseDecision({
+    status: "Approved",
+    kyc: { first_name: "Eva", last_name: "Ernst", date_of_birth: "1985-13-01" },
+  }, "s3");
   assertEquals(v1.sessionId, "s3");
   assertEquals(v1.birthDate, null, "ungültiges Datum wird verworfen");
   assertEquals(parseDecision(null).outcome, null);
@@ -49,12 +76,19 @@ Deno.test("Webhook-Signatur: gültig, falsch, veraltet, fehlend", async () => {
 
 Deno.test("Fake-Didit: Sitzung, Entscheidung aus dem Webhook, Löschung", async () => {
   const fake = new FakeDiditClient("http://localhost:3041/");
-  const s = await fake.createSession({ vendorData: "v1", callbackUrl: "http://localhost:3041/onboarding/ausweis/zurueck" });
+  const s = await fake.createSession({
+    vendorData: "v1",
+    callbackUrl: "http://localhost:3041/onboarding/ausweis/zurueck",
+  });
   assert(s.sessionId.startsWith("fake_"));
   assertEquals(s.url, `http://localhost:3041/onboarding/ausweis/simulation?sitzung=${s.sessionId}`);
   const d = await fake.getDecision(s.sessionId, {
-    session_id: s.sessionId, status: "Approved",
-    decision: { status: "Approved", id_verification: { first_name: "Anna", last_name: "Albers", date_of_birth: "1990-05-17", document_number: "X1" } },
+    session_id: s.sessionId,
+    status: "Approved",
+    decision: {
+      status: "Approved",
+      id_verification: { first_name: "Anna", last_name: "Albers", date_of_birth: "1990-05-17", document_number: "X1" },
+    },
   });
   assertEquals(d.firstName, "Anna");
   assertEquals(d.outcome, "approved");
@@ -68,9 +102,24 @@ Deno.test("Live-Client: Pfade, Header und Löschen", async () => {
   const calls: { url: string; method: string; key: string | null; body?: string }[] = [];
   const fetchMock: typeof fetch = (input, init) => {
     const url = String(input);
-    calls.push({ url, method: init?.method ?? "GET", key: new Headers(init?.headers).get("x-api-key"), body: init?.body as string | undefined });
-    if (url.endsWith("/v2/session/")) return Promise.resolve(Response.json({ session_id: "abc", url: "https://verify.didit.me/session/abc" }));
-    if (url.endsWith("/decision/")) return Promise.resolve(Response.json({ session_id: "abc", status: "Approved", id_verification: { first_name: "A", last_name: "B", date_of_birth: "2000-01-01" } }));
+    calls.push({
+      url,
+      method: init?.method ?? "GET",
+      key: new Headers(init?.headers).get("x-api-key"),
+      body: init?.body as string | undefined,
+    });
+    if (url.endsWith("/v2/session/")) {
+      return Promise.resolve(Response.json({ session_id: "abc", url: "https://verify.didit.me/session/abc" }));
+    }
+    if (url.endsWith("/decision/")) {
+      return Promise.resolve(
+        Response.json({
+          session_id: "abc",
+          status: "Approved",
+          id_verification: { first_name: "A", last_name: "B", date_of_birth: "2000-01-01" },
+        }),
+      );
+    }
     if (url.endsWith("/delete/")) return Promise.resolve(new Response(null, { status: 404 }));
     return Promise.resolve(new Response("", { status: 500 }));
   };

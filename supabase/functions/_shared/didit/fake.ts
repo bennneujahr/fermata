@@ -18,14 +18,23 @@ export class FakeDiditClient implements DiditClient {
   createSession(input: { vendorData: string; callbackUrl: string }): Promise<DiditSession> {
     const sessionId = `fake_${crypto.randomUUID()}`;
     this.created.push({ sessionId, ...input });
-    const url = `${this.appUrl.replace(/\/$/, "")}/onboarding/ausweis/simulation?sitzung=${encodeURIComponent(sessionId)}`;
+    const url = `${this.appUrl.replace(/\/$/, "")}/onboarding/ausweis/simulation?sitzung=${
+      encodeURIComponent(sessionId)
+    }`;
     return Promise.resolve({ sessionId, url });
   }
 
   getDecision(sessionId: string, webhookBody: unknown): Promise<DiditDecision> {
-    const body = (typeof webhookBody === "object" && webhookBody !== null ? webhookBody : {}) as Record<string, unknown>;
+    const body = (typeof webhookBody === "object" && webhookBody !== null ? webhookBody : {}) as Record<
+      string,
+      unknown
+    >;
     const decision = parseDecision(body.decision ?? body, sessionId);
-    return Promise.resolve({ ...decision, sessionId, outcome: decision.outcome ?? parseDecision(body, sessionId).outcome });
+    return Promise.resolve({
+      ...decision,
+      sessionId,
+      outcome: decision.outcome ?? parseDecision(body, sessionId).outcome,
+    });
   }
 
   deleteSession(sessionId: string): Promise<void> {

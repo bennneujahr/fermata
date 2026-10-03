@@ -27,7 +27,11 @@ export class LiveDiditClient implements DiditClient {
       method: "POST",
       headers: this.headers(),
       // vendor_data ist die ID der Prüfung bei Fermata (keine Personen-ID, keine E-Mail).
-      body: JSON.stringify({ workflow_id: this.workflowId, vendor_data: input.vendorData, callback: input.callbackUrl }),
+      body: JSON.stringify({
+        workflow_id: this.workflowId,
+        vendor_data: input.vendorData,
+        callback: input.callbackUrl,
+      }),
     });
     if (!res.ok) throw new DiditHttpError(res.status, "session_create");
     const body = (await res.json()) as { session_id?: string; url?: string; verification_url?: string };

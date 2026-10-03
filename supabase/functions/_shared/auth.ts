@@ -67,7 +67,9 @@ export async function requireUser(req: Request): Promise<AuthUser> {
  */
 export async function asUser<T>(sql: Sql, user: AuthUser, fn: (tx: Sql) => Promise<T>): Promise<T> {
   return (await sql.begin(async (tx) => {
-    await tx`select set_config('request.jwt.claims', ${JSON.stringify({ ...user.claims, sub: user.id, role: "authenticated", aal: user.aal })}, true)`;
+    await tx`select set_config('request.jwt.claims', ${
+      JSON.stringify({ ...user.claims, sub: user.id, role: "authenticated", aal: user.aal })
+    }, true)`;
     await tx`select set_config('request.jwt.claim.sub', ${user.id}, true)`;
     await tx`set local role authenticated`;
     return await fn(tx as unknown as Sql);
