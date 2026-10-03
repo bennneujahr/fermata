@@ -546,7 +546,8 @@ begin
 
   v_offer := app.debrief_offer_for(e.id, uid);
   if coalesce((v_offer ->> 'eligible')::boolean, false) then
-    perform app.evening_notify(e, uid, 'evening.debrief_offer', jsonb_build_object('minutes', v_offer -> 'minutes'),
+    perform app.evening_notify(e, uid, 'evening.debrief_offer',
+      jsonb_build_object('minutes', v_offer -> 'minutes', 'offer_until', v_offer -> 'offer_until'),
       false, false, null, 'offer');
   end if;
 

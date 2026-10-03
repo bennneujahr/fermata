@@ -895,7 +895,15 @@ begin
         'reservation_name', ops.setting_text('evening.reservation_name'),
         'table_code', case when r.status = 'reserved' then r.table_code end,
         'late_cancel_from', e.starts_at - make_interval(hours => ops.setting_int('evening.late_cancel_hours')),
+        'late_cancel_hours', ops.setting_int('evening.late_cancel_hours'),
+        'find_before_minutes', ops.setting_int('evening.find_window_before_minutes'),
         'feedback_until', e.starts_at + make_interval(days => ops.setting_int('evening.feedback_open_days'))));
+      if q.template = 'evening.checkin' then
+        v_ctx := v_ctx || jsonb_build_object('safety', jsonb_build_object(
+          'emergency_number', ops.setting_text('safety.emergency_number'),
+          'heimwegtelefon_number', ops.setting_text('safety.heimwegtelefon_number'),
+          'heimwegtelefon_hours', ops.setting_text('safety.heimwegtelefon_hours')));
+      end if;
     else
       -- Lokal oder Admin: nur Reservierungsdaten, keine Mitgliederdaten.
       if r.id is null then
