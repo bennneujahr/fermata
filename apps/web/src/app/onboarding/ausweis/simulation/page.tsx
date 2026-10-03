@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { simulateVerificationAction } from "@/app/actions/simulation";
-import { Button, Card, Notice } from "@/components/ui";
+import { Button, Card, Notice, PageHeader } from "@/components/ui";
 import { simulation } from "@/copy/onboarding";
 import { requireMember } from "@/lib/data";
 import { diditFakeEnabled } from "@/lib/env";
@@ -16,10 +16,7 @@ export default async function SimulationPage({ searchParams }: { searchParams: P
   if (!sitzung || !/^fake_[0-9a-f-]{36}$/.test(sitzung)) notFound();
   return (
     <div className="stack stack-lg">
-      <header className="stack stack-sm">
-        <h1>{simulation.title}</h1>
-        <p className="lead">{simulation.lead}</p>
-      </header>
+      <PageHeader title={simulation.title} lead={simulation.lead} />
       <Notice tone="draft">{simulation.session(sitzung)}</Notice>
       <Card>
         <form action={simulateVerificationAction} className="stack">

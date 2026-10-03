@@ -8,10 +8,10 @@ export const metadata: Metadata = { title: admin.dashboard.title };
 
 function Stat({ value, label }: { value: number | string; label: string }) {
   return (
-    <p className="stat">
+    <div className="stat">
       <span className="stat__value">{value}</span>
       <span className="stat__label">{label}</span>
-    </p>
+    </div>
   );
 }
 
@@ -35,7 +35,7 @@ export default async function AdminDashboard() {
           <Link href="/admin/konten">{admin.nav.accounts}</Link>
         </Card>
         <Card title={d.invitations} headingLevel={2}>
-          <div className="cluster">
+          <div className="stats">
             <Stat value={o.invitations.open} label={d.open} />
             <Stat value={o.invitations.accepted} label={d.accepted} />
             <Stat value={o.invitations.expired} label={d.expired} />
@@ -57,7 +57,7 @@ export default async function AdminDashboard() {
           <Link href="/admin/pruefungen">{admin.nav.verifications}</Link>
         </Card>
         <Card title={d.flags} headingLevel={2} variant={o.safety_flags_open > 0 ? "accent" : "raised"}>
-          <div className="cluster">
+          <div className="stats">
             <Stat value={o.safety_flags_open} label={d.flags} />
             <Stat value={o.reports_open} label={d.reports} />
           </div>
@@ -65,7 +65,7 @@ export default async function AdminDashboard() {
         </Card>
         <Card title={d.waitlist} headingLevel={2} variant="sunk">
           {o.waitlist ? (
-            <div className="cluster">
+            <div className="stats">
               <Stat value={o.waitlist.total} label={d.waitlist} />
               <Stat value={o.waitlist.invited_to_app} label={d.waitlistInvited} />
             </div>

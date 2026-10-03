@@ -198,7 +198,7 @@
 
 .shell__footer {
   border-top: 1px solid var(--color-line);
-  padding: var(--space-6) var(--layout-gutter) calc(var(--space-9) + env(safe-area-inset-bottom));
+  padding: var(--space-6) 0 calc(var(--space-9) + env(safe-area-inset-bottom));
   color: var(--color-ink-muted);
   font-size: var(--text-sm);
 }
@@ -206,6 +206,7 @@
 .shell__footer-inner {
   max-inline-size: var(--layout-wide);
   margin-inline: auto;
+  padding-inline: var(--layout-gutter);
   display: flex;
   flex-wrap: wrap;
   gap: var(--space-3) var(--space-5);
@@ -250,6 +251,7 @@
 
 /* Konto-Menü-Knopf (Abmelden im Kopf, nur Desktop) */
 .header-link {
+  white-space: nowrap;
   color: var(--color-ink-soft);
   font-size: var(--text-sm);
   font-weight: 600;
@@ -342,13 +344,28 @@
   display: inline-flex;
 }
 
+@media (max-width: 30rem) {
+  .shell--admin .wordmark__tag {
+    display: none;
+  }
+
+  .shell__bar {
+    gap: var(--space-2);
+  }
+}
+
 .shell--admin .header-link:hover {
   color: var(--color-on-night);
 }
 
 .admin-layout {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--space-6);
+}
+
+.admin-nav {
+  min-inline-size: 0;
 }
 
 .admin-nav__list {

@@ -36,10 +36,10 @@ export default async function MembershipPage() {
         <div className="grid-auto">
           {tiers.map(([key, t]) => (
             <Card key={key} title={t.name} headingLevel={3} variant="outline">
-              <p className="stat">
+              <div className="stat">
                 <span className="stat__value">{formatEuro(t.price_cents)}</span>
                 <span className="stat__label">{c.perPeriod}</span>
-              </p>
+              </div>
               <p className="soft">{c.evenings(t.evenings)}</p>
             </Card>
           ))}

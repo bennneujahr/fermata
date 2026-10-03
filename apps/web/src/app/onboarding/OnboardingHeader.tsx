@@ -17,6 +17,9 @@ export function OnboardingHeader({ onboarding, current, form }: { onboarding: On
     <div className="onboarding-head">
       <div className="onboarding-head__meta">
         <span>{stepper.stepOf(index + 1, ONBOARDING_STEPS.length)}</span>
+        <span className="onboarding-head__current" aria-hidden="true">
+          {stepLabel(current, form)}
+        </span>
       </div>
       <Stepper steps={steps} label={stepper.label} stateLabels={{ done: stepper.done, current: stepper.current, todo: stepper.todo }} />
     </div>

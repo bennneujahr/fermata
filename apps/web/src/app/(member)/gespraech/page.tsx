@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Card, EmptyState, PageHeader } from "@/components/ui";
+import { Card, PageHeader } from "@/components/ui";
 import { Icon } from "@/components/ui/Icon";
 import { placeholders } from "@/copy/member";
 import { requireMember } from "@/lib/data";
@@ -17,11 +17,10 @@ export default async function ConversationPage() {
     <div className="stack stack-lg">
       <PageHeader eyebrow={c.eyebrow} title={c.title} lead={c.lead} />
       <Card variant="night">
-        <div className="stack" data-atem-stage>
+        <div className="atem-placeholder">
           <Atem label={c.atemLabel} />
-          <EmptyState title={c.emptyTitle}>
-            <p>{c.emptyText}</p>
-          </EmptyState>
+          <h2>{c.emptyTitle}</h2>
+          <p className="soft">{c.emptyText}</p>
         </div>
       </Card>
       <Card variant="sunk">

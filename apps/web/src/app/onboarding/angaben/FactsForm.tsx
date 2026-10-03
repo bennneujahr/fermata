@@ -52,12 +52,15 @@ export function FactsForm({ form, facts, collectStreet, locked, returnTo }: { fo
           maxLength={5}
           defaultValue={v("postal_code")}
           required
-          hint={c.postalCodeHint}
+          describedBy="plz-hinweis"
           error={err("postal_code")}
           onBlur={(e) => onPostalCode(e.currentTarget.value.trim())}
         />
         <Field label={c.city} name="city" autoComplete="address-level2" value={city} onChange={(e) => setCity(e.target.value)} error={err("city")} />
       </div>
+      <p className="field__hint field__hint--row" id="plz-hinweis">
+        {c.postalCodeHint}
+      </p>
       <Field label={c.phone} hint={c.phoneHint} name="phone" type="tel" autoComplete="tel" inputMode="tel" defaultValue={v("phone")} error={err("phone")} />
       {general ? (
         <Notice tone="danger" live="assertive">

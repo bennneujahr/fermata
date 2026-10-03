@@ -44,9 +44,7 @@ export default async function StartPage() {
             stateLabels={{ done: stepper.done, current: stepper.current, todo: stepper.todo }}
           />
         </Card>
-      </div>
 
-      <div className="grid-auto">
         <Card title={c.membershipTitle} id="mitgliedschaft" variant="sunk">
           <div className="cluster">
             <Badge tone="brass">{c.freePhase}</Badge>

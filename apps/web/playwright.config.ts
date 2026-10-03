@@ -4,7 +4,7 @@ import { loadStackEnv } from "./tests/e2e/helpers/env";
 
 const env = loadStackEnv();
 const chromium = process.env.PW_CHROMIUM_PATH ?? "/opt/pw-browsers/chromium-1194/chrome-linux/chrome";
-const launchOptions = { executablePath: chromium };
+const launchOptions = { executablePath: chromium, args: ["--lang=de-DE"], env: { ...process.env, LANG: "de_DE.UTF-8", LANGUAGE: "de" } };
 
 export default defineConfig({
   testDir: "./tests/e2e",

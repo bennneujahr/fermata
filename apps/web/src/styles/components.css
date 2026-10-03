@@ -990,3 +990,88 @@ details.card[open] > summary::after {
   letter-spacing: 0.08em;
   overflow-wrap: anywhere;
 }
+
+/* Hinweis unter einer ganzen Feldzeile */
+.field__hint--row {
+  margin-top: calc(var(--space-3) * -1);
+}
+
+/* Kennzahlen nebeneinander, Ziffern gleich hoch und gleich breit */
+.stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(6.5rem, 1fr));
+  gap: var(--space-4);
+}
+
+.stat__value {
+  font-variant-numeric: lining-nums tabular-nums;
+}
+
+/* Knöpfe auf dunklen Karten */
+.card--night .btn--secondary {
+  --btn-fg: var(--color-on-night);
+  --btn-border: var(--color-on-night-muted);
+  color: var(--btn-fg);
+}
+
+.card--night .btn--secondary:hover {
+  --btn-bg: var(--color-night-raised);
+  --btn-fg: var(--color-on-night);
+}
+
+:root[data-theme="dark"] .card--night {
+  border-color: var(--color-line);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .card--night {
+    border-color: var(--color-line);
+  }
+}
+
+/* Schritte auf schmalen Bildschirmen: nur Balken, der aktuelle Schritt steht im Kopf */
+.onboarding-head__current {
+  display: none;
+  font-weight: 650;
+  color: var(--color-ink);
+}
+
+@media (max-width: 34rem) {
+  .onboarding-head__current {
+    display: inline;
+  }
+
+  .onboarding-head .stepper__label {
+    position: absolute;
+    inline-size: 1px;
+    block-size: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+}
+
+h1,
+h2,
+h3 {
+  hyphens: manual;
+}
+
+.prose,
+.lead,
+.card p {
+  hyphens: auto;
+}
+
+.atem-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: var(--space-3);
+  padding-block: var(--space-4) var(--space-6);
+}
+
+.atem-placeholder p {
+  max-inline-size: 30rem;
+}
