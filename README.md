@@ -6,6 +6,13 @@ zuerst in Westmecklenburg. Grundlage ist [PLAN.md](PLAN.md).
 > **Stand:** Phase 1 ist als Code gebaut (M0–M9). Es fehlen echte Konten bei den Anbietern (Supabase, Brevo, Stripe,
 > Didit, AWS, Deepgram, LiveKit) und Entscheidungen, die nur du treffen kannst. Alles Offene steht in
 > [docs/PLATZHALTER.md](docs/PLATZHALTER.md), der Weg zum Start in [docs/STARTCHECKLISTE.md](docs/STARTCHECKLISTE.md).
+>
+> **Pausiert seit 5. Oktober 2026.** Letzter geprüfter Stand: alle Tests grün, CI grün (Commit `2bd6b12`).
+> Beim Wiedereinstieg:
+> 1. Abhängigkeiten und Container-Versionen auf den aktuellen Stand bringen (Node-Pakete, Python-Pakete,
+>    Supabase-Images in `scripts/db.sh` und `apps/web/scripts/stack.sh`, Modellnamen für Bedrock), dann alle Tests laufen lassen.
+> 2. Rechtstexte und Rechtslage neu prüfen (`docs/recht/`, Kündigungs- und Widerrufsknopf, Preisangaben).
+> 3. Mit der Liste „Zuerst entscheiden“ in [docs/PLATZHALTER.md](docs/PLATZHALTER.md) weitermachen.
 
 ## Wo du was findest
 
