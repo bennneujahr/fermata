@@ -1,0 +1,199 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  checks:
+    name: Prüfungen (Tokens, Tonalität, Kontraste, Atem)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm checks
+
+  database:
+    name: Datenbank (Migrationen + pgTAP)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: psql installieren
+        run: sudo apt-get update && sudo apt-get install -y postgresql-client
+      - name: Migrationen und Tests
+        run: bash scripts/db.sh test
+      - name: Datenbank stoppen
+        if: always()
+        run: bash scripts/db.sh stop
+
+  edge-functions:
+    name: Edge Functions (Deno)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+      - name: psql installieren
+        run: sudo apt-get update && sudo apt-get install -y postgresql-client
+      - name: Typprüfung
+        working-directory: supabase/functions
+        run: deno check $(find . -name '*.ts' -not -path '*/node_modules/*' | sort)
+      - name: Test-Datenbank mit Migrationen
+        run: bash scripts/db.sh migrate
+      - name: Tests
+        working-directory: supabase/functions
+        env:
+          DB_PORT: "54322"
+          DATABASE_URL: postgres://postgres:postgres@localhost:54322/postgres
+          SUPABASE_DB_URL: postgres://postgres:postgres@localhost:54322/postgres
+          FERMATA_ENV: test
+        run: deno test --allow-all
+      - name: Datenbank stoppen
+        if: always()
+        run: bash scripts/db.sh stop
+
+  landing:
+    name: Landingpage (Build + Ende-zu-Ende)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+      - name: psql installieren
+        run: sudo apt-get update && sudo apt-get install -y postgresql-client
+      - run: pnpm install --frozen-lockfile
+      - name: Build für Vercel
+        run: pnpm --filter @fermata/landing build
+      - name: Typprüfung
+        run: pnpm --filter @fermata/landing typecheck
+      - name: Test-Datenbank mit Migrationen
+        run: bash scripts/db.sh migrate
+      - name: Chromium für Playwright
+        working-directory: apps/landing
+        run: npx playwright install --with-deps chromium
+      - name: Ende-zu-Ende-Tests
+        working-directory: apps/landing
+        env:
+          DB_PORT: "54322"
+        run: npx playwright test
+      - name: Bericht sichern
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: landing-playwright
+          path: apps/landing/test-results
+          retention-days: 7
+      - name: Datenbank stoppen
+        if: always()
+        run: bash scripts/db.sh stop
+
+  matcher:
+    name: Auswahl-Job (Python)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - uses: astral-sh/setup-uv@v6
+      - name: psql installieren
+        run: sudo apt-get update && sudo apt-get install -y postgresql-client
+      - name: Test-Datenbank mit Migrationen
+        run: bash scripts/db.sh migrate
+      - name: ruff
+        working-directory: services/matcher
+        run: uv run ruff check .
+      - name: pytest
+        working-directory: services/matcher
+        env:
+          DB_PORT: "54322"
+        run: uv run pytest -q
+      - name: Datenbank stoppen
+        if: always()
+        run: bash scripts/db.sh stop
+
+  viola:
+    name: Viola (Python)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+      - name: ruff
+        working-directory: services/viola
+        run: uv run ruff check . && uv run ruff format --check .
+      - name: mypy
+        working-directory: services/viola
+        run: uv run mypy
+      - name: pytest
+        working-directory: services/viola
+        run: uv run pytest -q
+
+  web:
+    name: Web-App (Typen, Lint, Tests, Build, Ende-zu-Ende)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+      # uv: Viola-Textdienst im Stapel (Gespräch im Textmodus) und Simulation des Auswahl-Jobs in den Admin-Tests
+      - uses: astral-sh/setup-uv@v6
+      - name: psql installieren
+        run: sudo apt-get update && sudo apt-get install -y postgresql-client
+      - run: pnpm install --frozen-lockfile
+      - name: Typen
+        run: pnpm --filter @fermata/web typecheck
+      - name: Lint
+        run: pnpm --filter @fermata/web lint
+      - name: Unit-Tests
+        run: pnpm --filter @fermata/web test
+      - name: Lokaler Stapel (Datenbank, GoTrue, PostgREST, Mailpit, Functions)
+        run: bash apps/web/scripts/stack.sh up
+      - name: Build und Start
+        run: bash apps/web/scripts/serve-e2e.sh
+      - name: Chromium für Playwright
+        working-directory: apps/web
+        run: npx playwright install --with-deps chromium
+      - name: Ende-zu-Ende-Tests
+        run: pnpm --filter @fermata/web test:e2e
+      - name: Bericht sichern
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: web-playwright
+          path: apps/web/test-results
+          retention-days: 7
+      - name: Stapel stoppen
+        if: always()
+        run: bash apps/web/scripts/stack.sh down

@@ -1,0 +1,8 @@
+# Beim Build aus packages/brand kopiert (scripts/copy-brand.mjs)
+public/brand/
+public/favicon.ico
+public/favicon.svg
+public/apple-touch-icon.png
+# Optional beim Build aus Supabase geladen (scripts/pull-settings.mjs)
+src/generated/
+lighthouse-ergebnis.json

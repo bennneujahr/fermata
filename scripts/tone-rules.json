@@ -1,0 +1,56 @@
+{
+  "$description": "Tonalitätsregeln für alle sichtbaren Texte. PLATZHALTER: eigener Entwurf, weil Abschnitt 12 des Auftrags nicht im Repository liegt. Benn kann Regeln ergänzen oder streichen.",
+  "include": [
+    "apps/landing/src/**/*.astro",
+    "apps/landing/src/**/*.md",
+    "apps/landing/src/content/**/*.json",
+    "apps/landing/src/content/**/*.ts",
+    "apps/web/src/copy/**/*.ts",
+    "apps/web/src/copy/**/*.json",
+    "apps/web/src/**/*.md",
+    "packages/shared/src/copy/**/*.ts",
+    "supabase/functions/_shared/mail/templates/**/*.ts",
+    "services/viola/src/viola/prompts/**/*.md"
+  ],
+  "exclude": ["**/node_modules/**", "**/dist/**", "**/*.test.ts", "**/*.spec.ts"],
+  "rules": [
+    {
+      "id": "kein-wischen",
+      "pattern": "\\b(swipe\\w*|swipen|geswiped|wisch(en|t|e)?)\\b",
+      "allowIf": "(ohne|kein|keinem|keine|nicht|statt|kein ständiges) (zu |mehr )?(swipe\\w*|swipen|wisch(en)?)",
+      "reason": "Fermata kommt ohne Wischen aus. Erlaubt nur als Abgrenzung („ohne Wischen“)."
+    },
+    {
+      "id": "kein-match-jargon",
+      "pattern": "\\b(match(es)?|gematcht|matchen|likes?|geliked|super-?like)\\b",
+      "allowIf": "(ohne|keine|kein) (match(es)?|likes?)",
+      "reason": "Statt App-Jargon: „Vorschlag“, „Gegenüber“, „Abend“."
+    },
+    {
+      "id": "kein-druck",
+      "pattern": "(nur noch heute|letzte chance|jetzt zuschlagen|beeil|schnell sein|verpassen sie nicht|verpass nicht|nicht verpassen)",
+      "reason": "Keine künstliche Dringlichkeit."
+    },
+    {
+      "id": "keine-versprechen",
+      "pattern": "(garantiert|100\\s?%|seelenverwandt|perfekte[nrs]? (partner|partnerin|gegenüber)|liebe deines lebens|liebe ihres lebens)",
+      "reason": "Keine Heilsversprechen. Fermata verabredet Abende, keine Liebe auf Bestellung."
+    },
+    {
+      "id": "keine-ausrufezeichen",
+      "pattern": "!(?!=)",
+      "reason": "Ruhiger Ton: keine Ausrufezeichen in sichtbaren Texten."
+    },
+    {
+      "id": "keine-emojis",
+      "pattern": "[\\u{1F300}-\\u{1FAFF}\\u{2600}-\\u{27BF}]",
+      "flags": "u",
+      "reason": "Keine Emojis."
+    },
+    {
+      "id": "kein-singleboerse",
+      "pattern": "single-?börse|partnerbörse|singles in deiner nähe",
+      "reason": "Fermata ist keine Börse."
+    }
+  ]
+}

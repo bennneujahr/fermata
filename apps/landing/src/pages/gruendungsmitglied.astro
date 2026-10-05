@@ -1,0 +1,26 @@
+---
+import Fermate from "../components/Fermate.astro";
+import { gruendung as t } from "../content/pages";
+import Base from "../layouts/Base.astro";
+---
+<Base title={t.title} description={t.lead}>
+  <section class="page">
+    <div class="wrap-narrow">
+      <Fermate class="page-mark" />
+      <p class="eyebrow">{t.eyebrow}</p>
+      <h1 class="page-title">{t.heading}</h1>
+      <p class="page-lead">{t.lead}</p>
+      <div class="prose">
+        {t.sections.map((s) => (
+          <>
+            <h2>{s.title}</h2>
+            {s.paragraphs.map((p) => <p>{p}</p>)}
+          </>
+        ))}
+      </div>
+      <div class="page-actions page-actions-start">
+        <a class="btn btn-primary" href={t.cta.href}>{t.cta.label}</a>
+      </div>
+    </div>
+  </section>
+</Base>

@@ -1,0 +1,94 @@
+---
+// Wartelisten-Formular. Braucht JavaScript (scripts/waitlist-form.ts); ohne JS erklärt ein Hinweis den Weg per E-Mail.
+// Antwort ist immer gleich (neutral): Erfolg führt auf /bestaetigen.
+import { consent, form, regionGroups } from "../content/form";
+import { join } from "../content/home";
+import { site } from "../content/site";
+const f = form.fields;
+---
+<section class="section" id={join.id} aria-labelledby="warteliste-title">
+  <div class="wrap">
+    <div class="join">
+      <div>
+        <p class="eyebrow">{join.eyebrow}</p>
+        <h2 class="section-title" id="warteliste-title">{join.title}</h2>
+        <p class="section-intro">{join.intro}</p>
+        <div class="join-next">
+          <h3>{join.nextTitle}</h3>
+          <ol>
+            {join.next.map((n) => <li>{n}</li>)}
+          </ol>
+        </div>
+      </div>
+      <div>
+        <form
+          class="form"
+          id="waitlist-form"
+          novalidate
+          data-messages={JSON.stringify({ errors: form.errors, general: form.general, summaryOne: form.summaryOne, summaryMany: form.summaryMany, submit: form.submit, submitting: form.submitting, labels: { first_name: f.first_name.label, email: f.email.label, region: f.region.label, postal_code: f.postal_code.label, consent: "Einwilligung" } })}
+        >
+          <noscript><p class="noscript-note">{site.noscript}</p></noscript>
+          <p class="invite-note" data-invite-note hidden>{form.inviteNote}</p>
+          <div class="error-summary" data-summary role="alert" tabindex="-1" hidden></div>
+          <fieldset>
+            <legend>{form.requiredNote}</legend>
+            <div class="field">
+              <label for="first_name">{f.first_name.label}</label>
+              <input class="input" id="first_name" name="first_name" type="text" autocomplete="given-name" maxlength="60" required aria-describedby="first_name-hint" />
+              <p class="hint" id="first_name-hint">{f.first_name.hint}</p>
+              <p class="field-error" id="first_name-error" hidden></p>
+            </div>
+            <div class="field">
+              <label for="email">{f.email.label}</label>
+              <input class="input" id="email" name="email" type="email" inputmode="email" autocomplete="email" maxlength="254" required spellcheck="false" />
+              <p class="field-error" id="email-error" hidden></p>
+            </div>
+            <div class="form-row">
+              <div class="field">
+                <label for="region">{f.region.label}</label>
+                <div class="select-wrap">
+                  <select class="select" id="region" name="region" required>
+                    <option value="" selected disabled>{f.region.placeholder}</option>
+                    {regionGroups.map((g) => (
+                      <optgroup label={g.label}>
+                        {g.options.map((o) => <option value={o.value}>{o.label}</option>)}
+                      </optgroup>
+                    ))}
+                  </select>
+                </div>
+                <p class="field-error" id="region-error" hidden></p>
+              </div>
+              <div class="field">
+                <label for="postal_code">{f.postal_code.label}</label>
+                <input class="input" id="postal_code" name="postal_code" type="text" inputmode="numeric" autocomplete="postal-code" maxlength="5" pattern="[0-9]{5}" required aria-describedby="postal_code-hint" />
+                <p class="hint" id="postal_code-hint">{f.postal_code.hint}</p>
+                <p class="field-error" id="postal_code-error" hidden></p>
+              </div>
+            </div>
+            <div class="field">
+              <label class="check" for="consent">
+                <input id="consent" name="consent" type="checkbox" required />
+                <span>{consent.before}<a href={consent.href}>{consent.linkText}</a>{consent.after}</span>
+              </label>
+              <p class="field-error" id="consent-error" hidden></p>
+            </div>
+            <div class="hp">
+              <label for="website">{form.honeypot}</label>
+              <input id="website" name="website" type="text" tabindex="-1" autocomplete="off" />
+            </div>
+            <input type="hidden" name="consent_version" value={consent.version} />
+            <input type="hidden" name="source" value="" />
+            <input type="hidden" name="invite" value="" />
+          </fieldset>
+          <div class="form-actions">
+            <button class="btn btn-primary" type="submit" disabled data-submit>{form.submit}</button>
+            <p class="form-note">{form.reassurance}</p>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</section>
+<script>
+  import "../scripts/waitlist-form";
+</script>

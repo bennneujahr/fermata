@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 80" role="img" aria-labelledby="t">
+  <title id="t">Fermata</title>
+  <!-- Wortmarke: Fermate über dem Schriftzug. Der Schriftzug wird im Browser mit der Hausschrift gesetzt;
+       für Druck und Mails bitte die Pfad-Fassung aus dem Build (dist/wortmarke-pfade.svg, M9) nutzen. -->
+  <g transform="translate(118 0) scale(0.53)">
+    <path fill="currentColor" d="M3.2 64.6C3.4 28.6 28 5 60 5s56.6 23.6 56.8 59.6c0 1.3-1.9 1.4-2.1.1C110.6 36.2 88.8 15.4 60 15.4S9.4 36.2 5.3 64.7c-.2 1.3-2.1 1.2-2.1-.1Z"/>
+    <circle fill="currentColor" cx="60" cy="56" r="7.6"/>
+  </g>
+  <text x="150" y="74" text-anchor="middle" font-family="Fraunces, Georgia, serif" font-size="40" letter-spacing="2" fill="currentColor">Fermata</text>
+</svg>

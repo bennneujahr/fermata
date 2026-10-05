@@ -1,0 +1,87 @@
+/*
+ * „Atem“ – die sichtbare Gestalt von Viola. Kein Gesicht, nur ein ruhiges Atmen.
+ * Zustände über data-state: ruhig | hoert | denkt | spricht | pause
+ * Lautstärke beim Sprechen über die CSS-Variable --atem-level (0 bis 1), gesetzt von atem.js.
+ * Ohne Inline-Styles, damit eine strenge CSP (ohne 'unsafe-inline') genügt.
+ */
+fermata-atem {
+  --atem-size: 12rem;
+  --atem-color: currentColor;
+  --atem-glow: var(--color-brass-decor, #b08a4e);
+  --atem-level: 0;
+  display: inline-grid;
+  place-items: center;
+  inline-size: var(--atem-size);
+  block-size: var(--atem-size);
+  position: relative;
+  color: inherit;
+}
+fermata-atem .atem-ring,
+fermata-atem .atem-mark {
+  grid-area: 1 / 1;
+}
+fermata-atem .atem-ring {
+  inline-size: 100%;
+  block-size: 100%;
+  border-radius: 50%;
+  background: radial-gradient(circle at 50% 50%, color-mix(in srgb, var(--atem-glow) 34%, transparent) 0%, color-mix(in srgb, var(--atem-glow) 12%, transparent) 46%, transparent 70%);
+  transform: scale(0.86);
+  opacity: 0.75;
+  animation: atem-breathe var(--motion-atem, 6400ms) var(--motion-ease-atem, ease-in-out) infinite;
+}
+fermata-atem .atem-ring + .atem-ring {
+  animation-delay: calc(var(--motion-atem, 6400ms) / -2);
+  opacity: 0.45;
+}
+fermata-atem .atem-mark {
+  inline-size: 46%;
+  color: var(--atem-color);
+  transform-origin: 50% 70%;
+  animation: atem-mark var(--motion-atem, 6400ms) var(--motion-ease-atem, ease-in-out) infinite;
+}
+fermata-atem svg {
+  display: block;
+  inline-size: 100%;
+  block-size: auto;
+  overflow: visible;
+}
+fermata-atem[data-state="hoert"] .atem-ring {
+  animation-duration: calc(var(--motion-atem, 6400ms) * 0.8);
+}
+fermata-atem[data-state="denkt"] .atem-ring {
+  animation-duration: calc(var(--motion-atem, 6400ms) * 0.55);
+  opacity: 0.55;
+}
+fermata-atem[data-state="spricht"] .atem-ring {
+  animation: none;
+  transform: scale(calc(0.9 + var(--atem-level) * 0.22));
+  transition: transform 90ms linear;
+}
+fermata-atem[data-state="pause"] .atem-ring,
+fermata-atem[data-state="pause"] .atem-mark {
+  animation-play-state: paused;
+  opacity: 0.5;
+}
+@keyframes atem-breathe {
+  0%, 100% { transform: scale(0.86); opacity: 0.55; }
+  45% { transform: scale(1.04); opacity: 0.9; }
+}
+@keyframes atem-mark {
+  0%, 100% { transform: translateY(1.5%) scale(0.985); }
+  45% { transform: translateY(-1.5%) scale(1.015); }
+}
+@media (prefers-reduced-motion: reduce) {
+  fermata-atem .atem-ring,
+  fermata-atem .atem-mark {
+    animation: atem-fade calc(var(--motion-atem, 6400ms) * 1.4) ease-in-out infinite;
+    transform: none;
+  }
+  fermata-atem[data-state="spricht"] .atem-ring {
+    transform: none;
+    opacity: calc(0.5 + var(--atem-level) * 0.4);
+  }
+  @keyframes atem-fade {
+    0%, 100% { opacity: 0.6; }
+    50% { opacity: 0.85; }
+  }
+}

@@ -1,0 +1,26 @@
+---
+import { site } from "../content/site";
+import Fermate from "./Fermate.astro";
+interface Props {
+  showNav?: boolean;
+}
+const { showNav = true } = Astro.props;
+---
+<header class="site-header">
+  <div class="wrap">
+    <a class="brand" href="/" aria-label={site.homeLabel}>
+      <Fermate class="brand-mark" />
+      <span class="brand-name">{site.name}</span>
+    </a>
+    {showNav && (
+      <nav class="site-nav" aria-label={site.navLabel}>
+        <ul>
+          {site.nav.map((item) => (
+            <li><a href={item.href}>{item.label}</a></li>
+          ))}
+        </ul>
+      </nav>
+    )}
+    <a class="btn btn-quiet btn-small" href={site.cta.href}>{site.cta.label}</a>
+  </div>
+</header>

@@ -1,0 +1,82 @@
+---
+// Grundgerüst jeder Seite. Strenge CSP auch als <meta> (lokal und als zweite Schicht zum Header aus vercel.json):
+// keine Inline-Skripte, keine Inline-Styles, Verbindungen nur zur eigenen Seite und zu den Edge Functions.
+import "@fermata/tokens/tokens.css";
+import "@fermata/brand/fonts/fonts.css";
+import "../styles/global.css";
+import frauncesNormal from "@fermata/brand/fonts/fraunces-latin-wght-normal.woff2?url";
+import frauncesItalic from "@fermata/brand/fonts/fraunces-latin-wght-italic.woff2?url";
+import sourceSans from "@fermata/brand/fonts/source-sans-3-latin-wght-normal.woff2?url";
+import { tokens } from "@fermata/tokens";
+import Footer from "../components/Footer.astro";
+import Header from "../components/Header.astro";
+import { site } from "../content/site";
+import { vorschau } from "../content/pages";
+import { functionsOrigin } from "../settings";
+
+interface Props {
+  title?: string;
+  description?: string;
+  /** Seiten ohne Suchmaschinen-Nutzen (persönliche Links, Bestätigungen). */
+  noindex?: boolean;
+  showNav?: boolean;
+}
+const { title, description = site.description, noindex = false, showNav = true } = Astro.props;
+const fullTitle = title ? `${title} · ${site.name}` : site.title;
+const cleanPath = Astro.url.pathname.replace(/\.html$/, "").replace(/\/index$/, "/").replace(/(.)\/$/, "$1") || "/";
+const canonical = new URL(cleanPath, Astro.site).href;
+const ogImage = new URL("/og.png", Astro.site).href;
+const csp = [
+  "default-src 'none'",
+  "script-src 'self'",
+  "style-src 'self'",
+  "img-src 'self'",
+  "font-src 'self'",
+  `connect-src 'self' ${functionsOrigin}`,
+  "media-src 'self'",
+  "manifest-src 'self'",
+  "form-action 'self'",
+  "base-uri 'none'",
+  "object-src 'none'",
+].join("; ");
+---
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="utf-8" />
+    <meta http-equiv="Content-Security-Policy" content={csp} />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{fullTitle}</title>
+    <meta name="description" content={description} />
+    {noindex ? <meta name="robots" content="noindex" /> : <link rel="canonical" href={canonical} />}
+    <meta name="color-scheme" content="light dark" />
+    <meta name="theme-color" content={tokens.color.light.paper} media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content={tokens.color.dark.paper} media="(prefers-color-scheme: dark)" />
+    <link rel="icon" href="/favicon.ico" sizes="32x32" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="preload" href={frauncesNormal} as="font" type="font/woff2" crossorigin="anonymous" />
+    <link rel="preload" href={frauncesItalic} as="font" type="font/woff2" crossorigin="anonymous" />
+    <link rel="preload" href={sourceSans} as="font" type="font/woff2" crossorigin="anonymous" />
+    <meta property="og:type" content="website" />
+    <meta property="og:locale" content={site.locale} />
+    <meta property="og:site_name" content={site.name} />
+    <meta property="og:title" content={fullTitle} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonical} />
+    <meta property="og:image" content={ogImage} />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="Die Fermate, das Zeichen für eine Pause in der Musik, über dem Schriftzug Fermata." />
+    <meta name="twitter:card" content="summary_large_image" />
+  </head>
+  <body>
+    <a class="skip-link" href="#inhalt">{site.skipLink}</a>
+    {import.meta.env.PUBLIC_PREVIEW === "1" && <p class="preview-banner" role="note">{vorschau.banner}</p>}
+    <Header showNav={showNav} />
+    <main id="inhalt" tabindex="-1">
+      <slot />
+    </main>
+    <Footer />
+  </body>
+</html>
